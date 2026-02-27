@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: lite-backend
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3001"  # Only expose to localhost
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_TYPE: postgres
+      DB_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    env_file:
+      - ../.env.production
+    volumes:
+      - uploads:/usr/src/app/src/public/uploads
+      - logs:/usr/src/app/logs
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: lite-backend-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-litebackend}
+      POSTGRES_USER: ${DB_USER:-liteuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-liteuser} -d ${DB_NAME:-litebackend}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  nginx:
+    image: nginx:alpine
+    container_name: lite-backend-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ../src/public/uploads:/var/www/uploads:ro
+      - nginx_logs:/var/log/nginx
+      - ./nginx/cache:/var/cache/nginx
+    depends_on:
+      - app
+    networks:
+      - backend
+      - frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # Optional: Redis for caching/sessions
+  redis:
+    image: redis:7-alpine
+    container_name: lite-backend-redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads:
+    driver: local
+  logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge
+    internal: true
+  frontend:
+    driver: bridge
