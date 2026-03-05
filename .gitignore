@@ -43,6 +43,7 @@ coverage/
 dist/
 build/
 .cache/
+*.tsbuildinfo
 
 # PM2
 ecosystem.config.local.js
