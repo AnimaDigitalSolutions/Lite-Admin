@@ -180,6 +180,19 @@ validate-env:
   @[ -f .env ] || (echo -e "${RED}❌ .env file not found${NC}" && echo -e "   Run: just setup-env" && exit 1)
   @echo -e "  ✅ .env: Found"
 
+# Validate project (lint + type-check)
+validate:
+  @echo -e "${CYAN}🔍 Validating Lite-Backend Project...${NC}"
+  @echo -e "\n${BLUE}📦 Installing dependencies...${NC}"
+  @pnpm install
+  @echo -e "\n${BLUE}🔧 Type checking...${NC}"
+  @pnpm run type-check || (echo -e "${RED}❌ Type check failed${NC}" && exit 1)
+  @echo -e "${GREEN}✅ Type check passed${NC}"
+  @echo -e "\n${BLUE}🎨 Linting...${NC}"
+  @pnpm run lint || (echo -e "${RED}❌ Lint check failed${NC}" && exit 1)
+  @echo -e "${GREEN}✅ Lint check passed${NC}"
+  @echo -e "\n${GREEN}✨ All validation checks passed!${NC}"
+
 # Run linting
 lint:
   @echo -e "${BLUE}🔍 Running linter...${NC}"

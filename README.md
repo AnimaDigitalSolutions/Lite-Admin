@@ -1,15 +1,16 @@
 # Lite-Backend
 
-A lightweight, modular Node.js/Express backend with database abstraction, multi-provider email service, S3 media storage, and admin functionality.
+A lightweight, modular TypeScript/Express monorepo with database abstraction, multi-provider email service, S3 media storage, and admin dashboard.
 
 ## Features
 
+- **TypeScript Monorepo**: Modern development with Turbo.js orchestration
 - **Multi-Database Support**: Seamless switching between SQLite, PostgreSQL, and MySQL
 - **Multi-Provider Email**: AHASEND and Resend email service support
 - **Flexible Storage**: Local filesystem and AWS S3 storage providers
 - **Image Optimization**: Automatic image resizing and WebP conversion
-- **Admin Dashboard**: CLI tools for managing content and data
-- **Security**: Rate limiting, CORS, API key authentication, input validation
+- **Admin Dashboard**: Next.js admin interface with authentication
+- **Advanced Security**: Smart rate limiting, CORS, JWT authentication, input validation
 - **Production Ready**: Docker support, PM2 clustering, health checks
 
 ## Quick Start
@@ -41,7 +42,7 @@ just quickstart
 ### Prerequisites
 
 - Node.js >= 20.0.0
-- pnpm >= 10.0.0
+- pnpm >= 9.0.0
 - Docker & Docker Compose (optional)
 
 ### Manual Installation
@@ -50,8 +51,10 @@ just quickstart
 # Install dependencies
 pnpm install
 
-# Create environment file
+# Set up environment files
 cp .env.example .env
+cp apps/admin/.env.example apps/admin/.env
+cp apps/backend/.env.example apps/backend/.env
 
 # Edit configuration
 nano .env
@@ -59,8 +62,11 @@ nano .env
 # Create required directories
 mkdir -p database src/public/uploads/portfolio src/public/uploads/thumbnails
 
-# Start server
+# Start development servers
 pnpm dev
+# Or start individual apps:
+# pnpm dev:backend
+# pnpm dev:admin
 ```
 
 ## Configuration
@@ -68,10 +74,15 @@ pnpm dev
 ### Environment Variables
 
 ```env
-# Server
+# Backend Configuration (apps/backend/.env)
 NODE_ENV=development
 PORT=3001
-ADMIN_API_KEY=your-secret-admin-key
+
+# Admin Authentication
+ADMIN_USERNAME=admin@example.com
+ADMIN_PASSWORD=your-secure-password
+JWT_SECRET=your-jwt-secret
+JWT_REFRESH_SECRET=your-jwt-refresh-secret
 
 # Database (choose one)
 DB_TYPE=sqlite                 # sqlite|postgres|mysql
@@ -91,11 +102,10 @@ AWS_REGION=                    # For S3
 AWS_S3_BUCKET=                 # For S3
 
 # CORS
-ALLOWED_ORIGINS=http://localhost:3000,https://animadigitalsolutions.com
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3002
 
-# Rate Limiting
-RATE_LIMIT_WINDOW=30           # seconds
-RATE_LIMIT_MAX=10              # requests per window
+# Admin Dashboard Configuration (apps/admin/.env)
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
 ## API Documentation
@@ -134,11 +144,11 @@ GET /api/media/:id
 GET /api/media/:id/thumb?width=300&height=300&quality=85
 ```
 
-### Admin Endpoints (API Key Required)
+### Admin Endpoints (JWT Authentication Required)
 
-Include API key in headers:
+Include JWT token in headers:
 ```http
-X-API-Key: your-admin-api-key
+Authorization: Bearer your-jwt-token
 ```
 
 #### Media Management
@@ -162,6 +172,14 @@ POST /api/admin/migrate
 GET /api/admin/stats
 ```
 
+#### Authentication
+```http
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET /api/auth/me
+```
+
 ## Admin Tools
 
 ### CLI Tools
@@ -169,54 +187,70 @@ GET /api/admin/stats
 #### Upload Images
 ```bash
 # Single image
-node scripts/upload-image.js --file ./image.jpg --project "VERSAND.GURU"
+pnpm --filter backend exec tsx scripts/upload-image.ts --file ./image.jpg --project "VERSAND.GURU"
 
 # Bulk upload
-node scripts/upload-image.js --folder ./portfolio-images/
+pnpm --filter backend exec tsx scripts/upload-image.ts --folder ./portfolio-images/
 ```
 
 #### Export Data
 ```bash
 # Export contacts
-node scripts/export-submissions.js --type contacts --format csv
+pnpm --filter backend exec tsx scripts/export-submissions.ts --type contacts --format csv
 
 # Export waitlist
-node scripts/export-submissions.js --type waitlist --format json
+pnpm --filter backend exec tsx scripts/export-submissions.ts --type waitlist --format json
 ```
 
 #### Database Cleanup
 ```bash
 # Clean data older than 90 days
-node scripts/clean-database.js --days 90
+pnpm --filter backend exec tsx scripts/clean-database.ts --days 90
 
 # Dry run
-node scripts/clean-database.js --days 90 --dry-run
+pnpm --filter backend exec tsx scripts/clean-database.ts --days 90 --dry-run
 ```
 
 ### Interactive Admin CLI
 ```bash
-node tools/admin-cli.js
+pnpm --filter backend exec tsx tools/admin-cli.ts
 ```
+
+### Admin Dashboard
+Access the web-based admin dashboard at `http://localhost:3002` after starting the development server.
 
 ## Development
 
 ### Available Scripts
 
 ```bash
-# Development server with hot reload
+# Development servers (both backend and admin)
 pnpm dev
+
+# Individual development servers
+pnpm dev:backend    # Backend only on port 3001
+pnpm dev:admin      # Admin dashboard only on port 3002
 
 # Run tests
 pnpm test
 
+# Type checking
+pnpm type-check
+
 # Lint code
 pnpm lint
+
+# Format code
+pnpm format
 
 # Database migrations
 pnpm db:migrate
 
 # Production build
 pnpm build
+
+# Clean build artifacts
+pnpm clean
 ```
 
 ### Just Commands
@@ -259,7 +293,8 @@ just kill-port
 ### PM2 Deployment
 
 ```bash
-# Start with PM2
+# Start backend with PM2
+cd apps/backend
 pm2 start ecosystem.config.js
 
 # Monitor
@@ -284,7 +319,7 @@ docker-compose logs -f app
 
 ### Production Checklist
 
-1. Set strong `ADMIN_API_KEY`
+1. Set strong `ADMIN_PASSWORD` and `JWT_SECRET`
 2. Configure production database (PostgreSQL recommended)
 3. Set up S3 for media storage
 4. Configure email provider API keys
@@ -292,6 +327,8 @@ docker-compose logs -f app
 6. Set up SSL/TLS certificates
 7. Configure proper backup strategy
 8. Set up monitoring and alerts
+9. Build and deploy admin dashboard
+10. Configure reverse proxy (nginx) for both backend and admin
 
 ## Architecture
 
@@ -299,37 +336,48 @@ docker-compose logs -f app
 
 ```
 lite-backend/
-├── src/
-│   ├── app.js                 # Express app configuration
-│   ├── server.js              # Server entry point
-│   ├── config/                # Configuration
-│   ├── database/              # Database abstraction
-│   │   ├── adapters/          # Database adapters
-│   │   └── models/            # Data models
-│   ├── routes/                # API routes
-│   ├── services/              # Business logic
-│   │   ├── email/             # Email services
-│   │   ├── storage/           # Storage services
-│   │   └── forms/             # Form processing
-│   ├── middleware/            # Express middleware
-│   ├── schemas/               # Zod validation schemas
-│   └── utils/                 # Utilities
-├── scripts/                   # CLI scripts
-├── tools/                     # Admin tools
+├── apps/
+│   ├── backend/               # Express.js Backend
+│   │   ├── src/
+│   │   │   ├── app.ts         # Express app configuration
+│   │   │   ├── server.ts      # Server entry point
+│   │   │   ├── config/        # Configuration
+│   │   │   ├── routes/        # API routes
+│   │   │   ├── services/      # Business logic
+│   │   │   │   ├── auth/      # Authentication services
+│   │   │   │   ├── email/     # Email services
+│   │   │   │   ├── storage/   # Storage services
+│   │   │   │   └── forms/     # Form processing
+│   │   │   ├── middleware/    # Express middleware
+│   │   │   ├── schemas/       # Zod validation schemas
+│   │   │   └── utils/         # Utilities
+│   │   ├── scripts/           # CLI scripts
+│   │   └── tools/             # Admin tools
+│   └── admin/                 # Next.js Admin Dashboard
+│       ├── app/               # App Router pages
+│       ├── components/        # React components
+│       └── lib/               # Utilities and API client
+├── packages/                  # Shared packages
 ├── docker/                    # Docker configuration
-└── tests/                     # Test files
+├── tests/                     # Test files
+└── turbo.json                 # Turbo configuration
 ```
 
 ### Technology Stack
 
-- **Framework**: Express.js
+- **Language**: TypeScript
+- **Monorepo**: Turbo.js with pnpm workspaces
+- **Backend Framework**: Express.js
+- **Frontend Framework**: Next.js 15 (App Router)
+- **UI Components**: Radix UI + Tailwind CSS
+- **Authentication**: JWT with refresh tokens
 - **Validation**: Zod
 - **Database**: SQLite/PostgreSQL/MySQL
 - **Email**: AHASEND/Resend
 - **Storage**: Local/S3
 - **Image Processing**: Sharp
 - **Logging**: Pino
-- **Security**: Helmet, CORS, bcryptjs
+- **Security**: Helmet, CORS, Smart Rate Limiting
 - **Process Manager**: PM2
 - **Containerization**: Docker
 
@@ -388,13 +436,15 @@ CREATE TABLE admin_logs (
 
 ## Security
 
-- **Rate Limiting**: Configurable per-IP request limits
+- **Smart Rate Limiting**: Origin-based adaptive rate limiting
 - **CORS**: Whitelist allowed origins
-- **Input Validation**: Zod schema validation
-- **File Upload**: Type and size restrictions
-- **API Authentication**: Admin endpoints require API key
+- **Input Validation**: Comprehensive Zod schema validation
+- **File Upload**: Type and size restrictions with image optimization
+- **JWT Authentication**: Secure admin authentication with refresh tokens
 - **SQL Injection Protection**: Parameterized queries
 - **XSS Prevention**: Input sanitization
+- **Suspicious Activity Detection**: Automatic blocking of scanning attempts
+- **Helmet.js**: Security headers and protections
 
 ## Contributing
 
