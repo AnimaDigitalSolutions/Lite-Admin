@@ -1,23 +1,31 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTimezone } from '@/lib/timezone';
+import { useDisplayPrefs } from '@/lib/display-prefs';
+import { isPrivateIp, truncateEmail } from '@/lib/utils';
 import ProtectedLayout from '@/components/protected-layout';
 import { waitlistApi, emailTestApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Search, 
-  Trash2, 
-  Download, 
-  Calendar,
-  Users,
-  TrendingUp,
-  Mail,
-  Send,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react';
+import {
+  MagnifyingGlassIcon,
+  TrashIcon,
+  ArrowDownTrayIcon,
+  CalendarIcon,
+  UsersIcon,
+  ArrowTrendingUpIcon,
+  EnvelopeIcon,
+  PaperAirplaneIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  PlusIcon,
+  XMarkIcon,
+  ClipboardDocumentIcon,
+  PencilSquareIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline';
 
 interface WaitlistEntry {
   id: string;
@@ -25,9 +33,17 @@ interface WaitlistEntry {
   name?: string;
   signed_up_at: string;
   ip_address?: string;
+  country?: string;
+  country_name?: string;
+  city?: string;
+  region?: string;
 }
 
+const EMPTY_WAITLIST_FORM = { email: '', name: '' };
+
 export default function WaitlistPage() {
+  const { formatDate } = useTimezone();
+  const { prefs } = useDisplayPrefs();
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +51,51 @@ export default function WaitlistPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
+
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+
+  // Inline edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const startEdit = (entry: WaitlistEntry) => {
+    setEditingId(entry.id);
+    setEditForm({ name: entry.name ?? '', email: entry.email });
+    setEditError(null);
+  };
+
+  const cancelEdit = () => { setEditingId(null); setEditError(null); };
+
+  const saveEdit = async (id: string) => {
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const res = await waitlistApi.update(id, editForm);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const updated = res.data as WaitlistEntry;
+      setEntries(prev => prev.map(e => e.id === id ? updated : e));
+      setEditingId(null);
+    } catch {
+      setEditError('Failed to save. Please try again.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const copyEmail = async (email: string) => {
+    await navigator.clipboard.writeText(email);
+    setCopiedEmail(email);
+    setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
+  // Add to waitlist states
+  const [showAddEntry, setShowAddEntry] = useState(false);
+  const [addEntryLoading, setAddEntryLoading] = useState(false);
+  const [addEntryError, setAddEntryError] = useState<string | null>(null);
+  const [addEntryForm, setAddEntryForm] = useState(EMPTY_WAITLIST_FORM);
 
   // Test email states
   const [showTestEmail, setShowTestEmail] = useState(false);
@@ -55,16 +116,36 @@ export default function WaitlistPage() {
       
       setEntries(response.data || []);
       setTotalPages(Math.ceil((response.pagination?.total || 0) / itemsPerPage));
-    } catch (error) {
-      console.error('Failed to load waitlist entries:', error);
+    } catch {
+      setPageError('Failed to load waitlist entries. Please refresh the page.');
     } finally {
       setLoading(false);
     }
   }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    loadEntries();
+    void loadEntries();
   }, [loadEntries]);
+
+  const handleAddEntry = async () => {
+    if (!addEntryForm.email) {
+      setAddEntryError('Email is required.');
+      return;
+    }
+    setAddEntryLoading(true);
+    setAddEntryError(null);
+    try {
+      await waitlistApi.create({ email: addEntryForm.email, name: addEntryForm.name || undefined });
+      setShowAddEntry(false);
+      setAddEntryForm(EMPTY_WAITLIST_FORM);
+      void loadEntries();
+    } catch (err) {
+      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      setAddEntryError(e.response?.data?.error?.message ?? e.message ?? 'Failed to add entry');
+    } finally {
+      setAddEntryLoading(false);
+    }
+  };
 
   const handleExportCSV = async () => {
     try {
@@ -75,8 +156,8 @@ export default function WaitlistPage() {
       link.download = `waitlist-${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to export waitlist:', error);
+    } catch {
+      setPageError('Failed to export waitlist. Please try again.');
     }
   };
 
@@ -100,17 +181,21 @@ export default function WaitlistPage() {
 
   const handleBulkDelete = async () => {
     if (selectedEntries.size === 0) return;
-    
-    if (!confirm(`Are you sure you want to delete ${selectedEntries.size} waitlist entries?`)) return;
-    
-    // Note: This would require a bulk delete API endpoint
-    // For now, we'll show what the UI would look like
-    console.log('Bulk delete:', Array.from(selectedEntries));
-    
-    // Remove from local state for demo
-    setEntries(prev => prev.filter(entry => !selectedEntries.has(entry.id)));
-    setSelectedEntries(new Set());
+    if (!confirm(`Delete ${selectedEntries.size} waitlist entry(s)?`)) return;
+    try {
+      await waitlistApi.bulkDelete(Array.from(selectedEntries).map(Number));
+      setEntries(prev => prev.filter(e => !selectedEntries.has(e.id)));
+      setSelectedEntries(new Set());
+    } catch {
+      setPageError('Failed to delete selected entries. Please try again.');
+    }
   };
+
+  // Count occurrences of each IP in the current page (for duplicate badge)
+  const ipCounts = entries.reduce<Record<string, number>>((acc, e) => {
+    if (e.ip_address) acc[e.ip_address] = (acc[e.ip_address] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const handleTestEmail = async () => {
     if (!testEmailData.test_email) {
@@ -132,11 +217,12 @@ export default function WaitlistPage() {
       });
 
       // Reload entries to show the new test entry
-      loadEntries();
-    } catch (error: any) {
+      void loadEntries();
+    } catch (error) {
+      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
       setTestEmailResult({
         success: false,
-        message: error.response?.data?.error?.message || error.message || 'Failed to send test email'
+        message: err.response?.data?.error?.message ?? err.message ?? 'Failed to send test email'
       });
     } finally {
       setTestEmailLoading(false);
@@ -152,14 +238,9 @@ export default function WaitlistPage() {
     );
   });
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const countryFlag = (iso: string) => {
+    if (!iso || iso.length !== 2) return '';
+    return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
   };
 
   const getRecentSignups = () => {
@@ -180,6 +261,12 @@ export default function WaitlistPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
+        {pageError && (
+          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {pageError}
+            <button type="button" onClick={() => setPageError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
+          </div>
+        )}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Waitlist Management</h1>
@@ -187,17 +274,21 @@ export default function WaitlistPage() {
           </div>
           <div className="flex gap-2">
             {selectedEntries.size > 0 && (
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={handleBulkDelete}
                 className="flex items-center gap-2"
               >
-                <Trash2 className="h-4 w-4" />
+                <TrashIcon className="h-4 w-4" />
                 Delete ({selectedEntries.size})
               </Button>
             )}
+            <Button variant="outline" onClick={() => { setShowAddEntry(true); setAddEntryError(null); }} className="flex items-center gap-2">
+              <PlusIcon className="h-4 w-4" />
+              Add to Waitlist
+            </Button>
             <Button onClick={handleExportCSV} className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
+              <ArrowDownTrayIcon className="h-4 w-4" />
               Export CSV
             </Button>
           </div>
@@ -206,7 +297,7 @@ export default function WaitlistPage() {
         {/* Search */}
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search by name or email..."
               value={searchTerm}
@@ -221,7 +312,7 @@ export default function WaitlistPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-blue-600" />
+                <UsersIcon className="h-8 w-8 text-blue-600" />
                 <div>
                   <p className="text-sm text-gray-600">Total Signups</p>
                   <p className="text-2xl font-bold">{entries.length}</p>
@@ -232,7 +323,7 @@ export default function WaitlistPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Calendar className="h-8 w-8 text-green-600" />
+                <CalendarIcon className="h-8 w-8 text-green-600" />
                 <div>
                   <p className="text-sm text-gray-600">This Month</p>
                   <p className="text-2xl font-bold">{getMonthlySignups()}</p>
@@ -243,7 +334,7 @@ export default function WaitlistPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <TrendingUp className="h-8 w-8 text-purple-600" />
+                <ArrowTrendingUpIcon className="h-8 w-8 text-purple-600" />
                 <div>
                   <p className="text-sm text-gray-600">Last 7 Days</p>
                   <p className="text-2xl font-bold">{getRecentSignups()}</p>
@@ -254,7 +345,7 @@ export default function WaitlistPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Mail className="h-8 w-8 text-orange-600" />
+                <EnvelopeIcon className="h-8 w-8 text-orange-600" />
                 <div>
                   <p className="text-sm text-gray-600">With Names</p>
                   <p className="text-2xl font-bold">
@@ -271,7 +362,7 @@ export default function WaitlistPage() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle className="flex items-center gap-2">
-                <Send className="h-5 w-5 text-blue-600" />
+                <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
                 Test Waitlist Email
               </CardTitle>
               <Button
@@ -279,7 +370,7 @@ export default function WaitlistPage() {
                 size="sm"
                 onClick={() => setShowTestEmail(!showTestEmail)}
               >
-                {showTestEmail ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {showTestEmail ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
               </Button>
             </div>
           </CardHeader>
@@ -322,7 +413,7 @@ export default function WaitlistPage() {
                   disabled={testEmailLoading || !testEmailData.test_email}
                   className="flex items-center gap-2"
                 >
-                  <Send className="h-4 w-4" />
+                  <PaperAirplaneIcon className="h-4 w-4" />
                   {testEmailLoading ? 'Sending...' : 'Send Test Waitlist Email'}
                 </Button>
                 <Button
@@ -377,7 +468,7 @@ export default function WaitlistPage() {
                     </thead>
                     <tbody>
                       {filteredEntries.map((entry) => (
-                        <tr key={entry.id} className="border-b hover:bg-gray-50">
+                        <tr key={entry.id} className={`border-b ${editingId === entry.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
                           <td className="p-3">
                             <input
                               type="checkbox"
@@ -387,41 +478,100 @@ export default function WaitlistPage() {
                             />
                           </td>
                           <td className="p-3">
-                            {entry.name ? (
+                            {editingId === entry.id ? (
+                              <Input className="h-8 text-sm" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Name (optional)" />
+                            ) : entry.name ? (
                               <span className="font-medium">{entry.name}</span>
                             ) : (
                               <span className="text-gray-400 italic">No name</span>
                             )}
                           </td>
                           <td className="p-3">
-                            <a 
-                              href={`mailto:${entry.email}`}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {entry.email}
-                            </a>
+                            {editingId === entry.id ? (
+                              <div className="space-y-1">
+                                <Input className="h-8 text-sm" type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} required />
+                                {editError && <p className="text-xs text-red-600">{editError}</p>}
+                              </div>
+                            ) : (
+                              <div className="group flex items-center gap-1.5 max-w-[220px]">
+                                <span className={`text-sm ${prefs.truncateEmails ? '' : 'truncate'}`}
+                                  title={prefs.truncateEmails && truncateEmail(entry.email) !== entry.email ? entry.email : !prefs.truncateEmails ? entry.email : undefined}>
+                                  {prefs.truncateEmails ? truncateEmail(entry.email) : entry.email}
+                                </span>
+                                <button type="button" onClick={() => void copyEmail(entry.email)} title="Copy email"
+                                  className={`transition-colors shrink-0 ${copiedEmail === entry.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                                  <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </td>
                           <td className="p-3 text-sm text-gray-600">
                             {formatDate(entry.signed_up_at)}
                           </td>
                           <td className="p-3">
-                            {entry.ip_address ? (
-                              <span className="font-mono text-xs text-gray-600">{entry.ip_address}</span>
+                            {prefs.showGeoInfo ? (
+                              entry.ip_address ? (() => {
+                                const priv = isPrivateIp(entry.ip_address!);
+                                return (
+                                  <div>
+                                    <span className="inline-flex items-center gap-1">
+                                      {!priv && entry.country && (
+                                        <span title={entry.country_name ?? entry.country}>
+                                          {countryFlag(entry.country)}
+                                        </span>
+                                      )}
+                                      <span className="font-mono text-xs text-gray-400">{entry.ip_address}</span>
+                                      {priv && (
+                                        <span className="text-xs text-gray-400 italic">private</span>
+                                      )}
+                                      {(ipCounts[entry.ip_address!] ?? 0) > 1 && (
+                                        <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-600"
+                                          title={`${ipCounts[entry.ip_address!]} entries from this IP`}>
+                                          ×{ipCounts[entry.ip_address!]}
+                                        </span>
+                                      )}
+                                    </span>
+                                    {!priv && entry.city && (
+                                      <div className="text-xs text-gray-400 mt-0.5">
+                                        {entry.city}{entry.country_name ? `, ${entry.country_name}` : ''}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })() : (
+                                <span className="text-gray-400">-</span>
+                              )
                             ) : (
-                              <span className="text-gray-400">-</span>
+                              <span className="text-gray-400">—</span>
                             )}
                           </td>
                           <td className="p-3">
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setSelectedEntries(new Set([entry.id]));
-                                handleBulkDelete();
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {editingId === entry.id ? (
+                              <div className="flex gap-1">
+                                <Button size="sm" onClick={() => void saveEdit(entry.id)} disabled={editSaving}>
+                                  <CheckCircleIcon className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={cancelEdit}>
+                                  <XMarkIcon className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="outline" onClick={() => startEdit(entry)}>
+                                  <PencilSquareIcon className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedEntries(new Set([entry.id]));
+                                    void handleBulkDelete();
+                                  }}
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -462,27 +612,13 @@ export default function WaitlistPage() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button
                 variant="outline"
                 className="flex items-center justify-center gap-2 h-20"
-                onClick={() => {
-                  const emails = entries.map(e => e.email).join(',');
-                  window.open(`mailto:?bcc=${emails}`, '_blank');
-                }}
+                onClick={() => void handleExportCSV()}
               >
-                <Mail className="h-6 w-6" />
-                <div className="text-center">
-                  <div className="font-medium">Email All</div>
-                  <div className="text-xs text-gray-500">Send BCC email</div>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="flex items-center justify-center gap-2 h-20"
-                onClick={handleExportCSV}
-              >
-                <Download className="h-6 w-6" />
+                <ArrowDownTrayIcon className="h-6 w-6" />
                 <div className="text-center">
                   <div className="font-medium">Export CSV</div>
                   <div className="text-xs text-gray-500">Download all data</div>
@@ -491,26 +627,71 @@ export default function WaitlistPage() {
               <Button
                 variant="outline"
                 className="flex items-center justify-center gap-2 h-20"
-                onClick={() => {
-                  const recentEntries = entries.filter(e => {
-                    const sevenDaysAgo = new Date();
-                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                    return new Date(e.signed_up_at) > sevenDaysAgo;
-                  });
-                  const emails = recentEntries.map(e => e.email).join(',');
-                  window.open(`mailto:?bcc=${emails}`, '_blank');
+                onClick={async () => {
+                  const emails = entries.map(e => e.email).join(', ');
+                  await navigator.clipboard.writeText(emails);
                 }}
               >
-                <TrendingUp className="h-6 w-6" />
+                <ClipboardDocumentIcon className="h-6 w-6" />
                 <div className="text-center">
-                  <div className="font-medium">Email Recent</div>
-                  <div className="text-xs text-gray-500">Last 7 days only</div>
+                  <div className="font-medium">Copy All Emails</div>
+                  <div className="text-xs text-gray-500">Comma-separated list</div>
                 </div>
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Add to Waitlist Modal */}
+      {showAddEntry && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Add to Waitlist</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowAddEntry(false)}>
+                  <XMarkIcon className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <Input
+                    type="email"
+                    value={addEntryForm.email}
+                    onChange={e => setAddEntryForm(p => ({ ...p, email: e.target.value }))}
+                    placeholder="user@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name (optional)</label>
+                  <Input
+                    value={addEntryForm.name}
+                    onChange={e => setAddEntryForm(p => ({ ...p, name: e.target.value }))}
+                    placeholder="Jane Doe"
+                  />
+                </div>
+
+                {addEntryError && (
+                  <div className="p-3 rounded-md bg-red-50 text-red-800 border border-red-200 text-sm">
+                    {addEntryError}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={() => void handleAddEntry()} disabled={addEntryLoading} className="flex items-center gap-2">
+                    <PlusIcon className="h-4 w-4" />
+                    {addEntryLoading ? 'Adding...' : 'Add to Waitlist'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAddEntry(false)}>Cancel</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedLayout>
   );
 }
