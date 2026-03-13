@@ -15,7 +15,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const pendingRequests = useRef(0);
-  const progressInterval = useRef<NodeJS.Timeout>();
+  const progressInterval = useRef<NodeJS.Timeout>(undefined);
 
   const startLoading = useCallback(() => {
     pendingRequests.current++;

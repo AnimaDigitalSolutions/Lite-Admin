@@ -99,7 +99,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   }, []);
 
   useEffect(() => {
-    if (user) fetchMenuPrefs();
+    if (user) void fetchMenuPrefs();
   }, [user, fetchMenuPrefs]);
 
   // Listen for menu preference changes (from the settings/menu page)

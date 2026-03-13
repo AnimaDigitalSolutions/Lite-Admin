@@ -199,7 +199,7 @@ export default function EmailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base"><AtSymbolIcon className="h-4 w-4" />Email Provider</CardTitle>
-            <CardDescription>Select your active provider and enter its credentials. Only the active provider's key is used.</CardDescription>
+            <CardDescription>Select your active provider and enter its credentials. Only the active provider&apos;s key is used.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {providers.map(({ id, label }) => {

@@ -97,7 +97,7 @@ export default function MenuConfigPage() {
     }
   }, []);
 
-  useEffect(() => { fetchPrefs(); }, [fetchPrefs]);
+  useEffect(() => { void fetchPrefs(); }, [fetchPrefs]);
 
   const notifySidebar = () => {
     window.dispatchEvent(new Event('menu-prefs-updated'));
@@ -153,7 +153,7 @@ export default function MenuConfigPage() {
       await menuApi.update(updates);
       notifySidebar();
     } catch {
-      fetchPrefs();
+      void fetchPrefs();
     }
   };
 
@@ -235,7 +235,7 @@ export default function MenuConfigPage() {
                           aria-checked={allVisible}
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleGroup(group);
+                            void toggleGroup(group);
                           }}
                           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
                             allVisible ? 'bg-blue-600' : 'bg-gray-200'
