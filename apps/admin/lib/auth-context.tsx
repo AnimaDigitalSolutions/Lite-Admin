@@ -1,9 +1,11 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from './api';
 import type { AdminUser } from '@lite/shared';
+import logger from './logger';
 
 interface AuthContextType {
   user: AdminUser | null;
@@ -26,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await authApi.getMe();
       setUser(userData);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -35,21 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    
-    // Only check auth if we have potential tokens
-    const hasAuthCookies = typeof document !== 'undefined' && 
-      (document.cookie.includes('accessToken') || document.cookie.includes('refreshToken'));
-    
-    if (hasAuthCookies) {
-      checkAuth().catch(() => {
-        // Gracefully handle auth failures without throwing
-        setUser(null);
-        setLoading(false);
-      });
-    } else {
-      // No tokens, skip auth check
+    // Always check auth — cookies are httpOnly so document.cookie can't see them.
+    // Let the backend decide if the session is valid.
+    checkAuth().catch(() => {
+      setUser(null);
       setLoading(false);
-    }
+    });
   }, []);
 
   // Prevent hydration mismatch by not rendering until mounted
@@ -64,11 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAuthState = () => {
     setUser(null);
     setLoading(false);
-    // Clear any client-side auth data if needed
-    if (typeof document !== 'undefined') {
-      document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    }
+    // Cookies are httpOnly — they are cleared by the backend on logout
   };
 
   const login = async (email: string, password: string) => {
@@ -85,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authApi.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
     } finally {
       // Always clear state and redirect
       clearAuthState();
