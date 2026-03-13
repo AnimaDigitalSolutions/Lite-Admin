@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -25,9 +26,10 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Invalid credentials');
-    } finally {
+      // Keep loading state true during redirect
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: { message?: string } } } };
+      setError(error.response?.data?.error?.message ?? 'Invalid credentials');
       setLoading(false);
     }
   };
@@ -77,9 +79,9 @@ export default function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-400" />
+                  <EyeSlashIcon className="h-4 w-4 text-gray-400" />
                 ) : (
-                  <Eye className="h-4 w-4 text-gray-400" />
+                  <EyeIcon className="h-4 w-4 text-gray-400" />
                 )}
               </button>
             </div>
@@ -97,11 +99,28 @@ export default function LoginPage() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner size="sm" />
+                  Signing in...
+                </span>
+              ) : (
+                'Sign in'
+              )}
             </Button>
           </div>
         </form>
       </div>
+
+      {/* Full-screen loading overlay during redirect */}
+      {loading && (
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="flex flex-col items-center gap-4">
+            <Spinner size="lg" />
+            <p className="text-gray-600 font-medium">Loading dashboard...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

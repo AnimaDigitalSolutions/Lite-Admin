@@ -4,10 +4,15 @@ const nextConfig = {
   transpilePackages: ['@lite/shared'],
   
   async rewrites() {
+    const backendBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
     return [
       {
         source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/:path*',
+        destination: `${backendBase}/api/:path*`,
+      },
+      {
+        source: '/uploads/:path*',
+        destination: `${backendBase}/uploads/:path*`,
       },
     ];
   },
