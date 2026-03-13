@@ -68,6 +68,7 @@ const config: Config = {
     from: process.env.EMAIL_FROM || 'noreply@animadigitalsolutions.com',
     ahasend: {
       apiKey: process.env.AHASEND_API_KEY || '',
+      accountId: process.env.AHASEND_ACCOUNT_ID || '',
     },
     resend: {
       apiKey: process.env.RESEND_API_KEY || '',

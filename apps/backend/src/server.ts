@@ -1,9 +1,11 @@
-import { Server } from 'http';
+import type { Server } from 'http';
 import app from './app.js';
 import config from './config/index.js';
 import logger from './utils/logger.js';
 import DatabaseService from './services/database.service.js';
 import { authService } from './services/auth/auth.service.js';
+import SettingsService from './services/settings/index.js';
+import GeoService from './services/geo/index.js';
 
 let server: Server | undefined;
 
@@ -14,7 +16,9 @@ async function startServer() {
     
     // Initialize auth service
     await authService.initialize();
-    logger.info('Auth service initialized');
+
+    // Initialize settings service (loads runtime toggles from DB)
+    await SettingsService.getInstance();
 
     // Start server
     server = app.listen(config.port, () => {
@@ -37,6 +41,7 @@ function gracefulShutdown(signal: string) {
       logger.info('HTTP server closed');
       
       try {
+        GeoService.getInstance().close(); // stops geolite2-redist background updater
         await DatabaseService.close();
         process.exit(0);
       } catch (error) {
@@ -52,7 +57,7 @@ function gracefulShutdown(signal: string) {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('unhandledRejection', (reason: any, promise: Promise<unknown>) => {
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
   logger.error({
     message: 'Unhandled Rejection at',
     promise: promise,
@@ -60,4 +65,4 @@ process.on('unhandledRejection', (reason: any, promise: Promise<unknown>) => {
   });
 });
 
-startServer();
+void startServer();

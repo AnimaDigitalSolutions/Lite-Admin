@@ -6,20 +6,25 @@ import type SQLiteAdapter from '../database/adapters/sqlite.js';
 class DatabaseService {
   private static instance: SQLiteAdapter | null = null;
   private static initialized = false;
+  private static initPromise: Promise<SQLiteAdapter> | null = null;
 
   static async getInstance(): Promise<SQLiteAdapter> {
-    if (!this.instance) {
-      logger.info('Creating database singleton instance');
-      this.instance = await DatabaseFactory.create(config.database.type);
-      
-      if (!this.initialized) {
-        await this.instance.initialize();
+    if (this.instance) return this.instance;
+
+    if (!this.initPromise) {
+      this.initPromise = (async () => {
+        logger.info('Creating database singleton instance');
+        const instance = await DatabaseFactory.create(config.database.type);
+        await instance.initialize();
+        this.instance = instance;
         this.initialized = true;
+        this.initPromise = null;
         logger.info(`Database ${config.database.type} singleton initialized`);
-      }
+        return instance;
+      })();
     }
-    
-    return this.instance;
+
+    return this.initPromise;
   }
 
   static async initialize(): Promise<void> {
@@ -31,6 +36,7 @@ class DatabaseService {
       await this.instance.close();
       this.instance = null;
       this.initialized = false;
+      this.initPromise = null;
       logger.info('Database singleton closed');
     }
   }
