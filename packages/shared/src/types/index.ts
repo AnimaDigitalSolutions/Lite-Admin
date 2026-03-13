@@ -119,6 +119,7 @@ export interface EmailConfig {
   from: string;
   ahasend?: {
     apiKey: string;
+    accountId?: string;
   };
   resend?: {
     apiKey: string;

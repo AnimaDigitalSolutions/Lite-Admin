@@ -85,7 +85,7 @@ pnpm dev:admin
 ## Architecture
 
 ```
-Lite-Backend/
+Lite-Admin/
 ├── apps/
 │   ├── backend/          Express.js API (TypeScript)
 │   └── admin/           Next.js Dashboard (TypeScript)
