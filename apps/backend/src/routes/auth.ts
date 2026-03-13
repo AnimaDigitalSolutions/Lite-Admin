@@ -125,4 +125,31 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
   }
 });
 
+// Change password endpoint (requires authentication)
+router.post('/change-password', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { current_password, new_password } = req.body as {
+      current_password?: string;
+      new_password?: string;
+    };
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: { message: 'current_password and new_password are required', status: 400 } });
+    }
+    if (new_password.length < 8) {
+      return res.status(400).json({ error: { message: 'new_password must be at least 8 characters', status: 400 } });
+    }
+
+    await authService.changePassword(current_password, new_password);
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    const err = error as Error;
+    if (err.message === 'Invalid credentials') {
+      return res.status(401).json({ error: { message: 'Current password is incorrect', status: 401 } });
+    }
+    next(error);
+  }
+});
+
 export default router;
