@@ -399,13 +399,13 @@ router.get('/waitlist',
   }
 );
 
-// Update waitlist entry (editable fields only)
+// Update waitlist/subscriber entry (editable fields only)
 router.patch('/waitlist/:id', async (req, res, next) => {
   try {
     const id = parseInt(req.params.id ?? '', 10);
     if (isNaN(id)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
 
-    const { name, email } = req.body as { name?: string; email?: string };
+    const { name, email, tags } = req.body as { name?: string; email?: string; tags?: string };
 
     if (email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(422).json({ error: { message: 'Invalid email address', status: 422 } });
@@ -414,6 +414,7 @@ router.patch('/waitlist/:id', async (req, res, next) => {
     const data: Record<string, string | undefined> = {};
     if (name !== undefined) data.name = name;
     if (email !== undefined) data.email = email;
+    if (tags !== undefined) data.tags = tags;
 
     if (!Object.keys(data).length) {
       return res.status(400).json({ error: { message: 'No fields to update', status: 400 } });
@@ -421,12 +422,12 @@ router.patch('/waitlist/:id', async (req, res, next) => {
 
     const db = await DatabaseService.getInstance();
     const updated = await db.waitlist.updateById(id, data);
-    if (!updated) return res.status(404).json({ error: { message: 'Waitlist entry not found', status: 404 } });
+    if (!updated) return res.status(404).json({ error: { message: 'Subscriber not found', status: 404 } });
 
     await db.adminLogs.create({
       action: 'waitlist_update',
       resource: 'waitlist',
-      details: `Updated waitlist entry #${id}: ${Object.keys(data).join(', ')}`,
+      details: `Updated subscriber #${id}: ${Object.keys(data).join(', ')}`,
       ip_address: req.ip,
     });
 
@@ -619,6 +620,8 @@ const NAV_KEYS = [
   'nav_visible_media',
   'nav_visible_contacts',
   'nav_visible_waitlist',
+  'nav_visible_subscribers',
+  'nav_visible_campaigns',
   'nav_visible_sites',
   'nav_visible_stats',
   'nav_visible_logs',
@@ -1180,6 +1183,186 @@ router.post('/waitlist/bulk-delete', async (req, res, next) => {
     const deleted = await db.waitlist.deleteByIds(ids);
     await db.adminLogs.create({ action: 'waitlist_bulk_delete', resource: 'waitlist', details: `Bulk deleted ${deleted} waitlist entry(s)`, ip_address: req.ip });
     res.json({ success: true, deleted });
+  } catch (error) { next(error); }
+});
+
+// === CAMPAIGNS ===
+
+// List all campaigns
+router.get('/campaigns', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const limit = Math.min(Number(req.query['limit']) || 100, 200);
+    const offset = Number(req.query['offset']) || 0;
+    const campaigns = await db.campaigns.findAll(limit, offset);
+    const total = await db.campaigns.count();
+    res.json({ data: campaigns, pagination: { limit, offset, total } });
+  } catch (error) { next(error); }
+});
+
+// Create campaign (draft)
+router.post('/campaigns', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const { name, subject, preheader, html_content, text_content } = req.body as {
+      name: string; subject: string; preheader?: string; html_content: string; text_content?: string;
+    };
+
+    if (!name || !subject || !html_content) {
+      return res.status(400).json({ error: { message: 'name, subject, and html_content are required', status: 400 } });
+    }
+
+    const campaign = await db.campaigns.create({ name, subject, preheader, html_content, text_content, status: 'draft' });
+
+    await db.adminLogs.create({
+      action: 'campaign_create',
+      resource: 'campaigns',
+      resource_id: campaign.id,
+      details: `Created campaign: ${name}`,
+      ip_address: req.ip,
+    });
+
+    res.status(201).json({ success: true, data: campaign });
+  } catch (error) { next(error); }
+});
+
+// Get single campaign
+router.get('/campaigns/:id', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const id = Number(req.params['id']);
+    if (!id || isNaN(id)) return res.status(400).json({ error: { message: 'Invalid campaign ID', status: 400 } });
+
+    const campaign = await db.campaigns.findById(id);
+    if (!campaign) return res.status(404).json({ error: { message: 'Campaign not found', status: 404 } });
+
+    res.json({ data: campaign });
+  } catch (error) { next(error); }
+});
+
+// Update draft campaign
+router.patch('/campaigns/:id', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const id = Number(req.params['id']);
+    if (!id || isNaN(id)) return res.status(400).json({ error: { message: 'Invalid campaign ID', status: 400 } });
+
+    const existing = await db.campaigns.findById(id);
+    if (!existing) return res.status(404).json({ error: { message: 'Campaign not found', status: 404 } });
+    if (existing.status !== 'draft') return res.status(400).json({ error: { message: 'Only draft campaigns can be edited', status: 400 } });
+
+    const { name, subject, preheader, html_content, text_content } = req.body as {
+      name?: string; subject?: string; preheader?: string; html_content?: string; text_content?: string;
+    };
+
+    const data: Record<string, string | undefined> = {};
+    if (name !== undefined) data.name = name;
+    if (subject !== undefined) data.subject = subject;
+    if (preheader !== undefined) data.preheader = preheader;
+    if (html_content !== undefined) data.html_content = html_content;
+    if (text_content !== undefined) data.text_content = text_content;
+
+    if (!Object.keys(data).length) return res.status(400).json({ error: { message: 'No fields to update', status: 400 } });
+
+    const updated = await db.campaigns.updateById(id, data);
+
+    await db.adminLogs.create({
+      action: 'campaign_update',
+      resource: 'campaigns',
+      resource_id: id,
+      details: `Updated campaign: ${Object.keys(data).join(', ')}`,
+      ip_address: req.ip,
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) { next(error); }
+});
+
+// Delete draft campaign
+router.delete('/campaigns/:id', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const id = Number(req.params['id']);
+    if (!id || isNaN(id)) return res.status(400).json({ error: { message: 'Invalid campaign ID', status: 400 } });
+
+    const deleted = await db.campaigns.deleteById(id);
+    if (!deleted) return res.status(404).json({ error: { message: 'Campaign not found or already sent', status: 404 } });
+
+    await db.adminLogs.create({
+      action: 'campaign_delete',
+      resource: 'campaigns',
+      resource_id: id,
+      details: 'Deleted draft campaign',
+      ip_address: req.ip,
+    });
+
+    res.json({ success: true });
+  } catch (error) { next(error); }
+});
+
+// Send campaign to all active subscribers
+router.post('/campaigns/:id/send', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const id = Number(req.params['id']);
+    if (!id || isNaN(id)) return res.status(400).json({ error: { message: 'Invalid campaign ID', status: 400 } });
+
+    const campaign = await db.campaigns.findById(id);
+    if (!campaign) return res.status(404).json({ error: { message: 'Campaign not found', status: 404 } });
+    if (campaign.status !== 'draft') return res.status(400).json({ error: { message: 'Campaign has already been sent', status: 400 } });
+
+    // Load all active subscribers
+    const subscribers = await db.waitlist.findAllActive();
+    if (subscribers.length === 0) {
+      return res.status(400).json({ error: { message: 'No active subscribers to send to', status: 400 } });
+    }
+
+    // Get email provider
+    // Resolve active provider (settings override → env config)
+    const settingsService = await SettingsService.getInstance();
+    const activeProvider = settingsService.get('email_provider') ?? config.email.provider;
+    const emailProvider = await EmailFactory.create(activeProvider);
+
+    let sentCount = 0;
+    const errors: string[] = [];
+
+    for (const sub of subscribers) {
+      try {
+        await emailProvider.sendCampaign(
+          { email: sub.email, name: sub.name },
+          {
+            subject: campaign.subject,
+            preheader: campaign.preheader,
+            html: campaign.html_content,
+            text: campaign.text_content,
+          },
+        );
+        sentCount++;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${sub.email}: ${msg}`);
+        logger.error({ message: `Failed to send campaign to ${sub.email}`, error: err });
+      }
+    }
+
+    // Mark campaign as sent
+    const updated = await db.campaigns.markSent(id, sentCount);
+
+    await db.adminLogs.create({
+      action: 'campaign_send',
+      resource: 'campaigns',
+      resource_id: id,
+      details: `Sent campaign "${campaign.name}" to ${sentCount}/${subscribers.length} subscribers${errors.length ? ` (${errors.length} failures)` : ''}`,
+      ip_address: req.ip,
+    });
+
+    logger.info({ campaignId: id, sentCount, totalSubscribers: subscribers.length, errors: errors.length }, 'Campaign sent');
+
+    res.json({
+      success: true,
+      data: updated,
+      stats: { sent: sentCount, total: subscribers.length, errors: errors.length },
+    });
   } catch (error) { next(error); }
 });
 

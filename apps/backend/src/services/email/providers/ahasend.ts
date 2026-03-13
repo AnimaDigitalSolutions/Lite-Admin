@@ -155,6 +155,43 @@ class AhasendProvider {
       date: new Date().toISOString(),
     });
   }
+
+  async sendCampaign(
+    subscriber: { email: string; name?: string },
+    campaign: { subject: string; preheader?: string; html: string; text?: string },
+  ): Promise<void> {
+    try {
+      if (!this.apiKey) throw new Error('AHASEND_API_KEY is not configured');
+      if (!this.accountId) throw new Error('AHASEND_ACCOUNT_ID is not configured');
+
+      const payload = {
+        from: { email: this.fromAddress, name: this.fromName },
+        recipients: [{ email: subscriber.email, name: subscriber.name || '' }],
+        subject: campaign.subject,
+        html_content: campaign.html,
+        text_content: campaign.text || this.htmlToText(campaign.html),
+        ...(campaign.preheader ? { preheader: campaign.preheader } : {}),
+      };
+
+      await axios.post(
+        `https://api.ahasend.com/v2/accounts/${this.accountId}/messages`,
+        payload,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => status === 200 || status === 202,
+        },
+      );
+
+      logger.info({ message: `Campaign email sent via AhaSend to ${subscriber.email}` });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error({ message: `Failed to send campaign email via AhaSend: ${msg}` });
+      throw new Error(`Campaign email sending failed: ${msg}`);
+    }
+  }
 }
 
 export default AhasendProvider;

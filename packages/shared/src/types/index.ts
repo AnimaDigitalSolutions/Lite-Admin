@@ -48,8 +48,23 @@ export interface WaitlistEntry {
   id: number;
   email: string;
   name?: string;
+  tags?: string;
   signedUpAt: Date;
   ipAddress?: string;
+}
+
+export interface Campaign {
+  id: number;
+  name: string;
+  subject: string;
+  preheader?: string;
+  htmlContent: string;
+  textContent?: string;
+  status: 'draft' | 'sent';
+  recipientCount?: number;
+  sentAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Media Types

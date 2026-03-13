@@ -218,7 +218,7 @@ export const waitlistApi = {
     return response.data;
   },
 
-  update: async (id: string, data: { name?: string; email?: string }) => {
+  update: async (id: string, data: { name?: string; email?: string; tags?: string }) => {
     const response = await api.patch(`/admin/waitlist/${id}`, data);
     return response.data;
   },
@@ -374,6 +374,39 @@ export const templatesApi = {
 
   reset: async (name: string) => {
     const response = await api.delete(`/admin/email-templates/${name}`);
+    return response.data;
+  },
+};
+
+// Campaigns API
+export const campaignsApi = {
+  list: async (params?: { limit?: number; offset?: number }) => {
+    const response = await api.get('/admin/campaigns', { params });
+    return response.data;
+  },
+
+  get: async (id: number) => {
+    const response = await api.get(`/admin/campaigns/${id}`);
+    return response.data;
+  },
+
+  create: async (data: { name: string; subject: string; preheader?: string; html_content: string; text_content?: string }) => {
+    const response = await api.post('/admin/campaigns', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: { name?: string; subject?: string; preheader?: string; html_content?: string; text_content?: string }) => {
+    const response = await api.patch(`/admin/campaigns/${id}`, data);
+    return response.data;
+  },
+
+  remove: async (id: number) => {
+    const response = await api.delete(`/admin/campaigns/${id}`);
+    return response.data;
+  },
+
+  send: async (id: number) => {
+    const response = await api.post(`/admin/campaigns/${id}/send`);
     return response.data;
   },
 };
