@@ -11,7 +11,6 @@ export interface GeoResult {
 
 class GeoService {
   private static instance: GeoService | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private reader: (Reader<CountryResponse> & { close?: () => void }) | null = null;
   private initPromise: Promise<void> | null = null;
   private unavailable = false;

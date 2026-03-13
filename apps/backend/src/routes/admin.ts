@@ -225,7 +225,7 @@ router.patch('/media/:id/rename',
         return res.status(400).json({ error: { message: 'Rename only supported for local storage', status: 400 } });
       }
 
-      const localStorage = storage as import('../services/storage/providers/local.js').default;
+      const localStorage = storage as LocalStorageProvider;
       const newPath = await localStorage.rename(media.storage_path, name);
       const newFilename = path.basename(newPath);
 

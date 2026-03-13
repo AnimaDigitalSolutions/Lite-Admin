@@ -10,6 +10,7 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 export default [
+  { ignores: ['.next/**'] },
   ...compat.extends('next/core-web-vitals'),
   {
     files: ['**/*.ts', '**/*.tsx'],

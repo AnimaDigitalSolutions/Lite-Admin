@@ -11,7 +11,7 @@ export class AuthService {
 
   async initialize() {
     // Check if a password override is stored in DB settings
-    let passwordToHash = config.adminPassword;
+    const passwordToHash = config.adminPassword;
     try {
       const settingsService = await SettingsService.getInstance();
       const storedHash = settingsService.get('admin_password_hash');

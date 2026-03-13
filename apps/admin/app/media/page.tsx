@@ -193,19 +193,6 @@ export default function MediaPage() {
     localStorage.setItem('media-view-mode', viewMode);
   }, [viewMode]);
 
-  // Keyboard nav for preview modal
-  useEffect(() => {
-    if (!previewItem) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPreviewItem(null);
-      if (e.key === 'ArrowLeft') navigatePreview(-1);
-      if (e.key === 'ArrowRight') navigatePreview(1);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewItem, filteredAndSortedItems]);
-
   const loadMedia = async () => {
     try {
       const response = await mediaApi.list();
@@ -408,6 +395,19 @@ export default function MediaPage() {
   ));
 
   const allSelected = filteredAndSortedItems.length > 0 && selectedIds.size === filteredAndSortedItems.length;
+
+  // Keyboard nav for preview modal (must be after filteredAndSortedItems declaration)
+  useEffect(() => {
+    if (!previewItem) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewItem(null);
+      if (e.key === 'ArrowLeft') navigatePreview(-1);
+      if (e.key === 'ArrowRight') navigatePreview(1);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewItem, filteredAndSortedItems]);
 
   return (
     <ProtectedLayout>
