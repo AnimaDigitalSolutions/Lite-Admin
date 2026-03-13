@@ -1,5 +1,6 @@
 import DatabaseService from '../database.service.js';
 import EmailFactory from '../email/index.js';
+import GeoService from '../geo/index.js';
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
 // Using local interfaces to avoid circular dependencies
@@ -24,6 +25,7 @@ interface AdminLogData {
 interface RequestInfo {
   ip: string;
   userAgent?: string;
+  siteId?: number;
 }
 
 interface WaitlistFormData {
@@ -56,7 +58,7 @@ class WaitlistService {
   private emailService: EmailProvider | null = null;
 
   constructor() {
-    this.initializeServices();
+    void this.initializeServices();
   }
 
   async initializeServices(): Promise<void> {
@@ -84,10 +86,15 @@ class WaitlistService {
         };
       }
 
+      // Geo lookup (non-blocking — empty object on failure)
+      const geo = await GeoService.getInstance().lookup(requestInfo.ip);
+
       // Add request metadata
       const waitlistEntry = {
         ...data,
         ip_address: requestInfo.ip,
+        site_id: requestInfo.siteId,
+        ...geo,
       };
 
       // Save to database
@@ -210,58 +217,37 @@ class WaitlistService {
         await this.initializeServices();
       }
 
-      // Create test waitlist entry data
-      const waitlistEntry = {
-        ...formData,
-        email: customEmail, // Use custom email for testing
-        ip_address: requestInfo.ip,
-        is_test: true, // Mark as test
+      // Build a transient object — no DB write for test emails
+      const testEntry = {
+        id: 0,
+        email: customEmail,
+        name: formData.name,
       };
 
-      // Save to database (will ignore if email already exists)
-      const savedEntry = await this.db!.waitlist.create(waitlistEntry);
-      
-      logger.info({
-        message: 'Test waitlist signup saved',
-        data: {
-          id: savedEntry.id,
-          email: savedEntry.email,
-          is_test: true
-        }
-      });
-
       let emailSent = false;
-      // Send test confirmation email
       try {
-        await this.emailService!.sendWaitlistConfirmation(savedEntry);
+        await this.emailService!.sendWaitlistConfirmation(testEntry);
         emailSent = true;
         logger.info({
           message: 'Test waitlist confirmation email sent',
-          data: {
-            email: savedEntry.email
-          }
+          data: { email: customEmail }
         });
       } catch (emailError) {
-        logger.error({
-          message: 'Failed to send test waitlist confirmation email',
-          error: emailError
-        });
-        // Don't throw - we still saved the signup
+        const msg = emailError instanceof Error ? emailError.message : String(emailError);
+        logger.error({ message: `Failed to send test waitlist confirmation email: ${msg}` });
       }
 
-      // Log admin activity
+      // Log admin activity (no resource_id — nothing was saved)
       await this.db!.adminLogs.create({
         action: 'waitlist_test',
         resource: 'waitlist',
-        resource_id: savedEntry.id,
-        details: `Test waitlist signup to ${customEmail}`,
+        details: `Test waitlist email sent to ${customEmail}`,
         ip_address: requestInfo.ip,
       });
 
       return {
         success: true,
         data: {
-          id: savedEntry.id?.toString() || 'unknown',
           message: 'Test waitlist email sent successfully',
           email_sent: emailSent,
         },

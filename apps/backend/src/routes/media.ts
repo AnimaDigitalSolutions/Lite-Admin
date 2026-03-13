@@ -1,4 +1,5 @@
 /// <reference path="../types/express.d.ts" />
+import path from 'path';
 import { Router } from 'express';
 import { validateQuery, validateParams } from '../middleware/validation.js';
 import { mediaListQuerySchema, mediaIdSchema, thumbnailQuerySchema } from '../schemas/media.js';
@@ -43,8 +44,8 @@ router.get('/portfolio',
       // Add public URLs
       const mediaWithUrls = filtered.map(item => ({
         ...item,
-        url: `/uploads/portfolio/${item.filename}`,
-        thumbnailUrl: storage.getThumbnailUrl(item.storage_path || item.filename),
+        url: `/uploads/portfolio/${path.basename(item.storage_path)}`,
+        thumbnailUrl: storage.getThumbnailUrl(item.storage_path),
       }));
       
       res.json({

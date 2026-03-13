@@ -1,5 +1,6 @@
 import DatabaseService from '../database.service.js';
 import EmailFactory from '../email/index.js';
+import GeoService from '../geo/index.js';
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
 // Using local interfaces to avoid circular dependencies
@@ -27,6 +28,7 @@ interface AdminLogData {
 interface RequestInfo {
   ip: string;
   userAgent?: string;
+  siteId?: number;
 }
 
 interface ContactFormData {
@@ -63,7 +65,7 @@ class ContactFormService {
   private emailService: EmailProvider | null = null;
 
   constructor() {
-    this.initializeServices();
+    void this.initializeServices();
   }
 
   async initializeServices(): Promise<void> {
@@ -78,11 +80,16 @@ class ContactFormService {
         await this.initializeServices();
       }
 
+      // Geo lookup (non-blocking — empty object on failure)
+      const geo = await GeoService.getInstance().lookup(requestInfo.ip);
+
       // Add request metadata
       const submission = {
         ...formData,
         ip_address: requestInfo.ip,
         user_agent: requestInfo.userAgent,
+        site_id: requestInfo.siteId,
+        ...geo,
       };
 
       // Save to database
@@ -152,9 +159,7 @@ class ContactFormService {
     try {
       const submission = await this.db!.contacts.findById(id);
       if (!submission) {
-        const error = new Error('Contact submission not found') as any;
-        error.statusCode = 404;
-        throw error;
+        throw Object.assign(new Error('Contact submission not found'), { statusCode: 404 });
       }
       return submission;
     } catch (error) {
@@ -172,9 +177,7 @@ class ContactFormService {
       const deleted = await this.db!.contacts.deleteById(numericId);
       
       if (!deleted) {
-        const error = new Error('Contact submission not found') as any;
-        error.statusCode = 404;
-        throw error;
+        throw Object.assign(new Error('Contact submission not found'), { statusCode: 404 });
       }
 
       // Log admin activity
@@ -203,53 +206,43 @@ class ContactFormService {
         await this.initializeServices();
       }
 
-      // Create test submission data
-      const submission = {
-        ...formData,
-        email: customEmail, // Use custom email for testing
+      // Build a transient object — no DB write for test emails
+      const testContact = {
+        id: 0,
+        name: formData.name || 'Test User',
+        email: customEmail,
+        company: formData.company,
+        project_type: formData.project_type,
+        message: formData.message || '',
         ip_address: requestInfo.ip,
         user_agent: requestInfo.userAgent,
-        is_test: true, // Mark as test
       };
 
-      // Save to database
-      const savedContact = await this.db!.contacts.create(submission);
-      
-      logger.info({
-        message: 'Test contact form submission saved',
-        data: { id: savedContact.id, email: savedContact.email, is_test: true }
-      });
-
       let emailSent = false;
-      // Send test email notification
       try {
-        await this.emailService!.sendContactNotification(savedContact);
+        await this.emailService!.sendContactNotification(testContact);
         emailSent = true;
         logger.info({
           message: 'Test contact notification email sent',
-          data: { email: savedContact.email }
+          data: { email: customEmail }
         });
       } catch (emailError) {
-        logger.error({
-          message: 'Failed to send test contact notification email',
-          error: emailError
-        });
-        // Don't throw - we still saved the submission
+        const msg = emailError instanceof Error ? emailError.message : String(emailError);
+        logger.error({ message: `Failed to send test contact notification email: ${msg}` });
       }
 
-      // Log admin activity
+      // Log admin activity (no resource_id — nothing was saved)
       await this.db!.adminLogs.create({
         action: 'contact_form_test',
         resource: 'contacts',
-        resource_id: savedContact.id,
-        details: `Test contact form submission to ${customEmail}`,
+        details: `Test contact email sent to ${customEmail}`,
         ip_address: requestInfo.ip,
       });
 
       return {
         success: true,
         data: {
-          id: savedContact.id || 0,
+          id: 0,
           message: 'Test email sent successfully',
           email_sent: emailSent,
         },
