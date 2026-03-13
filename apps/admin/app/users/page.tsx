@@ -310,7 +310,10 @@ export default function UsersPage() {
               <select
                 className="rounded-md border border-input bg-background px-2 py-1 text-sm"
                 value={prefs.defaultDashboardDays}
-                onChange={e => updatePrefs({ defaultDashboardDays: parseInt(e.target.value, 10) as 7 | 14 | 30 | 90 })}
+                onChange={e => {
+                  updatePrefs({ defaultDashboardDays: parseInt(e.target.value, 10) as 7 | 14 | 30 | 90 });
+                  localStorage.removeItem('dashboard_date_range');
+                }}
               >
                 <option value={7}>7 days</option>
                 <option value={14}>14 days</option>
