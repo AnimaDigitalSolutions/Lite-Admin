@@ -19,6 +19,7 @@ import {
   AtSymbolIcon,
   UserCircleIcon,
   DocumentTextIcon,
+  MegaphoneIcon,
 } from '@heroicons/react/24/outline';
 
 interface ProtectedLayoutProps {
@@ -42,7 +43,13 @@ const navigation = [
     group: 'Leads',
     items: [
       { name: 'Contacts', href: '/contacts', icon: EnvelopeIcon, navKey: 'nav_visible_contacts' },
-      { name: 'Waitlist', href: '/waitlist', icon: UsersIcon, navKey: 'nav_visible_waitlist' },
+    ],
+  },
+  {
+    group: 'Audience',
+    items: [
+      { name: 'Subscribers', href: '/subscribers', icon: UsersIcon, navKey: 'nav_visible_subscribers' },
+      { name: 'Campaigns', href: '/subscribers?tab=campaigns', icon: MegaphoneIcon, navKey: 'nav_visible_campaigns' },
     ],
   },
   {
@@ -127,7 +134,13 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   if (!user) return null;
 
-  const isActive = (href: string) => pathname === href;
+  const isActive = (href: string) => {
+    if (href.includes('?')) {
+      const [path, query] = href.split('?');
+      return pathname === path && typeof window !== 'undefined' && window.location.search.includes(query);
+    }
+    return pathname === href;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -142,6 +142,30 @@ class ResendProvider {
       date: new Date().toISOString(),
     });
   }
+
+  async sendCampaign(
+    subscriber: { email: string; name?: string },
+    campaign: { subject: string; preheader?: string; html: string; text?: string },
+  ): Promise<void> {
+    try {
+      if (!this.resend) throw new Error('RESEND_API_KEY is not configured');
+
+      const payload = {
+        to: [subscriber.email],
+        from: this.fromName ? `${this.fromName} <${this.fromAddress}>` : this.fromAddress,
+        subject: campaign.subject,
+        html: campaign.html,
+        text: campaign.text || this.htmlToText(campaign.html),
+      };
+
+      await this.resend.emails.send(payload);
+
+      logger.info({ message: `Campaign email sent via Resend to ${subscriber.email}` });
+    } catch (error) {
+      logger.error({ message: 'Failed to send campaign email via Resend', error });
+      throw new Error(`Campaign email sending failed: ${(error as Error).message}`);
+    }
+  }
 }
 
 export default ResendProvider;
