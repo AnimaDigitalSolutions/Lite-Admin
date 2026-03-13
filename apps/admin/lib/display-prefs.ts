@@ -7,6 +7,7 @@ export interface DisplayPrefs {
   truncateEmails: boolean;
   defaultDashboardDays: 7 | 14 | 30 | 90;
   mediaBasePath: string;
+  maxUploadSizeMB: number;
 }
 
 const DEFAULTS: DisplayPrefs = {
@@ -14,6 +15,7 @@ const DEFAULTS: DisplayPrefs = {
   truncateEmails: true,
   defaultDashboardDays: 30,
   mediaBasePath: '/uploads/portfolio',
+  maxUploadSizeMB: 10,
 };
 
 const LS_KEY = 'display_prefs';

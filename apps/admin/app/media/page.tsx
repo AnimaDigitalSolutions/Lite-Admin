@@ -21,11 +21,14 @@ import {
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Play,
   FileText,
   Copy,
   Check,
   Download,
+  Eye,
 } from 'lucide-react';
 
 // --- Types ---
@@ -168,6 +171,8 @@ export default function MediaPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProject, setFilterProject] = useState('');
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('media-view-mode') as ViewMode) || 'grid';
@@ -184,6 +189,19 @@ export default function MediaPage() {
   useEffect(() => {
     localStorage.setItem('media-view-mode', viewMode);
   }, [viewMode]);
+
+  // Keyboard nav for preview modal
+  useEffect(() => {
+    if (!previewItem) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewItem(null);
+      if (e.key === 'ArrowLeft') navigatePreview(-1);
+      if (e.key === 'ArrowRight') navigatePreview(1);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewItem, filteredAndSortedItems]);
 
   const loadMedia = async () => {
     try {
@@ -239,23 +257,59 @@ export default function MediaPage() {
     }, 3000);
   }, []);
 
+  const maxSizeBytes = (prefs.maxUploadSizeMB || 10) * 1024 * 1024;
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif']
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif'],
+      'video/*': ['.mp4', '.webm', '.mov'],
+      'application/pdf': ['.pdf'],
     },
+    maxSize: maxSizeBytes,
     multiple: true
   });
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this item?')) return;
-
     try {
       await mediaApi.delete(id);
       setMediaItems(prev => prev.filter(item => item.id !== id));
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
     } catch (error) {
       console.error('Failed to delete media:', error);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
+    try {
+      for (const id of selectedIds) {
+        await mediaApi.delete(id);
+      }
+      setMediaItems(prev => prev.filter(item => !selectedIds.has(item.id)));
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('Failed to bulk delete:', error);
+    }
+  };
+
+  const handleBulkDownload = () => {
+    const items = filteredAndSortedItems.filter(item => selectedIds.has(item.id));
+    for (const item of items) {
+      handleDownload(item);
+    }
+  };
+
+  const handleBulkCopyPaths = async () => {
+    const items = filteredAndSortedItems.filter(item => selectedIds.has(item.id));
+    const base = (prefs.mediaBasePath || '/uploads/portfolio').replace(/\/+$/, '');
+    const paths = items.map(item => {
+      const filename = item.storage_path ? item.storage_path.split('/').pop() : item.filename;
+      return `${base}/${filename}`;
+    });
+    await navigator.clipboard.writeText(paths.join('\n'));
   };
 
   const handleDownload = (item: MediaItem) => {
@@ -287,6 +341,31 @@ export default function MediaPage() {
     await navigator.clipboard.writeText(`${base}/${filename}`);
     setCopiedId(item.id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // --- Selection ---
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedIds(checked ? new Set(filteredAndSortedItems.map(i => i.id)) : new Set());
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    setSelectedIds(prev => { const n = new Set(prev); checked ? n.add(id) : n.delete(id); return n; });
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  // --- Preview navigation ---
+
+  const navigatePreview = (direction: number) => {
+    if (!previewItem) return;
+    const idx = filteredAndSortedItems.findIndex(i => i.id === previewItem.id);
+    const nextIdx = idx + direction;
+    if (nextIdx >= 0 && nextIdx < filteredAndSortedItems.length) {
+      setPreviewItem(filteredAndSortedItems[nextIdx]);
+    }
   };
 
   const handleColumnSort = (column: string) => {
@@ -325,16 +404,41 @@ export default function MediaPage() {
     mediaItems.map(item => item.project_name).filter(Boolean)
   ));
 
+  const allSelected = filteredAndSortedItems.length > 0 && selectedIds.size === filteredAndSortedItems.length;
+
   return (
     <ProtectedLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
-          <p className="mt-1 text-gray-600">
-            {filteredAndSortedItems.length} {filteredAndSortedItems.length === 1 ? 'item' : 'items'}
-            {(searchTerm || filterProject || filterType !== 'all') && ` (filtered from ${mediaItems.length})`}
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
+            <p className="mt-1 text-gray-600">
+              {filteredAndSortedItems.length} {filteredAndSortedItems.length === 1 ? 'item' : 'items'}
+              {(searchTerm || filterProject || filterType !== 'all') && ` (filtered from ${mediaItems.length})`}
+            </p>
+          </div>
+          {/* Bulk actions */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">{selectedIds.size} selected</span>
+              <Button size="sm" variant="outline" onClick={() => void handleBulkCopyPaths()}>
+                <Copy className="h-4 w-4 mr-1" />
+                Copy Paths
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleBulkDownload}>
+                <Download className="h-4 w-4 mr-1" />
+                Download
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => void handleBulkDelete()}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete ({selectedIds.size})
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Upload Area */}
@@ -362,7 +466,7 @@ export default function MediaPage() {
                   : 'Drag & drop files here, or click to select'}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Supports: JPEG, PNG, WebP, GIF
+                Images: JPEG, PNG, WebP, GIF · Videos: MP4, WebM, MOV · Documents: PDF · Max {prefs.maxUploadSizeMB || 10} MB
               </p>
             </div>
 
@@ -475,9 +579,10 @@ export default function MediaPage() {
             {filteredAndSortedItems.map((item) => {
               const badge = getTypeBadge(item.mime_type);
               const mediaType = getMediaType(item.mime_type);
+              const isSelected = selectedIds.has(item.id);
               return (
-                <Card key={item.id} className="overflow-hidden group">
-                  <div className="relative h-48">
+                <Card key={item.id} className={`overflow-hidden group relative ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
+                  <div className="relative h-48 cursor-pointer" onClick={() => setPreviewItem(item)}>
                     {mediaType === 'image' ? (
                       <Image
                         src={item.url}
@@ -501,7 +606,16 @@ export default function MediaPage() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => handleDownload(item)}
+                        onClick={(e) => { e.stopPropagation(); setPreviewItem(item); }}
+                        className="h-8 w-8 p-0"
+                        title="Preview"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => { e.stopPropagation(); handleDownload(item); }}
                         className="h-8 w-8 p-0"
                         title="Download"
                       >
@@ -510,7 +624,7 @@ export default function MediaPage() {
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => setEditingItem(item)}
+                        onClick={(e) => { e.stopPropagation(); setEditingItem(item); }}
                         className="h-8 w-8 p-0"
                         title="Edit"
                       >
@@ -519,7 +633,7 @@ export default function MediaPage() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={(e) => { e.stopPropagation(); void handleDelete(item.id); }}
                         className="h-8 w-8 p-0"
                         title="Delete"
                       >
@@ -530,6 +644,16 @@ export default function MediaPage() {
                     <span className={`absolute top-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${badge.color}`}>
                       {badge.label}
                     </span>
+                    {/* Selection checkbox */}
+                    <div className={`absolute top-2 right-2 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectOne(item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                      />
+                    </div>
                   </div>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-1 group/name">
@@ -562,6 +686,14 @@ export default function MediaPage() {
                 <table className="w-full">
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b bg-gray-50">
+                      <th className="p-3 w-8">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={e => handleSelectAll(e.target.checked)}
+                          className="rounded"
+                        />
+                      </th>
                       <th className="text-left p-3 font-medium w-16"></th>
                       <th
                         className="text-left p-3 font-medium cursor-pointer select-none hover:text-gray-900"
@@ -600,10 +732,22 @@ export default function MediaPage() {
                     {filteredAndSortedItems.map((item) => {
                       const badge = getTypeBadge(item.mime_type);
                       const mediaType = getMediaType(item.mime_type);
+                      const isSelected = selectedIds.has(item.id);
                       return (
-                        <tr key={item.id} className="border-b hover:bg-gray-50 even:bg-gray-50/50">
+                        <tr key={item.id} className={`border-b hover:bg-gray-50 even:bg-gray-50/50 ${isSelected ? 'bg-blue-50' : ''}`}>
                           <td className="p-3">
-                            <div className="w-12 h-12 relative rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={e => handleSelectOne(item.id, e.target.checked)}
+                              className="rounded"
+                            />
+                          </td>
+                          <td className="p-3">
+                            <div
+                              className="w-12 h-12 relative rounded overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                              onClick={() => setPreviewItem(item)}
+                            >
                               {mediaType === 'image' ? (
                                 <Image
                                   src={item.url}
@@ -624,7 +768,11 @@ export default function MediaPage() {
                           </td>
                           <td className="p-3">
                             <div className="group/name flex items-center gap-1">
-                              <div className="font-medium text-sm truncate max-w-[200px]" title={item.filename}>
+                              <div
+                                className="font-medium text-sm truncate max-w-[200px] cursor-pointer hover:text-blue-600"
+                                title={item.filename}
+                                onClick={() => setPreviewItem(item)}
+                              >
                                 {highlightMatch(item.filename, searchTerm)}
                               </div>
                               <button
@@ -662,6 +810,15 @@ export default function MediaPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                onClick={() => setPreviewItem(item)}
+                                className="h-8 w-8 p-0"
+                                title="Preview"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 onClick={() => handleDownload(item)}
                                 className="h-8 w-8 p-0"
                                 title="Download"
@@ -680,7 +837,7 @@ export default function MediaPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleDelete(item.id)}
+                                onClick={() => void handleDelete(item.id)}
                                 className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                 title="Delete"
                               >
@@ -697,6 +854,112 @@ export default function MediaPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Preview Modal */}
+        {previewItem && (() => {
+          const mediaType = getMediaType(previewItem.mime_type);
+          const currentIdx = filteredAndSortedItems.findIndex(i => i.id === previewItem.id);
+          const hasPrev = currentIdx > 0;
+          const hasNext = currentIdx < filteredAndSortedItems.length - 1;
+          return (
+            <div
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+              onClick={() => setPreviewItem(null)}
+            >
+              {/* Close button */}
+              <button
+                className="absolute top-4 right-4 text-white/70 hover:text-white z-10"
+                onClick={() => setPreviewItem(null)}
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              {/* Info bar */}
+              <div className="absolute top-4 left-4 text-white/80 text-sm z-10">
+                <span className="font-medium">{previewItem.filename}</span>
+                <span className="ml-3 text-white/50">{formatFileSize(previewItem.file_size)}</span>
+                {previewItem.width && previewItem.height && (
+                  <span className="ml-3 text-white/50">{previewItem.width} × {previewItem.height}</span>
+                )}
+                <span className="ml-3 text-white/50">{currentIdx + 1} / {filteredAndSortedItems.length}</span>
+              </div>
+
+              {/* Prev/Next */}
+              {hasPrev && (
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
+                  onClick={(e) => { e.stopPropagation(); navigatePreview(-1); }}
+                >
+                  <ChevronLeft className="h-8 w-8" />
+                </button>
+              )}
+              {hasNext && (
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
+                  onClick={(e) => { e.stopPropagation(); navigatePreview(1); }}
+                >
+                  <ChevronRight className="h-8 w-8" />
+                </button>
+              )}
+
+              {/* Content */}
+              <div className="max-w-[90vw] max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                {mediaType === 'image' ? (
+                  <img
+                    src={previewItem.url}
+                    alt={previewItem.filename}
+                    className="max-w-full max-h-[85vh] object-contain rounded"
+                  />
+                ) : mediaType === 'video' ? (
+                  <video
+                    src={previewItem.url}
+                    controls
+                    autoPlay
+                    className="max-w-full max-h-[85vh] rounded"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : previewItem.mime_type === 'application/pdf' ? (
+                  <iframe
+                    src={previewItem.url}
+                    className="w-[80vw] h-[85vh] rounded bg-white"
+                    title={previewItem.filename}
+                  />
+                ) : (
+                  <div className="text-center text-white/70 p-12">
+                    <FileText className="h-16 w-16 mx-auto mb-4" />
+                    <p className="text-lg">{previewItem.filename}</p>
+                    <p className="text-sm mt-2">Preview not available for this file type</p>
+                    <Button
+                      variant="secondary"
+                      className="mt-4"
+                      onClick={() => handleDownload(previewItem)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom actions */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); handleDownload(previewItem); }}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); void copyMediaPath(previewItem); }}>
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy Path
+                </Button>
+                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setPreviewItem(null); setEditingItem(previewItem); }}>
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Edit Modal */}
         {editingItem && (

@@ -113,7 +113,6 @@ const menuStructure: { group: string; items: { name: string; key: string | null;
 
 export default function SettingsPage() {
   const { prefs: displayPrefs, setPrefs: setDisplayPrefs } = useDisplayPrefs();
-  const [savedMediaPath, setSavedMediaPath] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     email_enabled: true,
     maintenance_mode: false,
@@ -314,20 +313,20 @@ export default function SettingsPage() {
             </Card>
           </button>
 
-          {/* Media Copy Path */}
+          {/* Media Settings */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <PhotoIcon className="h-4 w-4" />
-                Media Path
+                Media
               </CardTitle>
               <CardDescription>
-                Base path used when copying media URLs. Set this to your hosting domain or CDN path.
+                Configure media paths and upload limits. Changes are saved automatically.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">Base Path</Label>
+                <Label className="text-sm font-medium">Copy Path Base URL</Label>
                 <Input
                   className="mt-1.5 font-mono text-sm"
                   value={displayPrefs.mediaBasePath}
@@ -338,18 +337,20 @@ export default function SettingsPage() {
                   Copied path will be: <code className="rounded bg-gray-100 px-1">{displayPrefs.mediaBasePath || '/uploads/portfolio'}/filename.webp</code>
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  size="sm"
-                  onClick={() => { setSavedMediaPath(true); setTimeout(() => setSavedMediaPath(false), 2000); }}
-                >
-                  {savedMediaPath ? 'Saved!' : 'Save'}
-                </Button>
-                {savedMediaPath && (
-                  <span className="flex items-center gap-1.5 text-sm text-emerald-600">
-                    <CheckCircleIcon className="h-4 w-4" />Saved to browser
-                  </span>
-                )}
+              <div>
+                <Label className="text-sm font-medium">Max Upload Size (MB)</Label>
+                <Input
+                  className="mt-1.5 w-32"
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={displayPrefs.maxUploadSizeMB}
+                  onChange={e => setDisplayPrefs({ maxUploadSizeMB: Math.max(1, parseInt(e.target.value) || 10) })}
+                />
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Ensure your server and reverse proxy (e.g. nginx <code className="rounded bg-gray-100 px-1">client_max_body_size</code>) allow at least this size.
+                  Backend default is 10 MB via <code className="rounded bg-gray-100 px-1">MAX_FILE_SIZE</code> env var.
+                </p>
               </div>
             </CardContent>
           </Card>
