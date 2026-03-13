@@ -32,10 +32,14 @@ export default [
     rules: {
       // TypeScript-specific rules
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: false }],
+      '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+
       // Standard rules
       'no-unused-vars': 'off', // Use TypeScript version instead
       'prefer-const': 'error',

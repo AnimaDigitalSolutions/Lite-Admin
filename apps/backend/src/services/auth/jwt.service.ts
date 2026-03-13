@@ -63,7 +63,7 @@ export class JWTService {
    */
   verifyRefreshToken(token: string): { id: number } {
     try {
-      const decoded = jwt.verify(token, this.secret) as any;
+      const decoded = jwt.verify(token, this.secret) as { type: string; id: number };
       if (decoded.type !== 'refresh') {
         throw new Error('Invalid token type');
       }

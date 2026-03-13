@@ -60,7 +60,7 @@ export const sanitizePhoneNumber = (phone: string) => {
 /**
  * Check if value is empty (null, undefined, empty string, empty array, empty object)
  */
-export const isEmpty = (value: any) => {
+export const isEmpty = (value: unknown) => {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string' && value.trim() === '') return true;
   if (Array.isArray(value) && value.length === 0) return true;

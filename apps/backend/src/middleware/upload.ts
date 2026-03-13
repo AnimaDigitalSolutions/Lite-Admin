@@ -1,6 +1,6 @@
 import multer from 'multer';
 import path from 'path';
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 
