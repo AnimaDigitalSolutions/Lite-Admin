@@ -63,9 +63,13 @@ class LocalStorageProvider {
 
   async upload(file: Express.Multer.File, destinationPath?: string): Promise<UploadResult> {
     try {
-      const fileId = nanoid();
       const fileExt = path.extname(file.originalname);
-      const fileName = `${fileId}${fileExt}`;
+      const baseName = path.basename(file.originalname, fileExt)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40) || 'file';
+      const fileName = `${baseName}-${nanoid(8)}${fileExt}`;
       const fullPath = path.join(this.uploadDir, destinationPath || '', fileName);
       
       // Ensure directory exists
@@ -95,7 +99,7 @@ class LocalStorageProvider {
         const thumbnailPath = path.join(
           this.uploadDir,
           'thumbnails',
-          `${fileId}_thumb.webp`
+          `${path.basename(fileName, fileExt)}_thumb.webp`
         );
         await fs.writeFile(thumbnailPath, thumbnailData.buffer);
       }
@@ -105,7 +109,7 @@ class LocalStorageProvider {
       return {
         provider: 'local',
         path: fullPath,
-        url: `/uploads/${destinationPath || ''}${fileName}`,
+        url: `/uploads/${destinationPath ? `${destinationPath}/` : ''}${fileName}`,
         size: file.size,
         mimetype: file.mimetype,
         metadata: optimizedData?.metadata || null,
@@ -162,6 +166,32 @@ class LocalStorageProvider {
       });
       throw error;
     }
+  }
+
+  async rename(oldPath: string, newBasename: string): Promise<string> {
+    const dir = path.dirname(oldPath);
+    const ext = path.extname(oldPath);
+    const sanitized = path.basename(newBasename, path.extname(newBasename))
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'file';
+    const newName = `${sanitized}-${nanoid(8)}${ext}`;
+    const newPath = path.join(dir, newName);
+    await fs.rename(oldPath, newPath);
+
+    // Rename associated webp + thumbnail
+    const oldBase = path.basename(oldPath, ext);
+    const newBase = path.basename(newName, ext);
+    const renames: [string, string][] = [
+      [path.join(dir, `${oldBase}.webp`), path.join(dir, `${newBase}.webp`)],
+      [path.join(this.uploadDir, 'thumbnails', `${oldBase}_thumb.webp`), path.join(this.uploadDir, 'thumbnails', `${newBase}_thumb.webp`)],
+    ];
+    for (const [src, dst] of renames) {
+      try { await fs.rename(src, dst); } catch { /* associated file may not exist */ }
+    }
+
+    return newPath;
   }
 
   async exists(filePath: string): Promise<boolean> {
