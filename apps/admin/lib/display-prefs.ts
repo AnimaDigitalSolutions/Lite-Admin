@@ -6,12 +6,14 @@ export interface DisplayPrefs {
   showGeoInfo: boolean;
   truncateEmails: boolean;
   defaultDashboardDays: 7 | 14 | 30 | 90;
+  mediaBasePath: string;
 }
 
 const DEFAULTS: DisplayPrefs = {
   showGeoInfo: true,
   truncateEmails: true,
   defaultDashboardDays: 30,
+  mediaBasePath: '/uploads/portfolio',
 };
 
 const LS_KEY = 'display_prefs';

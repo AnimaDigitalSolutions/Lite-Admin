@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import ProtectedLayout from '@/components/protected-layout';
 import { mediaApi } from '@/lib/api';
+import { useDisplayPrefs } from '@/lib/display-prefs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,9 @@ import {
   ChevronDown,
   Play,
   FileText,
+  Copy,
+  Check,
+  Download,
 } from 'lucide-react';
 
 // --- Types ---
@@ -133,6 +137,13 @@ function formatDate(dateString: string): string {
   });
 }
 
+function formatDateFull(dateString: string): string {
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+}
+
 function highlightMatch(text: string, search: string): React.ReactNode {
   if (!search || !text) return text;
   const idx = text.toLowerCase().indexOf(search.toLowerCase());
@@ -149,6 +160,8 @@ function highlightMatch(text: string, search: string): React.ReactNode {
 // --- Component ---
 
 export default function MediaPage() {
+  const { prefs } = useDisplayPrefs();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
@@ -245,7 +258,14 @@ export default function MediaPage() {
     }
   };
 
-  const handleEdit = async (item: MediaItem, data: { project_name?: string; description?: string }) => {
+  const handleDownload = (item: MediaItem) => {
+    const link = document.createElement('a');
+    link.href = item.url;
+    link.download = item.filename;
+    link.click();
+  };
+
+  const handleEdit = async (item: MediaItem, data: { filename?: string; project_name?: string; description?: string }) => {
     try {
       await mediaApi.update(item.id, data);
       setMediaItems(prev =>
@@ -259,6 +279,14 @@ export default function MediaPage() {
     } catch (error) {
       console.error('Failed to update media:', error);
     }
+  };
+
+  const copyMediaPath = async (item: MediaItem) => {
+    const base = (prefs.mediaBasePath || '/uploads/portfolio').replace(/\/+$/, '');
+    const filename = item.storage_path ? item.storage_path.split('/').pop() : item.filename;
+    await navigator.clipboard.writeText(`${base}/${filename}`);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleColumnSort = (column: string) => {
@@ -452,9 +480,10 @@ export default function MediaPage() {
                   <div className="relative h-48">
                     {mediaType === 'image' ? (
                       <Image
-                        src={`${item.url}?width=400&height=300`}
+                        src={item.url}
                         alt={item.filename}
                         fill
+                        unoptimized
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       />
@@ -472,8 +501,18 @@ export default function MediaPage() {
                       <Button
                         size="sm"
                         variant="secondary"
+                        onClick={() => handleDownload(item)}
+                        className="h-8 w-8 p-0"
+                        title="Download"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
                         onClick={() => setEditingItem(item)}
                         className="h-8 w-8 p-0"
+                        title="Edit"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -482,6 +521,7 @@ export default function MediaPage() {
                         variant="destructive"
                         onClick={() => handleDelete(item.id)}
                         className="h-8 w-8 p-0"
+                        title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -492,7 +532,17 @@ export default function MediaPage() {
                     </span>
                   </div>
                   <CardContent className="p-3">
-                    <h3 className="font-medium text-sm truncate" title={item.filename}>{item.filename}</h3>
+                    <div className="flex items-center gap-1 group/name">
+                      <h3 className="font-medium text-sm truncate" title={item.filename}>{item.filename}</h3>
+                      <button
+                        type="button"
+                        onClick={() => void copyMediaPath(item)}
+                        title="Copy media path"
+                        className={`shrink-0 transition-colors ${copiedId === item.id ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
+                      >
+                        {copiedId === item.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                       {item.project_name && (
                         <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{item.project_name}</span>
@@ -556,9 +606,10 @@ export default function MediaPage() {
                             <div className="w-12 h-12 relative rounded overflow-hidden bg-gray-100 flex-shrink-0">
                               {mediaType === 'image' ? (
                                 <Image
-                                  src={`${item.url}?width=96&height=96`}
+                                  src={item.url}
                                   alt={item.filename}
                                   fill
+                                  unoptimized
                                   className="object-cover"
                                   sizes="48px"
                                 />
@@ -572,8 +623,18 @@ export default function MediaPage() {
                             </div>
                           </td>
                           <td className="p-3">
-                            <div className="font-medium text-sm truncate max-w-[200px]" title={item.filename}>
-                              {highlightMatch(item.filename, searchTerm)}
+                            <div className="group/name flex items-center gap-1">
+                              <div className="font-medium text-sm truncate max-w-[200px]" title={item.filename}>
+                                {highlightMatch(item.filename, searchTerm)}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => void copyMediaPath(item)}
+                                title="Copy media path"
+                                className={`shrink-0 transition-colors ${copiedId === item.id ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
+                              >
+                                {copiedId === item.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                              </button>
                             </div>
                             <div className="text-xs text-gray-500">{getFormatLabel(item.mime_type)}</div>
                           </td>
@@ -595,14 +656,24 @@ export default function MediaPage() {
                               <span className="text-gray-400">—</span>
                             )}
                           </td>
-                          <td className="p-3 text-sm text-gray-600">{formatDate(item.uploaded_at)}</td>
+                          <td className="p-3 text-sm text-gray-600" title={formatDateFull(item.uploaded_at)}>{formatDate(item.uploaded_at)}</td>
                           <td className="p-3">
                             <div className="flex gap-1">
                               <Button
                                 size="sm"
                                 variant="ghost"
+                                onClick={() => handleDownload(item)}
+                                className="h-8 w-8 p-0"
+                                title="Download"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 onClick={() => setEditingItem(item)}
                                 className="h-8 w-8 p-0"
+                                title="Edit"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -611,6 +682,7 @@ export default function MediaPage() {
                                 variant="ghost"
                                 onClick={() => handleDelete(item.id)}
                                 className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Delete"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -646,12 +718,23 @@ export default function MediaPage() {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
                   void handleEdit(editingItem, {
+                    filename: formData.get('filename') as string || undefined,
                     project_name: formData.get('project_name') as string || undefined,
                     description: formData.get('description') as string || undefined,
                   });
                 }}
                 className="space-y-4"
               >
+                <div>
+                  <Label htmlFor="filename">Filename</Label>
+                  <Input
+                    id="filename"
+                    name="filename"
+                    defaultValue={editingItem.filename}
+                    placeholder="image.webp"
+                  />
+                </div>
+
                 <div>
                   <Label htmlFor="project_name">Project Name</Label>
                   <Input

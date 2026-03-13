@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ProtectedLayout from '@/components/protected-layout';
 import { settingsApi, credentialsApi, menuApi } from '@/lib/api';
+import { useDisplayPrefs } from '@/lib/display-prefs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,6 +112,8 @@ const menuStructure: { group: string; items: { name: string; key: string | null;
 ];
 
 export default function SettingsPage() {
+  const { prefs: displayPrefs, setPrefs: setDisplayPrefs } = useDisplayPrefs();
+  const [savedMediaPath, setSavedMediaPath] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     email_enabled: true,
     maintenance_mode: false,
@@ -310,6 +313,46 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </button>
+
+          {/* Media Copy Path */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <PhotoIcon className="h-4 w-4" />
+                Media Path
+              </CardTitle>
+              <CardDescription>
+                Base path used when copying media URLs. Set this to your hosting domain or CDN path.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium">Base Path</Label>
+                <Input
+                  className="mt-1.5 font-mono text-sm"
+                  value={displayPrefs.mediaBasePath}
+                  onChange={e => setDisplayPrefs({ mediaBasePath: e.target.value })}
+                  placeholder="https://cdn.example.com/media"
+                />
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Copied path will be: <code className="rounded bg-gray-100 px-1">{displayPrefs.mediaBasePath || '/uploads/portfolio'}/filename.webp</code>
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  onClick={() => { setSavedMediaPath(true); setTimeout(() => setSavedMediaPath(false), 2000); }}
+                >
+                  {savedMediaPath ? 'Saved!' : 'Save'}
+                </Button>
+                {savedMediaPath && (
+                  <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+                    <CheckCircleIcon className="h-4 w-4" />Saved to browser
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Storage */}
           <Card>
