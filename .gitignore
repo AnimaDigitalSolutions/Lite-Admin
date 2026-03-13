@@ -50,3 +50,4 @@ ecosystem.config.local.js
 
 # OS Files
 Thumbs.db
+.claude/worktrees/
