@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { menuApi } from '@/lib/api';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import {
@@ -28,42 +29,42 @@ const navigation = [
   {
     group: 'Overview',
     items: [
-      { name: 'Dashboard', href: '/', icon: HomeIcon },
+      { name: 'Dashboard', href: '/', icon: HomeIcon, navKey: null },
     ],
   },
   {
     group: 'Content',
     items: [
-      { name: 'Media', href: '/media', icon: PhotoIcon },
+      { name: 'Media', href: '/media', icon: PhotoIcon, navKey: 'nav_visible_media' },
     ],
   },
   {
     group: 'Leads',
     items: [
-      { name: 'Contacts', href: '/contacts', icon: EnvelopeIcon },
-      { name: 'Waitlist', href: '/waitlist', icon: UsersIcon },
+      { name: 'Contacts', href: '/contacts', icon: EnvelopeIcon, navKey: 'nav_visible_contacts' },
+      { name: 'Waitlist', href: '/waitlist', icon: UsersIcon, navKey: 'nav_visible_waitlist' },
     ],
   },
   {
     group: 'Sites',
     items: [
-      { name: 'Sites & API Keys', href: '/sites', icon: GlobeAltIcon },
+      { name: 'Sites & API Keys', href: '/sites', icon: GlobeAltIcon, navKey: 'nav_visible_sites' },
     ],
   },
   {
     group: 'System',
     items: [
-      { name: 'Statistics', href: '/stats', icon: ChartBarIcon },
-      { name: 'Activity Log', href: '/logs', icon: ClipboardDocumentListIcon },
+      { name: 'Statistics', href: '/stats', icon: ChartBarIcon, navKey: 'nav_visible_stats' },
+      { name: 'Activity Log', href: '/logs', icon: ClipboardDocumentListIcon, navKey: 'nav_visible_logs' },
     ],
   },
   {
     group: 'Configure',
     items: [
-      { name: 'Email', href: '/email', icon: AtSymbolIcon },
-      { name: 'Email Templates', href: '/email/templates', icon: DocumentTextIcon },
-      { name: 'Admin User', href: '/users', icon: UserCircleIcon },
-      { name: 'Settings', href: '/settings', icon: CogIcon },
+      { name: 'Email', href: '/email', icon: AtSymbolIcon, navKey: 'nav_visible_email' },
+      { name: 'Email Templates', href: '/email/templates', icon: DocumentTextIcon, navKey: 'nav_visible_email_templates' },
+      { name: 'Admin User', href: '/users', icon: UserCircleIcon, navKey: 'nav_visible_users' },
+      { name: 'Settings', href: '/settings', icon: CogIcon, navKey: null },
     ],
   },
 ];
@@ -72,12 +73,46 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [menuPrefs, setMenuPrefs] = useState<Record<string, boolean> | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  const fetchMenuPrefs = useCallback(async () => {
+    try {
+      const res = await menuApi.get();
+      setMenuPrefs(res.data);
+    } catch {
+      // fallback: show all items
+      setMenuPrefs({});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchMenuPrefs();
+  }, [user, fetchMenuPrefs]);
+
+  // Listen for menu preference changes (from the settings/menu page)
+  useEffect(() => {
+    const handler = () => fetchMenuPrefs();
+    window.addEventListener('menu-prefs-updated', handler);
+    return () => window.removeEventListener('menu-prefs-updated', handler);
+  }, [fetchMenuPrefs]);
+
+  const filteredNavigation = useMemo(() => {
+    if (!menuPrefs) return navigation; // show all while loading
+    return navigation
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item =>
+          item.navKey === null || menuPrefs[item.navKey] !== false
+        ),
+      }))
+      .filter(section => section.items.length > 0);
+  }, [menuPrefs]);
 
   if (loading) {
     return (
@@ -107,7 +142,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-          {navigation.map((section) => (
+          {filteredNavigation.map((section) => (
             <div key={section.group}>
               <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
                 {section.group}

@@ -257,6 +257,19 @@ export const settingsApi = {
   },
 };
 
+// Menu Configuration API
+export const menuApi = {
+  get: async () => {
+    const response = await api.get('/admin/settings/menu');
+    return response.data;
+  },
+
+  update: async (prefs: Record<string, boolean>) => {
+    const response = await api.put('/admin/settings/menu', prefs);
+    return response.data;
+  },
+};
+
 // Logs API
 export const logsApi = {
   list: async (params?: { limit?: number; offset?: number }) => {

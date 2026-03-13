@@ -613,6 +613,74 @@ router.put('/settings',
   }
 );
 
+// === MENU CONFIGURATION ===
+
+const NAV_KEYS = [
+  'nav_visible_media',
+  'nav_visible_contacts',
+  'nav_visible_waitlist',
+  'nav_visible_sites',
+  'nav_visible_stats',
+  'nav_visible_logs',
+  'nav_visible_email',
+  'nav_visible_email_templates',
+  'nav_visible_users',
+] as const;
+
+// Get menu visibility preferences
+router.get('/settings/menu',
+  async (_req, res, next) => {
+    try {
+      const settingsService = await SettingsService.getInstance();
+      const all = settingsService.getAll();
+
+      const prefs: Record<string, boolean> = {};
+      for (const key of NAV_KEYS) {
+        prefs[key] = all[key] !== 'false'; // default true
+      }
+
+      res.json({ data: prefs });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// Update menu visibility preferences
+router.put('/settings/menu',
+  async (req, res, next) => {
+    try {
+      const settingsService = await SettingsService.getInstance();
+      const db = await DatabaseService.getInstance();
+      const body = req.body as Record<string, boolean>;
+
+      for (const key of NAV_KEYS) {
+        if (typeof body[key] === 'boolean') {
+          await settingsService.set(key, String(body[key]));
+        }
+      }
+
+      await db.adminLogs.create({
+        action: 'menu_config_update',
+        resource: 'system',
+        details: 'Updated menu visibility preferences',
+        ip_address: req.ip,
+      });
+
+      // Return current state
+      const all = settingsService.getAll();
+      const prefs: Record<string, boolean> = {};
+      for (const key of NAV_KEYS) {
+        prefs[key] = all[key] !== 'false';
+      }
+
+      res.json({ success: true, data: prefs });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 // === ACTIVITY LOGS ===
 
 router.get('/logs',
