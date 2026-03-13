@@ -149,13 +149,16 @@ function formatDateFull(dateString: string): string {
 
 function highlightMatch(text: string, search: string): React.ReactNode {
   if (!search || !text) return text;
-  const idx = text.toLowerCase().indexOf(search.toLowerCase());
-  if (idx === -1) return text;
+  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if (parts.length === 1) return text;
   return (
     <>
-      {text.slice(0, idx)}
-      <mark className="bg-yellow-200 rounded-sm px-0.5">{text.slice(idx, idx + search.length)}</mark>
-      {text.slice(idx + search.length)}
+      {parts.map((part, i) =>
+        part.toLowerCase() === search.toLowerCase()
+          ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark>
+          : part
+      )}
     </>
   );
 }
@@ -657,7 +660,7 @@ export default function MediaPage() {
                   </div>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-1 group/name">
-                      <h3 className="font-medium text-sm truncate" title={item.filename}>{item.filename}</h3>
+                      <h3 className="font-medium text-sm truncate" title={item.filename}>{highlightMatch(item.filename, searchTerm)}</h3>
                       <button
                         type="button"
                         onClick={() => void copyMediaPath(item)}
@@ -687,12 +690,14 @@ export default function MediaPage() {
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b bg-gray-50">
                       <th className="p-3 w-8">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={e => handleSelectAll(e.target.checked)}
-                          className="rounded"
-                        />
+                        <div className={`${selectedIds.size > 0 ? 'opacity-100' : 'opacity-0 hover:opacity-100'} transition-opacity`}>
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={e => handleSelectAll(e.target.checked)}
+                            className="rounded cursor-pointer"
+                          />
+                        </div>
                       </th>
                       <th className="text-left p-3 font-medium w-16"></th>
                       <th
@@ -734,14 +739,16 @@ export default function MediaPage() {
                       const mediaType = getMediaType(item.mime_type);
                       const isSelected = selectedIds.has(item.id);
                       return (
-                        <tr key={item.id} className={`border-b hover:bg-gray-50 even:bg-gray-50/50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                        <tr key={item.id} className={`border-b hover:bg-gray-50 even:bg-gray-50/50 group/row ${isSelected ? 'bg-blue-50' : ''}`}>
                           <td className="p-3">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={e => handleSelectOne(item.id, e.target.checked)}
-                              className="rounded"
-                            />
+                            <div className={`${isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={e => handleSelectOne(item.id, e.target.checked)}
+                                className="rounded cursor-pointer"
+                              />
+                            </div>
                           </td>
                           <td className="p-3">
                             <div
