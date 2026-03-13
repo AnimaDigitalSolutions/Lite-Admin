@@ -640,6 +640,18 @@ function CampaignsTab() {
   // Send confirmation
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [sendLoading, setSendLoading] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+
+  const openSendDialog = async (id: number) => {
+    setSendingId(id);
+    setSubscriberCount(null);
+    try {
+      const res = await waitlistApi.list({ limit: 1, offset: 0 });
+      setSubscriberCount(res.pagination?.total ?? res.data?.length ?? 0);
+    } catch {
+      // non-blocking — dialog still works without the count
+    }
+  };
 
   const loadCampaigns = useCallback(async () => {
     try {
@@ -837,7 +849,7 @@ function CampaignsTab() {
                             <Button size="sm" variant="outline" onClick={() => openEdit(campaign)}>
                               <PencilSquareIcon className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setSendingId(campaign.id)}>
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => void openSendDialog(campaign.id)}>
                               <PaperAirplaneIcon className="h-4 w-4" />
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => void handleDelete(campaign.id)}>
@@ -921,7 +933,13 @@ function CampaignsTab() {
             <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">Send Campaign</h2>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to send this campaign to <strong>all active subscribers</strong>? This action cannot be undone.
+                Are you sure you want to send this campaign to{' '}
+                <strong>
+                  {subscriberCount !== null
+                    ? `${subscriberCount} active subscriber${subscriberCount !== 1 ? 's' : ''}`
+                    : 'all active subscribers'}
+                </strong>
+                ? This action cannot be undone.
               </p>
               <div className="flex gap-2">
                 <Button
