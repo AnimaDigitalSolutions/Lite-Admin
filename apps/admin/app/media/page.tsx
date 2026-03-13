@@ -133,6 +133,19 @@ function formatDate(dateString: string): string {
   });
 }
 
+function highlightMatch(text: string, search: string): React.ReactNode {
+  if (!search || !text) return text;
+  const idx = text.toLowerCase().indexOf(search.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-200 rounded-sm px-0.5">{text.slice(idx, idx + search.length)}</mark>
+      {text.slice(idx + search.length)}
+    </>
+  );
+}
+
 // --- Component ---
 
 export default function MediaPage() {
@@ -152,7 +165,7 @@ export default function MediaPage() {
   const [filterType, setFilterType] = useState<MediaType | 'all'>('all');
 
   useEffect(() => {
-    loadMedia();
+    void loadMedia();
   }, []);
 
   useEffect(() => {
@@ -192,14 +205,15 @@ export default function MediaPage() {
         );
 
         setMediaItems(prev => [response.data, ...prev]);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { error?: { message?: string } } } };
         setUploads(prev =>
           prev.map(u =>
             u.file === upload.file
               ? {
                   ...u,
                   status: 'error',
-                  error: error.response?.data?.error?.message || 'Upload failed'
+                  error: err.response?.data?.error?.message || 'Upload failed'
                 }
               : u
           )
@@ -496,7 +510,7 @@ export default function MediaPage() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead>
+                  <thead className="sticky top-0 z-10">
                     <tr className="border-b bg-gray-50">
                       <th className="text-left p-3 font-medium w-16"></th>
                       <th
@@ -510,10 +524,10 @@ export default function MediaPage() {
                       </th>
                       <th className="text-left p-3 font-medium">Type</th>
                       <th
-                        className="text-left p-3 font-medium cursor-pointer select-none hover:text-gray-900"
+                        className="text-right p-3 font-medium cursor-pointer select-none hover:text-gray-900"
                         onClick={() => handleColumnSort('size')}
                       >
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center justify-end gap-1">
                           Size
                           <SortIndicator column="size" />
                         </span>
@@ -537,7 +551,7 @@ export default function MediaPage() {
                       const badge = getTypeBadge(item.mime_type);
                       const mediaType = getMediaType(item.mime_type);
                       return (
-                        <tr key={item.id} className="border-b hover:bg-gray-50">
+                        <tr key={item.id} className="border-b hover:bg-gray-50 even:bg-gray-50/50">
                           <td className="p-3">
                             <div className="w-12 h-12 relative rounded overflow-hidden bg-gray-100 flex-shrink-0">
                               {mediaType === 'image' ? (
@@ -559,7 +573,7 @@ export default function MediaPage() {
                           </td>
                           <td className="p-3">
                             <div className="font-medium text-sm truncate max-w-[200px]" title={item.filename}>
-                              {item.filename}
+                              {highlightMatch(item.filename, searchTerm)}
                             </div>
                             <div className="text-xs text-gray-500">{getFormatLabel(item.mime_type)}</div>
                           </td>
@@ -568,14 +582,14 @@ export default function MediaPage() {
                               {badge.label}
                             </span>
                           </td>
-                          <td className="p-3 text-sm text-gray-600">{formatFileSize(item.file_size)}</td>
+                          <td className="p-3 text-sm text-gray-600 text-right tabular-nums">{formatFileSize(item.file_size)}</td>
                           <td className="p-3 text-sm text-gray-600">
                             {item.width && item.height ? `${item.width} × ${item.height}` : '—'}
                           </td>
                           <td className="p-3">
                             {item.project_name ? (
                               <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
-                                {item.project_name}
+                                {highlightMatch(item.project_name, searchTerm)}
                               </span>
                             ) : (
                               <span className="text-gray-400">—</span>
@@ -631,7 +645,7 @@ export default function MediaPage() {
                 onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
-                  handleEdit(editingItem, {
+                  void handleEdit(editingItem, {
                     project_name: formData.get('project_name') as string || undefined,
                     description: formData.get('description') as string || undefined,
                   });

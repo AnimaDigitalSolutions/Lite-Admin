@@ -279,6 +279,19 @@ export default function ContactsPage() {
     return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
   };
 
+  const highlightMatch = (text: string, search: string): React.ReactNode => {
+    if (!search || !text) return text;
+    const idx = text.toLowerCase().indexOf(search.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className="bg-yellow-200 rounded-sm px-0.5">{text.slice(idx, idx + search.length)}</mark>
+        {text.slice(idx + search.length)}
+      </>
+    );
+  };
+
   const getProjectTypeColor = (type?: string) => {
     const colors: Record<string, string> = {
       'web': 'bg-blue-100 text-blue-800',
@@ -507,8 +520,8 @@ export default function ContactsPage() {
               <>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="border-b bg-gray-50">
                         <th className="p-3 w-8">
                           <input type="checkbox" className="rounded"
                             checked={selectedIds.size === filteredContacts.length && filteredContacts.length > 0}
@@ -524,14 +537,14 @@ export default function ContactsPage() {
                     </thead>
                     <tbody>
                       {filteredContacts.map((contact) => (
-                        <tr key={contact.id} className={`border-b hover:bg-gray-50 ${selectedIds.has(contact.id) ? 'bg-blue-50' : ''}`}>
+                        <tr key={contact.id} className={`border-b hover:bg-gray-50 ${selectedIds.has(contact.id) ? 'bg-blue-50' : ''} even:bg-gray-50/50`}>
                           <td className="p-3">
                             <input type="checkbox" className="rounded"
                               checked={selectedIds.has(contact.id)}
                               onChange={e => handleSelectOne(contact.id, e.target.checked)} />
                           </td>
                           <td className="p-3">
-                            <div className="font-medium">{contact.name}</div>
+                            <div className="font-medium">{highlightMatch(contact.name, searchTerm)}</div>
                           </td>
                           <td className="p-3 max-w-[220px]">
                             <div className="group flex items-center gap-1.5">
@@ -547,7 +560,7 @@ export default function ContactsPage() {
                           </td>
                           <td className="p-3">
                             {contact.company ? (
-                              <span className="text-gray-900">{contact.company}</span>
+                              <span className="text-gray-900">{highlightMatch(contact.company, searchTerm)}</span>
                             ) : (
                               <span className="text-gray-400">-</span>
                             )}

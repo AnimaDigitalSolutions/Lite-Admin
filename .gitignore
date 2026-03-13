@@ -35,6 +35,9 @@ coverage/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code
+.claude/
 *.swp
 *.swo
 .DS_Store
