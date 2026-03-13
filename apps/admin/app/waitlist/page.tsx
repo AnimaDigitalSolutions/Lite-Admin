@@ -19,7 +19,6 @@ import {
   EnvelopeIcon,
   PaperAirplaneIcon,
   ChevronDownIcon,
-  ChevronUpIcon,
   PlusIcon,
   XMarkIcon,
   ClipboardDocumentIcon,
@@ -359,23 +358,19 @@ export default function WaitlistPage() {
 
         {/* Email Testing */}
         <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="flex items-center gap-2">
-                <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
-                Test Waitlist Email
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTestEmail(!showTestEmail)}
-              >
-                {showTestEmail ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
-              </Button>
-            </div>
-          </CardHeader>
+          <button
+            type="button"
+            onClick={() => setShowTestEmail(!showTestEmail)}
+            className="flex w-full items-center justify-between px-6 py-4 text-left"
+          >
+            <CardTitle className="flex items-center gap-2">
+              <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
+              Test Waitlist Email
+            </CardTitle>
+            <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${showTestEmail ? 'rotate-180' : ''}`} />
+          </button>
           {showTestEmail && (
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 border-t border-gray-100 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

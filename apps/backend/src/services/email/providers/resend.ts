@@ -4,18 +4,22 @@ import config from '../../../config/index.js';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import SettingsService from '../../settings/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface ResendConfig {
   apiKey: string;
+  fromAddress?: string;
+  fromName?: string;
+  notificationEmail?: string;
 }
 
 interface EmailData {
   to: string;
   subject: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ContactData {
@@ -34,15 +38,30 @@ interface WaitlistData {
 class ResendProvider {
   private apiKey: string;
   private resend: Resend | null;
+  private fromAddress: string;
+  private fromName: string;
+  private notificationEmail: string;
   private templates: Record<string, string>;
 
   constructor(providerConfig: ResendConfig) {
     this.apiKey = providerConfig.apiKey;
     this.resend = this.apiKey ? new Resend(this.apiKey) : null;
+    this.fromAddress = providerConfig.fromAddress || config.email.from;
+    this.fromName = providerConfig.fromName || 'Lite Admin';
+    this.notificationEmail = providerConfig.notificationEmail || providerConfig.fromAddress || config.email.from;
     this.templates = {};
   }
 
   async loadTemplate(templateName: string): Promise<string> {
+    // Check for DB override (custom template set via admin UI)
+    try {
+      const settings = await SettingsService.getInstance();
+      const custom = settings.get(`email_template_${templateName}`);
+      if (custom) return custom;
+    } catch {
+      // Settings not ready — fall through to file
+    }
+
     if (!this.templates[templateName]) {
       const templatePath = path.join(__dirname, '../templates', `${templateName}.html`);
       this.templates[templateName] = await readFile(templatePath, 'utf-8');
@@ -61,7 +80,7 @@ class ResendProvider {
 
       const payload = {
         to: [data.to],
-        from: data.from || config.email.from,
+        from: (data['from'] as string | undefined) ?? (this.fromName ? `${this.fromName} <${this.fromAddress}>` : this.fromAddress),
         subject: data.subject,
         html: html,
         text: this.htmlToText(html),
@@ -79,13 +98,13 @@ class ResendProvider {
         message: 'Failed to send email via Resend',
         error: error
       });
-      throw new Error(`Email sending failed: ${(error as any).message}`);
+      throw new Error(`Email sending failed: ${(error as Error).message}`);
     }
   }
 
-  renderTemplate(template: string, data: Record<string, any>): string {
+  renderTemplate(template: string, data: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return data[key] || match;
+      return String(data[key] ?? match);
     });
   }
 
@@ -103,7 +122,7 @@ class ResendProvider {
 
   async sendContactNotification(contactData: ContactData): Promise<void> {
     return this.send('contact', {
-      to: config.email.from, // Send to admin
+      to: this.notificationEmail,
       subject: `New Contact Form Submission from ${contactData.name}`,
       name: contactData.name,
       email: contactData.email,

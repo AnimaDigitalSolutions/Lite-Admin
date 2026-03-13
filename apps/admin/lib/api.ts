@@ -340,6 +340,31 @@ export const usersApi = {
   },
 };
 
+// Email Templates API
+export const templatesApi = {
+  list: async () => {
+    const response = await api.get('/admin/email-templates');
+    return response.data as {
+      data: Record<string, {
+        name: string;
+        default_html: string;
+        custom_html: string | null;
+        variables: string[];
+      }>;
+    };
+  },
+
+  update: async (name: string, html: string) => {
+    const response = await api.put(`/admin/email-templates/${name}`, { html });
+    return response.data;
+  },
+
+  reset: async (name: string) => {
+    const response = await api.delete(`/admin/email-templates/${name}`);
+    return response.data;
+  },
+};
+
 // Email Testing API
 export const emailTestApi = {
   testContact: async (data: {

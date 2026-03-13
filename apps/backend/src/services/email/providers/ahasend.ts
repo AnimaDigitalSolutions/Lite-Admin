@@ -4,18 +4,23 @@ import config from '../../../config/index.js';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import SettingsService from '../../settings/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface AhasendConfig {
   apiKey: string;
+  accountId: string;
+  fromAddress?: string;
+  fromName?: string;
+  notificationEmail?: string;
 }
 
 interface EmailData {
   to: string;
   subject: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ContactData {
@@ -33,16 +38,31 @@ interface WaitlistData {
 
 class AhasendProvider {
   private apiKey: string;
-  private apiUrl: string;
+  private accountId: string;
+  private fromAddress: string;
+  private fromName: string;
+  private notificationEmail: string;
   private templates: Record<string, string>;
 
   constructor(providerConfig: AhasendConfig) {
     this.apiKey = providerConfig.apiKey;
-    this.apiUrl = 'https://api.ahasend.com/v1';
+    this.accountId = providerConfig.accountId;
+    this.fromAddress = providerConfig.fromAddress || config.email.from;
+    this.fromName = providerConfig.fromName || 'Lite Admin';
+    this.notificationEmail = providerConfig.notificationEmail || providerConfig.fromAddress || config.email.from;
     this.templates = {};
   }
 
   async loadTemplate(templateName: string): Promise<string> {
+    // Check for DB override (custom template set via admin UI)
+    try {
+      const settings = await SettingsService.getInstance();
+      const custom = settings.get(`email_template_${templateName}`);
+      if (custom) return custom;
+    } catch {
+      // Settings not ready — fall through to file
+    }
+
     if (!this.templates[templateName]) {
       const templatePath = path.join(__dirname, '../templates', `${templateName}.html`);
       this.templates[templateName] = await readFile(templatePath, 'utf-8');
@@ -55,46 +75,49 @@ class AhasendProvider {
       if (!this.apiKey) {
         throw new Error('AHASEND_API_KEY is not configured');
       }
+      if (!this.accountId) {
+        throw new Error('AHASEND_ACCOUNT_ID is not configured');
+      }
 
       const template = await this.loadTemplate(templateName);
       const html = this.renderTemplate(template, data);
 
+      const toName = (data['name'] as string | undefined) ?? '';
       const payload = {
-        to: data.to,
-        from: data.from || config.email.from,
+        from: { email: this.fromAddress, name: this.fromName },
+        recipients: [{ email: data.to, name: toName }],
         subject: data.subject,
-        html: html,
-        text: this.htmlToText(html),
+        html_content: html,
+        text_content: this.htmlToText(html),
       };
 
       const response = await axios.post(
-        `${this.apiUrl}/send`,
+        `https://api.ahasend.com/v2/accounts/${this.accountId}/messages`,
         payload,
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
+          validateStatus: (status) => status === 200 || status === 202,
         }
       );
 
       logger.info({
-        message: `Email sent via AHASEND: ${templateName}`,
-        data: { to: data.to, messageId: response.data.messageId }
+        message: `Email sent via AhaSend: ${templateName}`,
+        data: { to: data.to, messageId: response.data?.id }
       });
 
     } catch (error) {
-      logger.error({
-        message: 'Failed to send email via AHASEND',
-        error: error
-      });
-      throw new Error(`Email sending failed: ${(error as any).message}`);
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error({ message: `Failed to send email via AhaSend: ${msg}` });
+      throw new Error(`Email sending failed: ${msg}`);
     }
   }
 
-  renderTemplate(template: string, data: Record<string, any>): string {
+  renderTemplate(template: string, data: Record<string, unknown>): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return data[key] || match;
+      return String(data[key] ?? match);
     });
   }
 
@@ -112,7 +135,7 @@ class AhasendProvider {
 
   async sendContactNotification(contactData: ContactData): Promise<void> {
     return this.send('contact', {
-      to: config.email.from, // Send to admin
+      to: this.notificationEmail,
       subject: `New Contact Form Submission from ${contactData.name}`,
       name: contactData.name,
       email: contactData.email,
