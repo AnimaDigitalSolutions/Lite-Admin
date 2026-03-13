@@ -1,6 +1,6 @@
 #!/usr/bin/env just --justfile
 
-# Lite-Backend Development Commands
+# Lite-Admin Development Commands
 # Run 'just' to see all available commands
 
 set shell := ["bash", "-c"]
@@ -23,9 +23,9 @@ export NC := '\033[0m' # No Color
 
 # Interactive setup for first-time users
 quickstart:
-  @echo -e "${GREEN}🎯 Lite-Backend Quick Start Setup${NC}"
+  @echo -e "${GREEN}🎯 Lite-Admin Quick Start Setup${NC}"
   @echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  @echo -e "\nThis will guide you through setting up Lite-Backend for the first time.\n"
+  @echo -e "\nThis will guide you through setting up Lite-Admin for the first time.\n"
   @just check-requirements
   @echo -e "\n${GREEN}✅ System requirements check passed!${NC}\n"
   @echo -e "${BLUE}📦 Step 1: Installing dependencies...${NC}"
@@ -63,7 +63,7 @@ check-requirements:
 
 # Install all dependencies
 install:
-  @echo -e "${GREEN}🚀 Setting up Lite-Backend...${NC}"
+  @echo -e "${GREEN}🚀 Setting up Lite-Admin...${NC}"
   @just check-requirements
   @echo -e "${BLUE}📦 Installing dependencies...${NC}"
   pnpm install
@@ -93,7 +93,7 @@ setup-env:
 
 # Start development server
 dev:
-  @echo -e "${GREEN}🚀 Starting Lite-Backend Development Server...${NC}"
+  @echo -e "${GREEN}🚀 Starting Lite-Admin Development Server...${NC}"
   @just validate-env
   @echo -e "${BLUE}🗄️  Initializing database...${NC}"
   @just db-init
@@ -102,28 +102,28 @@ dev:
 
 # Start in production mode
 start:
-  @echo -e "${GREEN}🚀 Starting Lite-Backend in production mode...${NC}"
+  @echo -e "${GREEN}🚀 Starting Lite-Admin in production mode...${NC}"
   @just validate-env
   @NODE_ENV=production pnpm start
 
 # Start with PM2
 pm2-start:
-  @echo -e "${GREEN}🚀 Starting Lite-Backend with PM2...${NC}"
+  @echo -e "${GREEN}🚀 Starting Lite-Admin with PM2...${NC}"
   @pm2 start ecosystem.config.js
 
 # Stop PM2
 pm2-stop:
-  @echo -e "${YELLOW}🛑 Stopping Lite-Backend PM2 process...${NC}"
+  @echo -e "${YELLOW}🛑 Stopping Lite-Admin PM2 process...${NC}"
   @pm2 stop ecosystem.config.js
 
 # Restart PM2
 pm2-restart:
-  @echo -e "${YELLOW}🔄 Restarting Lite-Backend PM2 process...${NC}"
+  @echo -e "${YELLOW}🔄 Restarting Lite-Admin PM2 process...${NC}"
   @pm2 restart ecosystem.config.js
 
 # PM2 logs
 pm2-logs:
-  @pm2 logs lite-backend
+  @pm2 logs lite-admin
 
 # === DATABASE MANAGEMENT ===
 
@@ -182,7 +182,7 @@ validate-env:
 
 # Validate project (lint + type-check)
 validate:
-  @echo -e "${CYAN}🔍 Validating Lite-Backend Project...${NC}"
+  @echo -e "${CYAN}🔍 Validating Lite-Admin Project...${NC}"
   @echo -e "\n${BLUE}📦 Installing dependencies...${NC}"
   @pnpm install
   @echo -e "\n${BLUE}🔧 Type checking...${NC}"
@@ -221,11 +221,11 @@ build:
 # Build Docker image
 docker-build:
   @echo -e "${BLUE}🐳 Building Docker image...${NC}"
-  @docker build -t lite-backend:latest -f docker/Dockerfile .
+  @docker build -t lite-admin:latest -f docker/Dockerfile .
 
 # Run with Docker Compose
 docker-up:
-  @echo -e "${GREEN}🚀 Starting Lite-Backend with Docker...${NC}"
+  @echo -e "${GREEN}🚀 Starting Lite-Admin with Docker...${NC}"
   @docker-compose -f docker/docker-compose.yml up -d
 
 # Stop Docker services
@@ -255,7 +255,7 @@ clean-all: clean
 
 # Check system status
 status:
-  @echo -e "${CYAN}📊 Lite-Backend Status${NC}"
+  @echo -e "${CYAN}📊 Lite-Admin Status${NC}"
   @echo -e "\n${BLUE}Services:${NC}"
   @lsof -ti:3001 >/dev/null 2>&1 && echo -e "  🟢 API Server (port 3001)" || echo -e "  🔴 API Server"
   @echo -e "\n${BLUE}Database:${NC}"
@@ -266,7 +266,7 @@ status:
 
 # System diagnostics
 doctor:
-  @echo -e "${CYAN}🩺 Running Lite-Backend Doctor...${NC}"
+  @echo -e "${CYAN}🩺 Running Lite-Admin Doctor...${NC}"
   @echo -e "\n${BLUE}📋 System Requirements:${NC}"
   @command -v node >/dev/null && echo -e "  ✅ Node.js: $(node -v)" || echo -e "  ❌ Node.js: Not found"
   @command -v pnpm >/dev/null && echo -e "  ✅ pnpm: $(pnpm -v)" || echo -e "  ❌ pnpm: Not found"
@@ -302,7 +302,7 @@ logs:
 # Show detailed help
 help:
   @echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-  @echo -e "${GREEN}                           Lite-Backend Development Commands                           ${NC}"
+  @echo -e "${GREEN}                           Lite-Admin Development Commands                           ${NC}"
   @echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
   @echo -e "\n${BLUE}🚀 Quick Start:${NC}"
   @echo -e "  just quickstart       - Interactive first-time setup"

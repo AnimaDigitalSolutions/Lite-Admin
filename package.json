@@ -1,8 +1,8 @@
 {
-  "name": "lite-backend-monorepo",
+  "name": "lite-admin-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Monorepo for Lite Backend with Admin Dashboard",
+  "description": "Monorepo for Lite Admin with Backend API and Dashboard",
   "scripts": {
     "dev": "turbo run dev",
     "dev:backend": "turbo run dev --filter=backend",
@@ -20,6 +20,12 @@
     "prettier": "^3.3.0",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "glob@<9": "^10.4.0",
+      "rimraf@<4": "^5.0.10"
+    }
   },
   "packageManager": "pnpm@9.15.0",
   "engines": {

@@ -203,7 +203,7 @@ async function runMigrations() {
 }
 
 async function showMenu() {
-  console.log(chalk.cyan('\n🛠️  Lite Backend Admin CLI\n'));
+  console.log(chalk.cyan('\n🛠️  Lite Admin CLI\n'));
   console.log('1. Show statistics');
   console.log('2. List contact submissions');
   console.log('3. View contact details');
@@ -251,7 +251,7 @@ async function showMenu() {
 // Command line arguments
 program
   .name('admin-cli')
-  .description('Lite Backend Admin CLI')
+  .description('Lite Admin CLI')
   .option('--api-url <url>', 'API URL', API_URL)
   .option('--api-key <key>', 'Admin API key', API_KEY)
   .command('stats', 'Show system statistics')

@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'lite-backend',
+    name: 'lite-admin',
     script: 'src/server.js',
     instances: 'max',
     exec_mode: 'cluster',

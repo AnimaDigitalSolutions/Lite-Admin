@@ -5,7 +5,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: lite-backend
+    container_name: lite-admin
     restart: unless-stopped
     ports:
       - "3001:3001"
@@ -27,7 +27,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: lite-backend-postgres
+    container_name: lite-admin-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: litebackend
@@ -48,7 +48,7 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: lite-backend-nginx
+    container_name: lite-admin-nginx
     restart: unless-stopped
     ports:
       - "80:80"
