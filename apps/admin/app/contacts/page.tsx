@@ -21,10 +21,10 @@ import {
   PaperAirplaneIcon,
   ChevronDownIcon,
   PlusIcon,
-  ClipboardDocumentIcon,
   PencilSquareIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
+import { Copy, Check } from 'lucide-react';
 
 type ProjectType = 'web' | 'mobile' | 'erp' | 'consulting' | 'other';
 
@@ -526,9 +526,11 @@ export default function ContactsPage() {
                     <thead className="sticky top-0 z-10">
                       <tr className="border-b bg-gray-50">
                         <th className="p-3 w-8">
-                          <input type="checkbox" className="rounded"
-                            checked={selectedIds.size === filteredContacts.length && filteredContacts.length > 0}
-                            onChange={e => handleSelectAll(e.target.checked)} />
+                          <div className={`${selectedIds.size > 0 ? 'opacity-100' : 'opacity-0 hover:opacity-100'} transition-opacity`}>
+                            <input type="checkbox" className="rounded cursor-pointer"
+                              checked={selectedIds.size === filteredContacts.length && filteredContacts.length > 0}
+                              onChange={e => handleSelectAll(e.target.checked)} />
+                          </div>
                         </th>
                         <th className="text-left p-3 font-medium">Name</th>
                         <th className="text-left p-3 font-medium">Email</th>
@@ -540,11 +542,13 @@ export default function ContactsPage() {
                     </thead>
                     <tbody>
                       {filteredContacts.map((contact) => (
-                        <tr key={contact.id} className={`border-b hover:bg-gray-50 ${selectedIds.has(contact.id) ? 'bg-blue-50' : ''} even:bg-gray-50/50`}>
+                        <tr key={contact.id} className={`border-b hover:bg-gray-50 ${selectedIds.has(contact.id) ? 'bg-blue-50' : ''} even:bg-gray-50/50 group/row`}>
                           <td className="p-3">
-                            <input type="checkbox" className="rounded"
-                              checked={selectedIds.has(contact.id)}
-                              onChange={e => handleSelectOne(contact.id, e.target.checked)} />
+                            <div className={`${selectedIds.has(contact.id) ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
+                              <input type="checkbox" className="rounded cursor-pointer"
+                                checked={selectedIds.has(contact.id)}
+                                onChange={e => handleSelectOne(contact.id, e.target.checked)} />
+                            </div>
                           </td>
                           <td className="p-3">
                             <div className="font-medium">{highlightMatch(contact.name, searchTerm)}</div>
@@ -557,7 +561,7 @@ export default function ContactsPage() {
                               </span>
                               <button type="button" onClick={() => void copyEmail(contact.email)} title="Copy email"
                                 className={`transition-colors shrink-0 ${copiedEmail === contact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                                <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+                                {copiedEmail === contact.email ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           </td>
@@ -808,7 +812,7 @@ export default function ContactsPage() {
                         </p>
                         <button type="button" onClick={() => void copyEmail(selectedContact.email)} title="Copy email"
                           className={`transition-colors ${copiedEmail === selectedContact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                          <ClipboardDocumentIcon className="h-4 w-4" />
+                          {copiedEmail === selectedContact.email ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>

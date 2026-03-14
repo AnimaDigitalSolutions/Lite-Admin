@@ -22,13 +22,13 @@ import {
   ChevronDownIcon,
   PlusIcon,
   XMarkIcon,
-  ClipboardDocumentIcon,
   PencilSquareIcon,
   CheckCircleIcon,
   TagIcon,
   MegaphoneIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
+import { Copy, Check } from 'lucide-react';
 
 // === Types ===
 
@@ -422,7 +422,9 @@ function SubscribersTab() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-3 w-8">
-                        <input type="checkbox" checked={selectedEntries.size === filteredEntries.length && filteredEntries.length > 0} onChange={(e) => handleSelectAll(e.target.checked)} className="rounded" />
+                        <div className={`${selectedEntries.size > 0 ? 'opacity-100' : 'opacity-0 hover:opacity-100'} transition-opacity`}>
+                          <input type="checkbox" checked={selectedEntries.size === filteredEntries.length && filteredEntries.length > 0} onChange={(e) => handleSelectAll(e.target.checked)} className="rounded cursor-pointer" />
+                        </div>
                       </th>
                       <th className="text-left p-3 font-medium">Name</th>
                       <th className="text-left p-3 font-medium">Email</th>
@@ -434,9 +436,11 @@ function SubscribersTab() {
                   </thead>
                   <tbody>
                     {filteredEntries.map((entry) => (
-                      <tr key={entry.id} className={`border-b ${editingId === entry.id ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                      <tr key={entry.id} className={`border-b ${editingId === entry.id ? 'bg-blue-50' : 'hover:bg-gray-50'} group/row`}>
                         <td className="p-3">
-                          <input type="checkbox" checked={selectedEntries.has(entry.id)} onChange={(e) => handleSelectEntry(entry.id, e.target.checked)} className="rounded" />
+                          <div className={`${selectedEntries.has(entry.id) ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
+                            <input type="checkbox" checked={selectedEntries.has(entry.id)} onChange={(e) => handleSelectEntry(entry.id, e.target.checked)} className="rounded cursor-pointer" />
+                          </div>
                         </td>
                         <td className="p-3">
                           {editingId === entry.id ? (
@@ -461,7 +465,7 @@ function SubscribersTab() {
                               </span>
                               <button type="button" onClick={() => void copyEmail(entry.email)} title="Copy email"
                                 className={`transition-colors shrink-0 ${copiedEmail === entry.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                                <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+                                {copiedEmail === entry.email ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           )}
@@ -573,7 +577,7 @@ function SubscribersTab() {
               const emails = entries.map(e => e.email).join(', ');
               await navigator.clipboard.writeText(emails);
             }}>
-              <ClipboardDocumentIcon className="h-6 w-6" />
+              <Copy className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Copy All Emails</div>
                 <div className="text-xs text-gray-500">Comma-separated list</div>
