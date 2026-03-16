@@ -32,11 +32,11 @@ export function SecretField({ value, onChange, label, placeholder }: SecretField
           className="font-mono text-sm"
         />
         <button type="button" onClick={() => setRevealed(r => !r)}
-          className="rounded border px-2 text-gray-500 hover:bg-gray-50" title={revealed ? 'Hide' : 'Reveal'}>
+          className="rounded border px-2 text-muted-foreground hover:bg-accent" title={revealed ? 'Hide' : 'Reveal'}>
           {revealed ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
         </button>
         <button type="button" onClick={() => void copy(value, label)}
-          className="rounded border px-2 text-gray-500 hover:bg-gray-50" title="Copy">
+          className="rounded border px-2 text-muted-foreground hover:bg-accent" title="Copy">
           <ClipboardDocumentIcon className={`h-4 w-4 ${isCopied(label) ? 'text-emerald-600' : ''}`} />
         </button>
       </div>

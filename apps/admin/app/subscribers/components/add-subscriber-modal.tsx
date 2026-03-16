@@ -61,11 +61,11 @@ export default function AddSubscriberModal({ open, onClose, onAdded }: AddSubscr
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
               <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="user@example.com" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name (optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Name (optional)</label>
               <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Jane Doe" />
             </div>
             {error && (

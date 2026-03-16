@@ -103,7 +103,7 @@ function getTypeBadge(mimeType: string): { label: string; color: string } {
     case 'image': return { label: 'IMG', color: 'bg-blue-100 text-blue-800' };
     case 'video': return { label: 'VID', color: 'bg-purple-100 text-purple-800' };
     case 'document': return { label: 'DOC', color: 'bg-amber-100 text-amber-800' };
-    default: return { label: 'FILE', color: 'bg-gray-100 text-gray-800' };
+    default: return { label: 'FILE', color: 'bg-accent text-foreground' };
   }
 }
 
@@ -349,7 +349,7 @@ export default function MediaPage() {
     if (!map) return null;
     if (sortBy === map.asc) return <ChevronUpIcon className="h-3 w-3" />;
     if (sortBy === map.desc) return <ChevronDownIcon className="h-3 w-3" />;
-    return <ArrowsUpDownIcon className="h-3 w-3 text-gray-300" />;
+    return <ArrowsUpDownIcon className="h-3 w-3 text-muted-foreground/50" />;
   };
 
   // --- Filter + Sort Pipeline ---
@@ -395,8 +395,8 @@ export default function MediaPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
-            <p className="mt-1 text-gray-600">
+            <h1 className="text-2xl font-bold text-foreground">Media Library</h1>
+            <p className="mt-1 text-muted-foreground">
               {filteredAndSortedItems.length} {filteredAndSortedItems.length === 1 ? 'item' : 'items'}
               {(searchTerm || filterProject || filterType !== 'all') && ` (filtered from ${mediaItems.length})`}
             </p>
@@ -404,7 +404,7 @@ export default function MediaPage() {
           {/* Bulk actions */}
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">{selectedIds.size} selected</span>
+              <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
               <Button size="sm" variant="outline" onClick={() => void handleBulkCopyPaths()}>
                 <ClipboardDocumentIcon className="h-4 w-4 mr-1" />
                 Copy Paths
@@ -438,17 +438,17 @@ export default function MediaPage() {
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                 isDragActive
                   ? 'border-blue-400 bg-blue-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  : 'border-border hover:border-border'
               }`}
             >
               <input {...getInputProps()} />
-              <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-600">
+              <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">
                 {isDragActive
                   ? 'Drop the files here...'
                   : 'Drag & drop files here, or click to select'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Images: JPEG, PNG, WebP, GIF · Videos: MP4, WebM, MOV · Documents: PDF · Max {prefs.maxUploadSizeMB || 10} MB
               </p>
             </div>
@@ -476,11 +476,11 @@ export default function MediaPage() {
             {uploads.length > 0 && (
               <div className="mt-4 space-y-2">
                 {uploads.map((upload, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
                     <span className="text-sm truncate">{upload.file.name}</span>
                     <div className="flex items-center gap-2">
                       {upload.status === 'uploading' && (
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div className="w-16 bg-muted rounded-full h-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${upload.progress}%` }}
@@ -505,7 +505,7 @@ export default function MediaPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search media..."
                 value={searchTerm}
@@ -518,7 +518,7 @@ export default function MediaPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as MediaType | 'all')}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-border rounded-md text-sm"
           >
             {TYPE_FILTERS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -528,7 +528,7 @@ export default function MediaPage() {
           <select
             value={filterProject}
             onChange={(e) => setFilterProject(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-border rounded-md text-sm"
           >
             <option value="">All Projects</option>
             {uniqueProjects.map(project => (
@@ -539,14 +539,14 @@ export default function MediaPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            className="px-3 py-2 border border-border rounded-md text-sm"
           >
             {SORT_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
 
-          <div className="flex border border-gray-300 rounded-md">
+          <div className="flex border border-border rounded-md">
             <Button
               variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
               size="sm"
@@ -570,7 +570,7 @@ export default function MediaPage() {
         {loading ? (
           <div className="text-center py-12">Loading media...</div>
         ) : filteredAndSortedItems.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             {searchTerm || filterProject || filterType !== 'all'
               ? 'No items match your filters'
               : 'No media uploaded yet'}
@@ -598,8 +598,8 @@ export default function MediaPage() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <DocumentTextIcon className="h-12 w-12 text-gray-400" />
+                      <div className="w-full h-full bg-accent flex items-center justify-center">
+                        <DocumentTextIcon className="h-12 w-12 text-muted-foreground" />
                       </div>
                     )}
                     {/* Hover overlay */}
@@ -652,7 +652,7 @@ export default function MediaPage() {
                         checked={isSelected}
                         onChange={() => toggleSelectOne(item.id)}
                         onClick={(e) => e.stopPropagation()}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                        className="h-4 w-4 rounded border-border text-blue-600 cursor-pointer"
                       />
                     </div>
                   </div>
@@ -663,7 +663,7 @@ export default function MediaPage() {
                         type="button"
                         onClick={() => void copyMediaPath(item)}
                         title="Copy media path"
-                        className={`shrink-0 transition-colors ${isCopied(item.id) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
+                        className={`shrink-0 transition-colors ${isCopied(item.id) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover/name:opacity-100 hover:text-foreground'}`}
                       >
                         {isCopied(item.id) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                       </button>
@@ -672,7 +672,7 @@ export default function MediaPage() {
                       {item.project_name && (
                         <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{item.project_name}</span>
                       )}
-                      <span className="text-xs text-gray-500">{formatFileSize(item.file_size)}</span>
+                      <span className="text-xs text-muted-foreground">{formatFileSize(item.file_size)}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -686,7 +686,7 @@ export default function MediaPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="sticky top-0 z-10">
-                    <tr className="border-b bg-gray-50">
+                    <tr className="border-b bg-muted">
                       <th className="p-3 w-8">
                         <div className={`${selectedIds.size > 0 ? 'opacity-100' : 'opacity-0 hover:opacity-100'} transition-opacity`}>
                           <input
@@ -699,7 +699,7 @@ export default function MediaPage() {
                       </th>
                       <th className="text-left p-3 font-medium w-16"></th>
                       <th
-                        className="text-left p-3 font-medium cursor-pointer select-none hover:text-gray-900"
+                        className="text-left p-3 font-medium cursor-pointer select-none hover:text-foreground"
                         onClick={() => handleColumnSort('name')}
                       >
                         <span className="flex items-center gap-1">
@@ -709,7 +709,7 @@ export default function MediaPage() {
                       </th>
                       <th className="text-left p-3 font-medium">Type</th>
                       <th
-                        className="text-right p-3 font-medium cursor-pointer select-none hover:text-gray-900"
+                        className="text-right p-3 font-medium cursor-pointer select-none hover:text-foreground"
                         onClick={() => handleColumnSort('size')}
                       >
                         <span className="flex items-center justify-end gap-1">
@@ -720,7 +720,7 @@ export default function MediaPage() {
                       <th className="text-left p-3 font-medium">Dimensions</th>
                       <th className="text-left p-3 font-medium">Project</th>
                       <th
-                        className="text-left p-3 font-medium cursor-pointer select-none hover:text-gray-900"
+                        className="text-left p-3 font-medium cursor-pointer select-none hover:text-foreground"
                         onClick={() => handleColumnSort('date')}
                       >
                         <span className="flex items-center gap-1">
@@ -737,7 +737,7 @@ export default function MediaPage() {
                       const mediaType = getMediaType(item.mime_type);
                       const isSelected = selectedIds.has(item.id);
                       return (
-                        <tr key={item.id} className={`border-b hover:bg-gray-50 even:bg-gray-50/50 group/row ${isSelected ? 'bg-blue-50' : ''}`}>
+                        <tr key={item.id} className={`border-b hover:bg-accent even:bg-muted/50 group/row ${isSelected ? 'bg-blue-50' : ''}`}>
                           <td className="p-3">
                             <div className={`${isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
                               <input
@@ -750,7 +750,7 @@ export default function MediaPage() {
                           </td>
                           <td className="p-3">
                             <div
-                              className="w-12 h-12 relative rounded overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                              className="w-12 h-12 relative rounded overflow-hidden bg-accent flex-shrink-0 cursor-pointer"
                               onClick={() => setPreviewItem(item)}
                             >
                               {item.thumbnailUrl ? (
@@ -767,7 +767,7 @@ export default function MediaPage() {
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                  <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                                  <DocumentTextIcon className="h-5 w-5 text-muted-foreground" />
                                 </div>
                               )}
                             </div>
@@ -785,20 +785,20 @@ export default function MediaPage() {
                                 type="button"
                                 onClick={() => void copyMediaPath(item)}
                                 title="Copy media path"
-                                className={`shrink-0 transition-colors ${isCopied(item.id) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
+                                className={`shrink-0 transition-colors ${isCopied(item.id) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover/name:opacity-100 hover:text-foreground'}`}
                               >
                                 {isCopied(item.id) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
-                            <div className="text-xs text-gray-500">{getFormatLabel(item.mime_type)}</div>
+                            <div className="text-xs text-muted-foreground">{getFormatLabel(item.mime_type)}</div>
                           </td>
                           <td className="p-3">
                             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${badge.color}`}>
                               {badge.label}
                             </span>
                           </td>
-                          <td className="p-3 text-sm text-gray-600 text-right tabular-nums">{formatFileSize(item.file_size)}</td>
-                          <td className="p-3 text-sm text-gray-600">
+                          <td className="p-3 text-sm text-muted-foreground text-right tabular-nums">{formatFileSize(item.file_size)}</td>
+                          <td className="p-3 text-sm text-muted-foreground">
                             {item.width && item.height ? `${item.width} × ${item.height}` : '—'}
                           </td>
                           <td className="p-3">
@@ -807,10 +807,10 @@ export default function MediaPage() {
                                 {highlightMatch(item.project_name, searchTerm)}
                               </span>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
                           </td>
-                          <td className="p-3 text-sm text-gray-600" title={formatDateFull(item.uploaded_at)}>{formatDate(item.uploaded_at)}</td>
+                          <td className="p-3 text-sm text-muted-foreground" title={formatDateFull(item.uploaded_at)}>{formatDate(item.uploaded_at)}</td>
                           <td className="p-3">
                             <div className="flex gap-1">
                               <Button

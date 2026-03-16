@@ -57,17 +57,17 @@ export default function TestEmailPanel({ onEmailSent }: TestEmailPanelProps) {
           <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
           Test Subscriber Email
         </CardTitle>
-        <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${showTestEmail ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${showTestEmail ? 'rotate-180' : ''}`} />
       </button>
       {showTestEmail && (
-        <CardContent className="space-y-4 border-t border-gray-100 pt-4">
+        <CardContent className="space-y-4 border-t border-border pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Test Email Address *</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Test Email Address *</label>
               <Input type="email" value={testEmailData.test_email} onChange={(e) => setTestEmailData(prev => ({ ...prev, test_email: e.target.value }))} placeholder="your.email@example.com" required />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Test Name (Optional)</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Test Name (Optional)</label>
               <Input value={testEmailData.name} onChange={(e) => setTestEmailData(prev => ({ ...prev, name: e.target.value }))} placeholder="Jane Smith" />
             </div>
           </div>

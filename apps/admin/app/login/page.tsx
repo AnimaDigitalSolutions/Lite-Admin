@@ -43,10 +43,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Sign in to Admin Dashboard
           </h2>
         </div>
@@ -87,9 +87,9 @@ export default function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="h-4 w-4 text-gray-400" />
+                  <EyeSlashIcon className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                  <EyeIcon className="h-4 w-4 text-gray-400" />
+                  <EyeIcon className="h-4 w-4 text-muted-foreground" />
                 )}
               </button>
             </div>
@@ -122,10 +122,10 @@ export default function LoginPage() {
 
       {/* Full-screen loading overlay during redirect */}
       {loading && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="flex flex-col items-center gap-4">
             <Spinner size="lg" />
-            <p className="text-gray-600 font-medium">Loading dashboard...</p>
+            <p className="text-muted-foreground font-medium">Loading dashboard...</p>
           </div>
         </div>
       )}

@@ -88,19 +88,19 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
 
   return (
     <div>
-      <label className="text-xs font-medium text-gray-500 block mb-2">Activity</label>
+      <label className="text-xs font-medium text-muted-foreground block mb-2">Activity</label>
       {notesLoading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-muted-foreground">Loading…</p>
       ) : notes.length === 0 ? (
-        <p className="text-sm text-gray-400">No activity yet</p>
+        <p className="text-sm text-muted-foreground">No activity yet</p>
       ) : (
         <div className="space-y-2">
           {notes.map(note => {
             if (note.type === 'system') {
               return (
-                <div key={note.id} className="text-sm rounded px-3 py-2 bg-gray-50 text-gray-500 italic">
+                <div key={note.id} className="text-sm rounded px-3 py-2 bg-muted text-muted-foreground italic">
                   <p>{note.content}</p>
-                  <p className="text-xs text-gray-400 mt-1">{formatDate(note.created_at)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formatDate(note.created_at)}</p>
                 </div>
               );
             }
@@ -128,7 +128,7 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                         type="button"
                         onClick={() => void handleToggleDone(note.id)}
                         className={`mt-0.5 h-4 w-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${
-                          isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 hover:border-emerald-400'
+                          isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-border hover:border-emerald-400'
                         }`}
                         title={isDone ? 'Mark undone' : 'Mark done'}
                       >
@@ -153,20 +153,20 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                     ) : (
                       <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${style.dot}`} />
                     )}
-                    <p className={`whitespace-pre-wrap flex-1 ${isDone ? 'line-through text-gray-400' : ''}`}>
+                    <p className={`whitespace-pre-wrap flex-1 ${isDone ? 'line-through text-muted-foreground' : ''}`}>
                       {note.content}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void handleDeleteNote(note.id)}
-                    className="opacity-0 group-hover/note:opacity-100 text-gray-400 hover:text-red-500 transition-opacity shrink-0 mt-0.5"
+                    className="opacity-0 group-hover/note:opacity-100 text-muted-foreground hover:text-red-500 transition-opacity shrink-0 mt-0.5"
                     title="Delete note"
                   >
                     <XMarkIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                <div className="text-xs text-gray-400 mt-1 ml-6 flex items-center flex-wrap gap-x-1.5">
+                <div className="text-xs text-muted-foreground mt-1 ml-6 flex items-center flex-wrap gap-x-1.5">
                   <span>{formatDate(note.created_at)}</span>
                   {subtype !== 'note' && (
                     <span className={
@@ -193,10 +193,10 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                             type="button"
                             onClick={(e) => openDatePicker(dueAt.split('T')[0], v => void handleUpdateTodoDue(note.id, v), e)}
                             className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0 text-xs font-medium cursor-pointer transition-colors ${
-                              isDone ? 'bg-gray-100 text-gray-400 line-through'
+                              isDone ? 'bg-accent text-muted-foreground line-through'
                               : isOverdue ? 'bg-red-100 text-red-700'
                               : isToday ? 'bg-amber-100 text-amber-700'
-                              : 'bg-gray-100 text-gray-600'
+                              : 'bg-accent text-muted-foreground'
                             }`}
                             title="Change due date"
                           >
@@ -208,7 +208,7 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                           <button
                             type="button"
                             onClick={() => void handleUpdateTodoDue(note.id, null)}
-                            className="opacity-0 group-hover/note:opacity-100 text-gray-300 hover:text-red-500 transition-opacity"
+                            className="opacity-0 group-hover/note:opacity-100 text-muted-foreground/50 hover:text-red-500 transition-opacity"
                             title="Clear due date"
                           >
                             <XMarkIcon className="h-3 w-3" />
@@ -220,7 +220,7 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                       <button
                         type="button"
                         onClick={(e) => openDatePicker('', v => void handleUpdateTodoDue(note.id, v), e)}
-                        className="opacity-0 group-hover/note:opacity-100 text-gray-300 hover:text-gray-500 transition-opacity"
+                        className="opacity-0 group-hover/note:opacity-100 text-muted-foreground/50 hover:text-muted-foreground transition-opacity"
                         title="Set due date"
                       >
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -265,8 +265,8 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                   ? value === 'todo' ? 'bg-emerald-600 text-white'
                   : value === 'message' ? 'bg-indigo-600 text-white'
                   : value === 'reply' ? 'bg-blue-600 text-white'
-                  : 'bg-gray-900 text-white'
-                  : 'bg-background text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  : 'bg-foreground text-background'
+                  : 'bg-background text-muted-foreground hover:text-foreground hover:bg-accent'
               }`}
             >
               {label}
@@ -300,7 +300,7 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                 onClick={() => setNoteColor(c.value)}
                 title={c.label}
                 className={`h-5 w-5 rounded-full border-2 transition-all ${c.dot} ${
-                  noteColor === c.value ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-300'
+                  noteColor === c.value ? 'border-foreground scale-110' : 'border-transparent hover:border-border'
                 }`}
               />
             ))}
@@ -309,11 +309,11 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
             {noteSubtype === 'todo' && (
               <>
                 {todoDueDate ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-accent text-muted-foreground border border-border">
                     <button
                       type="button"
                       onClick={(e) => openDatePicker(todoDueDate, v => setTodoDueDate(v), e)}
-                      className="inline-flex items-center gap-0.5 hover:text-gray-900 transition-colors"
+                      className="inline-flex items-center gap-0.5 hover:text-foreground transition-colors"
                     >
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -323,7 +323,7 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                     <button
                       type="button"
                       onClick={() => setTodoDueDate('')}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      className="text-muted-foreground hover:text-red-500 transition-colors"
                       title="Clear due date"
                     >
                       <XMarkIcon className="h-3 w-3" />
@@ -333,7 +333,7 @@ export default function ContactNotesSection({ contactId, expanded }: ContactNote
                   <button
                     type="button"
                     onClick={(e) => openDatePicker('', v => setTodoDueDate(v), e)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                     title="Set due date"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

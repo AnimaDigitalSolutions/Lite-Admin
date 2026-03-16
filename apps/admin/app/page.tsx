@@ -5,6 +5,7 @@ import { useTimezone } from '@/lib/timezone';
 import { getDisplayPrefs } from '@/lib/display-prefs';
 import ProtectedLayout from '@/components/protected-layout';
 import { statsApi } from '@/lib/api';
+import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UsersIcon, EnvelopeIcon, PhotoIcon, SignalIcon } from '@heroicons/react/24/outline';
 import {
@@ -132,13 +133,10 @@ export default function DashboardPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">Overview of your platform</p>
-        </div>
+        <PageHeader title="Dashboard" description="Overview of your platform" />
 
         {loading ? (
-          <div className="py-12 text-center text-gray-500">Loading...</div>
+          <div className="py-12 text-center text-muted-foreground">Loading...</div>
         ) : stats ? (
           <>
             {/* Stat cards */}
@@ -213,8 +211,8 @@ export default function DashboardPage() {
                       onClick={() => handleDaysChange(d)}
                       className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                         days === d
-                          ? 'bg-gray-900 text-white'
-                          : 'text-gray-500 hover:bg-gray-100'
+                          ? 'bg-foreground text-background'
+                          : 'text-muted-foreground hover:bg-accent'
                       }`}
                     >
                       {d}d

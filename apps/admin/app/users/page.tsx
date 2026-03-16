@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { TIMEZONE_OPTIONS, invalidateTimezoneCache } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
+import { PageHeader } from '@/components/page-header';
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -98,12 +99,7 @@ export default function UsersPage() {
   return (
     <ProtectedLayout>
       <div className="max-w-xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin User</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your admin account credentials.
-          </p>
-        </div>
+        <PageHeader title="Admin User" description="Manage your admin account credentials." />
 
         {/* Current account info */}
         <Card>
@@ -115,17 +111,17 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-lg font-bold text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-lg font-bold text-white">
                 {user?.email.charAt(0).toUpperCase()}
               </div>
               <div>
                 <div className="group flex items-center gap-1.5">
-                  <p className={`font-medium text-gray-900 ${prefs.truncateEmails ? '' : 'max-w-[220px] truncate'}`}
+                  <p className={`font-medium text-foreground ${prefs.truncateEmails ? '' : 'max-w-[220px] truncate'}`}
                     title={prefs.truncateEmails && truncateEmail(user?.email ?? '') !== (user?.email ?? '') ? user?.email : !prefs.truncateEmails ? user?.email : undefined}>
                     {prefs.truncateEmails ? truncateEmail(user?.email ?? '') : user?.email}
                   </p>
                   <button type="button" onClick={() => { if (user?.email) void copyToClipboard(user.email, 'email'); }} title="Copy email"
-                    className={`transition-colors ${isCopied('email') ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                    className={`transition-colors ${isCopied('email') ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}>
                     <ClipboardDocumentIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -135,10 +131,10 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
-            <div className="rounded-lg bg-gray-50 border px-4 py-3 text-sm text-gray-600 space-y-1">
+            <div className="rounded-lg bg-muted border px-4 py-3 text-sm text-muted-foreground space-y-1">
               <p>
                 <span className="font-medium">Login email:</span> configured via{' '}
-                <code className="rounded bg-gray-200 px-1 text-xs">ADMIN_USERNAME</code> env var
+                <code className="rounded bg-muted px-1 text-xs">ADMIN_USERNAME</code> env var
               </p>
               <p>
                 <span className="font-medium">Role:</span> super_admin (full access)
@@ -184,7 +180,7 @@ export default function UsersPage() {
                   minLength={8}
                   required
                 />
-                <p className="mt-1 text-xs text-gray-400">Minimum 8 characters</p>
+                <p className="mt-1 text-xs text-muted-foreground">Minimum 8 characters</p>
               </div>
               <div>
                 <Label htmlFor="confirm_pw" className="text-sm font-medium">Confirm new password</Label>
@@ -266,38 +262,38 @@ export default function UsersPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3 hover:bg-gray-50">
+            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3 hover:bg-accent">
               <div>
-                <p className="text-sm font-medium text-gray-900">Show geo info (flag, city, country)</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-sm font-medium text-foreground">Show geo info (flag, city, country)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Displays location data captured from the visitor&apos;s IP on leads and waitlist entries.
                 </p>
               </div>
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-gray-900"
+                className="h-4 w-4 accent-foreground"
                 checked={prefs.showGeoInfo}
                 onChange={e => updatePrefs({ showGeoInfo: e.target.checked })}
               />
             </label>
-            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3 hover:bg-gray-50">
+            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3 hover:bg-accent">
               <div>
-                <p className="text-sm font-medium text-gray-900">Truncate long emails</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-sm font-medium text-foreground">Truncate long emails</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Shortens long email addresses in tables. Full email is always available on hover and via copy.
                 </p>
               </div>
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-gray-900"
+                className="h-4 w-4 accent-foreground"
                 checked={prefs.truncateEmails}
                 onChange={e => updatePrefs({ truncateEmails: e.target.checked })}
               />
             </label>
             <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">Default dashboard date range</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-sm font-medium text-foreground">Default dashboard date range</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   The activity chart range shown on the dashboard for new sessions.
                 </p>
               </div>
@@ -325,8 +321,8 @@ export default function UsersPage() {
         </Card>
 
         {/* Future note */}
-        <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-500">
-          <p className="font-medium text-gray-700 mb-1">Multi-user support</p>
+        <div className="rounded-lg border border-dashed border-border bg-muted px-4 py-4 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground mb-1">Multi-user support</p>
           <p>This version supports a single admin account. Multi-user roles (editor, viewer, etc.) are planned for a future release.</p>
         </div>
       </div>

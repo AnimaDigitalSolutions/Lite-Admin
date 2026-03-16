@@ -35,6 +35,7 @@ import {
   ArrowPathIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { PageHeader } from '@/components/page-header';
 
 interface Settings {
   email_enabled: boolean;
@@ -181,7 +182,7 @@ export default function SettingsPage() {
   };
 
   if (loading) return (
-    <ProtectedLayout><div className="py-12 text-center text-sm text-gray-400">Loading…</div></ProtectedLayout>
+    <ProtectedLayout><div className="py-12 text-center text-sm text-muted-foreground">Loading…</div></ProtectedLayout>
   );
 
   return (
@@ -189,10 +190,7 @@ export default function SettingsPage() {
       <div className="flex gap-6 items-start">
         {/* Left column */}
         <div className="max-w-2xl space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-            <p className="mt-1 text-sm text-gray-500">Runtime toggles and storage configuration.</p>
-          </div>
+          <PageHeader title="Settings" description="Runtime toggles and storage configuration." />
             {actionError && (
             <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
               {actionError}
@@ -210,7 +208,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm font-medium">Email delivery enabled</Label>
-                  <p className="text-xs text-gray-500 mt-0.5">When off, forms save to DB but no emails are sent.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">When off, forms save to DB but no emails are sent.</p>
                 </div>
                 <Toggle checked={settings.email_enabled} onChange={v => setSettings(p => ({ ...p, email_enabled: v }))} accent="bg-blue-600" />
               </div>
@@ -230,7 +228,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm font-medium">Enable maintenance mode</Label>
-                  <p className="text-xs text-gray-500 mt-0.5">Returns 503 on all contact + waitlist POSTs.</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Returns 503 on all contact + waitlist POSTs.</p>
                 </div>
                 <Toggle checked={settings.maintenance_mode} onChange={v => setSettings(p => ({ ...p, maintenance_mode: v }))} accent="bg-orange-500" />
               </div>
@@ -241,7 +239,7 @@ export default function SettingsPage() {
                   value={settings.maintenance_message}
                   onChange={e => setSettings(p => ({ ...p, maintenance_message: e.target.value }))}
                   rows={3}
-                  className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1.5 w-full rounded-md border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               {settings.maintenance_mode && (
@@ -265,16 +263,16 @@ export default function SettingsPage() {
 
           {/* Menu Configuration toggle */}
           <button type="button" onClick={() => void handleOpenMenu()} className="block w-full text-left">
-            <Card className={`transition-colors hover:border-gray-300 ${menuOpen ? 'border-blue-200 bg-blue-50/30' : ''}`}>
+            <Card className={`transition-colors hover:border-border ${menuOpen ? 'border-blue-200 bg-blue-50/30' : ''}`}>
               <CardContent className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-3">
-                  <Bars3Icon className="h-5 w-5 text-gray-400" />
+                  <Bars3Icon className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Configure Menu</p>
-                    <p className="text-xs text-gray-500">Show or hide sidebar navigation items</p>
+                    <p className="text-sm font-medium text-foreground">Configure Menu</p>
+                    <p className="text-xs text-muted-foreground">Show or hide sidebar navigation items</p>
                   </div>
                 </div>
-                <ChevronRightIcon className={`h-4 w-4 text-gray-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+                <ChevronRightIcon className={`h-4 w-4 text-muted-foreground transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
               </CardContent>
             </Card>
           </button>
@@ -299,8 +297,8 @@ export default function SettingsPage() {
                   onChange={e => setDisplayPrefs({ mediaBasePath: e.target.value })}
                   placeholder="https://cdn.example.com/media"
                 />
-                <p className="mt-1.5 text-xs text-gray-500">
-                  Copied path will be: <code className="rounded bg-gray-100 px-1">{displayPrefs.mediaBasePath || '/uploads/portfolio'}/filename.webp</code>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Copied path will be: <code className="rounded bg-accent px-1">{displayPrefs.mediaBasePath || '/uploads/portfolio'}/filename.webp</code>
                 </p>
               </div>
               <div>
@@ -313,9 +311,9 @@ export default function SettingsPage() {
                   value={displayPrefs.maxUploadSizeMB}
                   onChange={e => setDisplayPrefs({ maxUploadSizeMB: Math.max(1, parseInt(e.target.value) || 10) })}
                 />
-                <p className="mt-1.5 text-xs text-gray-500">
-                  Ensure your server and reverse proxy (e.g. nginx <code className="rounded bg-gray-100 px-1">client_max_body_size</code>) allow at least this size.
-                  Backend default is 10 MB via <code className="rounded bg-gray-100 px-1">MAX_FILE_SIZE</code> env var.
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Ensure your server and reverse proxy (e.g. nginx <code className="rounded bg-accent px-1">client_max_body_size</code>) allow at least this size.
+                  Backend default is 10 MB via <code className="rounded bg-accent px-1">MAX_FILE_SIZE</code> env var.
                 </p>
               </div>
             </CardContent>
@@ -369,9 +367,9 @@ export default function SettingsPage() {
             )}
             {storage.active_provider === 'local' && (
               <CardContent>
-                <p className="text-sm text-gray-500">
-                  Using local filesystem storage. Files are saved to <code className="rounded bg-gray-100 px-1 text-xs">src/public/uploads/</code>.
-                  Switch to S3 via the <code className="rounded bg-gray-100 px-1 text-xs">STORAGE_PROVIDER=s3</code> env var.
+                <p className="text-sm text-muted-foreground">
+                  Using local filesystem storage. Files are saved to <code className="rounded bg-accent px-1 text-xs">src/public/uploads/</code>.
+                  Switch to S3 via the <code className="rounded bg-accent px-1 text-xs">STORAGE_PROVIDER=s3</code> env var.
                 </p>
               </CardContent>
             )}
@@ -384,10 +382,10 @@ export default function SettingsPage() {
             {/* Header — aligned with the settings cards below the page title */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <Bars3Icon className="h-6 w-6 text-gray-400" />
+                <Bars3Icon className="h-6 w-6 text-muted-foreground" />
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Configure Menu</h2>
-                  <p className="text-sm text-gray-500">Show or hide sidebar navigation items</p>
+                  <h2 className="text-xl font-semibold text-foreground">Configure Menu</h2>
+                  <p className="text-sm text-muted-foreground">Show or hide sidebar navigation items</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -402,7 +400,7 @@ export default function SettingsPage() {
                 </Button>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-md p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="rounded-md p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-accent transition-colors"
                   title="Close"
                 >
                   <XMarkIcon className="h-5 w-5" />
@@ -427,14 +425,14 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {isCollapsed ? (
-                            <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                            <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                            <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
                           )}
-                          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-gray-600">
+                          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                             {group.group}
                           </CardTitle>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {visibleCount}/{group.items.length} visible
                           </span>
                         </div>
@@ -445,7 +443,7 @@ export default function SettingsPage() {
                             aria-checked={allVisible}
                             onClick={(e) => { e.stopPropagation(); void toggleMenuGroup(group); }}
                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                              allVisible ? 'bg-blue-600' : 'bg-gray-200'
+                              allVisible ? 'bg-blue-600' : 'bg-muted'
                             }`}
                           >
                             <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
@@ -462,18 +460,18 @@ export default function SettingsPage() {
                             const locked = item.key === null;
                             const visible = locked || menuPrefs[item.key!] !== false;
                             return (
-                              <li key={item.name} className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-50">
+                              <li key={item.name} className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-accent">
                                 <div className="flex items-center gap-2.5">
-                                  <item.icon className={`h-4 w-4 ${visible ? 'text-gray-600' : 'text-gray-300'}`} />
-                                  <span className={`text-sm ${visible ? 'text-gray-900' : 'text-gray-400'}`}>{item.name}</span>
-                                  {locked && <LockClosedIcon className="h-3 w-3 text-gray-300" />}
+                                  <item.icon className={`h-4 w-4 ${visible ? 'text-muted-foreground' : 'text-muted-foreground/50'}`} />
+                                  <span className={`text-sm ${visible ? 'text-foreground' : 'text-muted-foreground'}`}>{item.name}</span>
+                                  {locked && <LockClosedIcon className="h-3 w-3 text-muted-foreground/50" />}
                                 </div>
                                 <input
                                   type="checkbox"
                                   checked={visible}
                                   disabled={locked}
                                   onChange={() => !locked && toggleMenuItem(item.key!)}
-                                  className={`h-4 w-4 rounded border-gray-300 text-blue-600 ${locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} focus:ring-blue-500`}
+                                  className={`h-4 w-4 rounded border-border text-blue-600 ${locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} focus:ring-blue-500`}
                                 />
                               </li>
                             );
@@ -486,7 +484,7 @@ export default function SettingsPage() {
               })}
             </div>
 
-            <p className="mt-4 text-center text-xs text-gray-400">
+            <p className="mt-4 text-center text-xs text-muted-foreground">
               Dashboard and Settings are always visible and cannot be hidden.
             </p>
           </div>

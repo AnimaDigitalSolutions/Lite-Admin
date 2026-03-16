@@ -148,19 +148,19 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold truncate">{contact.name}</h2>
             <div className="group flex items-center gap-1.5 mt-0.5">
-              <span className="text-sm text-gray-500 truncate">
+              <span className="text-sm text-muted-foreground truncate">
                 {prefs.truncateEmails ? truncateEmail(contact.email) : contact.email}
               </span>
               <button
                 type="button"
                 onClick={() => void copyEmail(contact.email, contact.email)}
                 title="Copy email"
-                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}
+                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}
               >
                 {isEmailCopied(contact.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
               </button>
             </div>
-            {contact.company && <p className="text-sm text-gray-500 mt-0.5">{contact.company}</p>}
+            {contact.company && <p className="text-sm text-muted-foreground mt-0.5">{contact.company}</p>}
           </div>
           <div className="flex items-center gap-1 ml-2">
             {!editMode && (
@@ -189,24 +189,24 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
             <div className="space-y-4">
               <div className="grid gap-3 grid-cols-2">
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Name</label>
+                  <label className="text-xs font-medium text-muted-foreground">Name</label>
                   <Input className="mt-1" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Email</label>
+                  <label className="text-xs font-medium text-muted-foreground">Email</label>
                   <Input className="mt-1" type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Company</label>
+                  <label className="text-xs font-medium text-muted-foreground">Company</label>
                   <Input className="mt-1" value={editForm.company} onChange={e => setEditForm(f => ({ ...f, company: e.target.value }))} placeholder="Optional" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500">Project Type</label>
+                  <label className="text-xs font-medium text-muted-foreground">Project Type</label>
                   <Input className="mt-1" value={editForm.project_type} onChange={e => setEditForm(f => ({ ...f, project_type: e.target.value }))} placeholder="web / mobile…" />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Message</label>
+                <label className="text-xs font-medium text-muted-foreground">Message</label>
                 <textarea
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   rows={expanded ? 6 : 4}
@@ -228,7 +228,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
           ) : (
             <>
               {/* Meta info */}
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 <span>Submitted: {formatDate(contact.submitted_at)}</span>
                 {contact.project_type && (
                   <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${getProjectTypeColor(contact.project_type)}`}>
@@ -238,7 +238,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
               </div>
 
               {prefs.showGeoInfo && (contact.ip_address || contact.country) && (
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   {(() => {
                     const ip = contact.ip_address;
                     const priv = ip ? isPrivateIp(ip) : false;
@@ -263,7 +263,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
               {/* Status + Follow-up row */}
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Status</label>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Status</label>
                   <select
                     value={currentStatus}
                     onChange={e => void handleStatusChange(e.target.value as ContactStatus)}
@@ -277,7 +277,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
 
                 {/* Follow-up reminder */}
                 <div className="shrink-0">
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Reminder</label>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Reminder</label>
                   {contact.follow_up_at ? (() => {
                     const diff = Math.ceil((new Date(contact.follow_up_at).getTime() - Date.now()) / 86400000);
                     const dateLabel = new Date(contact.follow_up_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -293,7 +293,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
                             isOverdue ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
                             : isToday ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-150'
+                            : 'bg-accent text-muted-foreground border border-border hover:bg-accent'
                           } disabled:opacity-50`}
                         >
                           <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -306,7 +306,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
                           type="button"
                           onClick={() => void handleFollowUpChange('')}
                           disabled={followUpUpdating}
-                          className="text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50"
+                          className="text-muted-foreground/50 hover:text-red-500 transition-colors disabled:opacity-50"
                           title="Clear reminder"
                         >
                           <XMarkIcon className="h-3.5 w-3.5" />
@@ -319,7 +319,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
                       onClick={(e) => openDatePicker('', v => void handleFollowUpChange(v), e)}
                       disabled={followUpUpdating}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer
-                        text-gray-400 border border-dashed border-gray-300 hover:border-gray-400 hover:text-gray-600 transition-colors
+                        text-muted-foreground border border-dashed border-border hover:border-border hover:text-foreground transition-colors
                         ${followUpUpdating ? 'opacity-50 pointer-events-none' : ''}`}
                     >
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -333,7 +333,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
 
               {/* Initial message */}
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Initial Message</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Initial Message</label>
                 <div className="p-3 bg-blue-50 rounded-lg text-sm border border-blue-200 border-l-4 border-l-blue-400">
                   <div className="flex items-start gap-2">
                     <span className="mt-0.5 text-blue-500 shrink-0" title="Message from contact">

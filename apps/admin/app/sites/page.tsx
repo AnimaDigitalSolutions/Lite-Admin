@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { Toggle } from '@/components/ui/toggle';
+import { PageHeader } from '@/components/page-header';
 
 interface Site {
   id: number;
@@ -98,20 +99,15 @@ export default function SitesPage() {
   return (
     <ProtectedLayout>
       <div className="max-w-3xl space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Sites & API Keys</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Each site gets a unique key. External forms send{' '}
-              <code className="rounded bg-gray-100 px-1 text-xs font-mono">X-Site-Key: lsk_…</code>{' '}
-              to tag submissions.
-            </p>
-          </div>
+        <PageHeader
+          title="Sites & API Keys"
+          description="Each site gets a unique key. External forms send X-Site-Key: lsk_… to tag submissions."
+        >
           <Button size="sm" onClick={() => setShowNewSite(v => !v)}>
             <PlusIcon className="mr-1.5 h-4 w-4" />
             New site
           </Button>
-        </div>
+        </PageHeader>
 
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
@@ -167,11 +163,11 @@ export default function SitesPage() {
 
         {/* Site list */}
         {loading ? (
-          <div className="py-12 text-center text-sm text-gray-400">Loading…</div>
+          <div className="py-12 text-center text-sm text-muted-foreground">Loading…</div>
         ) : sites.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center text-sm text-gray-400">
-              <GlobeAltIcon className="mx-auto mb-3 h-8 w-8 text-gray-300" />
+            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <GlobeAltIcon className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
               No sites yet. Create one above to start tagging form submissions.
             </CardContent>
           </Card>
@@ -182,35 +178,35 @@ export default function SitesPage() {
                 <CardContent className="flex items-start gap-4 p-4">
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm text-gray-900">{site.name}</span>
+                      <span className="font-semibold text-sm text-foreground">{site.name}</span>
                       {site.domain && (
-                        <span className="text-xs text-gray-400">{site.domain}</span>
+                        <span className="text-xs text-muted-foreground">{site.domain}</span>
                       )}
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        site.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                        site.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-accent text-muted-foreground'
                       }`}>
                         {site.is_active ? 'active' : 'inactive'}
                       </span>
                     </div>
                     {site.description && (
-                      <p className="text-xs text-gray-500">{site.description}</p>
+                      <p className="text-xs text-muted-foreground">{site.description}</p>
                     )}
                     <div className="flex items-center gap-1.5">
-                      <code className="flex-1 truncate rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700 max-w-xs">
+                      <code className="flex-1 truncate rounded bg-accent px-2 py-1 font-mono text-xs text-foreground max-w-xs">
                         {site.api_key}
                       </code>
                       <button
                         onClick={() => void copyToClipboard(site.api_key, site.id)}
-                        className="rounded p-1 hover:bg-gray-100 transition-colors"
+                        className="rounded p-1 hover:bg-accent transition-colors"
                         title="Copy key"
                       >
                         {isCopied(site.id)
                           ? <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-500" />
-                          : <ClipboardDocumentIcon className="h-3.5 w-3.5 text-gray-400" />
+                          : <ClipboardDocumentIcon className="h-3.5 w-3.5 text-muted-foreground" />
                         }
                       </button>
                     </div>
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-muted-foreground">
                       Created {new Date(site.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -218,14 +214,14 @@ export default function SitesPage() {
                     <Toggle checked={site.is_active} onChange={v => void handleToggle(site.id, v)} size="sm" />
                     <button
                       onClick={() => void handleRegenerate(site.id)}
-                      className="rounded p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-amber-50 hover:text-amber-600 transition-colors"
                       title="Regenerate key"
                     >
                       <ArrowPathIcon className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => void handleDelete(site.id)}
-                      className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-colors"
                       title="Delete site"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -239,9 +235,9 @@ export default function SitesPage() {
 
         {/* Usage example */}
         {sites.length > 0 && (
-          <Card className="bg-gray-50">
+          <Card className="bg-muted">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-gray-500">Usage example</CardTitle>
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Usage example</CardTitle>
               <CardDescription className="text-xs">Add this header to your external contact/waitlist form submissions:</CardDescription>
             </CardHeader>
             <CardContent>

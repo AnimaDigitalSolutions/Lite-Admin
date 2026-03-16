@@ -36,6 +36,7 @@ import { useSelection } from '@/lib/hooks/use-selection';
 import ContactDetailPanel, { getStatusBadge } from '@/components/contact-detail-panel';
 import ContactsCalendar from '@/components/contacts-calendar';
 import ContactsKanban from '@/components/contacts-kanban';
+import { PageHeader } from '@/components/page-header';
 import AddContactModal from './components/add-contact-modal';
 import TestEmailPanel from './components/test-email-panel';
 
@@ -247,11 +248,7 @@ export default function ContactsPage() {
     <ProtectedLayout>
       <div className="space-y-6">
         <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Contact Submissions</h1>
-            <p className="mt-2 text-gray-600">Manage customer inquiries and contact form submissions</p>
-          </div>
+        <PageHeader title="Contact Submissions" description="Manage customer inquiries and contact form submissions">
           <div className="flex gap-2">
             {selectedIds.size > 0 && (
               <Button variant="destructive" onClick={() => void handleBulkDelete()} className="flex items-center gap-2">
@@ -268,12 +265,12 @@ export default function ContactsPage() {
               Export CSV
             </Button>
           </div>
-        </div>
+        </PageHeader>
 
         {/* Search + Status Filter + View Toggle */}
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               ref={inputRef}
               placeholder="Search contacts... (try has: or is:)"
@@ -288,24 +285,24 @@ export default function ContactsPage() {
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
             )}
             {filteredSuggestions.length > 0 && (
-              <div ref={suggestionsRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+              <div ref={suggestionsRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden">
                 {filteredSuggestions.map((s, i) => (
                   <button
                     key={s.token}
                     type="button"
                     onMouseDown={(e) => { e.preventDefault(); applySuggestion(s.token); }}
                     className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
-                      i === suggestionIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
+                      i === suggestionIndex ? 'bg-accent' : 'hover:bg-accent'
                     }`}
                   >
-                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">{s.token}</code>
-                    <span className="text-gray-500 text-xs">{s.label}</span>
+                    <code className="text-xs bg-accent px-1.5 py-0.5 rounded font-mono">{s.token}</code>
+                    <span className="text-muted-foreground text-xs">{s.label}</span>
                   </button>
                 ))}
               </div>
@@ -339,8 +336,8 @@ export default function ContactsPage() {
                 title={label}
                 className={`px-3 py-2 transition-colors ${
                   viewMode === mode
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-background text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'bg-foreground text-background'
+                    : 'bg-background text-muted-foreground hover:text-foreground hover:bg-accent'
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -383,7 +380,7 @@ export default function ContactsPage() {
               <Card
                 key={label}
                 className={`transition-all cursor-pointer hover:shadow-md ${
-                  isActive ? 'ring-2 ring-gray-900 bg-gray-50' : isNegated ? 'ring-2 ring-red-400 bg-red-50/50' : ''
+                  isActive ? 'ring-2 ring-foreground bg-muted' : isNegated ? 'ring-2 ring-red-400 bg-red-50/50' : ''
                 }`}
                 onClick={isClear ? () => setSearchTerm('') : token ? (e: React.MouseEvent) => toggleFilter(token, e) : undefined}
               >
@@ -391,9 +388,9 @@ export default function ContactsPage() {
                   <div className="flex items-center gap-3">
                     <Icon className={`h-8 w-8 ${color}`} />
                     <div>
-                      <p className="text-sm text-gray-600">{label}</p>
+                      <p className="text-sm text-muted-foreground">{label}</p>
                       <p className="text-2xl font-bold">{value}</p>
-                      {extra && <p className="text-xs text-gray-400">{extra}</p>}
+                      {extra && <p className="text-xs text-muted-foreground">{extra}</p>}
                     </div>
                   </div>
                 </CardContent>
@@ -439,7 +436,7 @@ export default function ContactsPage() {
             {loading ? (
               <div className="text-center py-8">Loading contacts...</div>
             ) : filteredContacts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {searchTerm ? 'No contacts match your search' : 'No contact submissions yet'}
               </div>
             ) : (
@@ -447,7 +444,7 @@ export default function ContactsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="sticky top-0 z-10">
-                      <tr className="border-b bg-gray-50">
+                      <tr className="border-b bg-muted">
                         <th className="p-3 w-8">
                           <div className={`${selectedIds.size > 0 ? 'opacity-100' : 'opacity-0 hover:opacity-100'} transition-opacity`}>
                             <input type="checkbox" className="rounded cursor-pointer"
@@ -472,9 +469,9 @@ export default function ContactsPage() {
                           ? 'bg-amber-50 border-l-2 border-l-amber-400 relative z-50'
                           : isChecked
                             ? 'bg-blue-50'
-                            : idx % 2 === 1 ? 'bg-gray-50/50' : '';
+                            : idx % 2 === 1 ? 'bg-muted/50' : '';
                         return (
-                        <tr key={contact.id} className={`border-b hover:bg-gray-100 ${rowBg} group/row`}>
+                        <tr key={contact.id} className={`border-b hover:bg-accent ${rowBg} group/row`}>
                           <td className="p-3">
                             <div className={`${selectedIds.has(contact.id) ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
                               <input type="checkbox" className="rounded cursor-pointer"
@@ -492,16 +489,16 @@ export default function ContactsPage() {
                                 {prefs.truncateEmails ? truncateEmail(contact.email) : contact.email}
                               </span>
                               <button type="button" onClick={() => void copyEmail(contact.email, contact.email)} title="Copy email"
-                                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}>
                                 {isEmailCopied(contact.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           </td>
                           <td className="p-3">
                             {contact.company ? (
-                              <span className="text-gray-900">{highlightMatch(contact.company, searchText)}</span>
+                              <span className="text-foreground">{highlightMatch(contact.company, searchText)}</span>
                             ) : (
-                              <span className="text-gray-400">-</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </td>
                           <td className="p-3">
@@ -510,7 +507,7 @@ export default function ContactsPage() {
                                 {contact.project_type}
                               </span>
                             ) : (
-                              <span className="text-gray-400">-</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </td>
                           <td className="p-3">
@@ -523,7 +520,7 @@ export default function ContactsPage() {
                               );
                             })()}
                           </td>
-                          <td className="p-3 text-sm text-gray-600">
+                          <td className="p-3 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               {prefs.showGeoInfo && contact.country && !isPrivateIp(contact.ip_address ?? '') && (
                                 <span title={contact.country_name ?? contact.country}>
@@ -533,7 +530,7 @@ export default function ContactsPage() {
                               {formatDate(contact.submitted_at)}
                             </div>
                             {prefs.showGeoInfo && contact.city && (
-                              <div className="text-xs text-gray-400 mt-0.5">
+                              <div className="text-xs text-muted-foreground mt-0.5">
                                 {contact.city}{contact.country_name ? `, ${contact.country_name}` : ''}
                               </div>
                             )}

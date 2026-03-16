@@ -25,11 +25,12 @@ import { ErrorBanner } from '@/components/ui/error-banner';
 import { invoiceFormSchema, formToInvoiceData, FieldError } from './schemas/invoice-form';
 import type { InvoiceFormValues } from './schemas/invoice-form';
 import { Pagination } from '@/components/ui/pagination';
+import { PageHeader } from '@/components/page-header';
 
 // Lazy-load PDF components (client-side only) to avoid SSR issues with @react-pdf/renderer
 const InvoicePDFPreview = dynamic(
   () => import('@/components/invoice-pdf-preview'),
-  { ssr: false, loading: () => <div className="h-[680px] bg-gray-50 rounded-lg animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-[680px] bg-muted rounded-lg animate-pulse" /> }
 );
 const PDFDownloadButton = dynamic(
   () => import('@/components/invoice-pdf-preview').then(mod => ({ default: mod.PDFDownloadButton })),
@@ -43,7 +44,7 @@ const PDFFullViewer = dynamic(
 type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 
 const STATUS_COLORS: Record<InvoiceStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700',
+  draft: 'bg-gray-100 text-foreground',
   sent: 'bg-blue-100 text-blue-700',
   paid: 'bg-green-100 text-green-700',
   overdue: 'bg-red-100 text-red-700',
@@ -279,17 +280,14 @@ export default function InvoicesPage() {
     return (
       <ProtectedLayout>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Preview — {previewInvoice.invoice_number}
-            </h1>
+          <PageHeader title={`Preview — ${previewInvoice.invoice_number}`}>
             <div className="flex gap-2">
               <PDFDownloadButton data={previewInvoice} />
               <Button variant="outline" onClick={() => { setMode('list'); setPreviewInvoice(null); }}>
                 <XMarkIcon className="h-4 w-4 mr-1" /> Close
               </Button>
             </div>
-          </div>
+          </PageHeader>
           <PDFFullViewer data={previewInvoice} />
         </div>
       </ProtectedLayout>
@@ -303,10 +301,7 @@ export default function InvoicesPage() {
     return (
       <ProtectedLayout>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {editId ? 'Edit Invoice' : 'New Invoice'}
-            </h1>
+          <PageHeader title={editId ? 'Edit Invoice' : 'New Invoice'}>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -321,7 +316,7 @@ export default function InvoicesPage() {
               </Button>
               <Button type="button" variant="outline" onClick={() => setMode('list')}>Cancel</Button>
             </div>
-          </div>
+          </PageHeader>
 
           <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
@@ -341,12 +336,12 @@ export default function InvoicesPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Invoice Number</label>
                       <Input {...form.register('invoice_number')} className={errors.invoice_number ? 'border-red-400' : ''} />
                       <FieldError message={errors.invoice_number?.message} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Status</label>
                       <select
                         {...form.register('status')}
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -359,15 +354,15 @@ export default function InvoicesPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Issue Date</label>
                       <Input type="date" {...form.register('issued_date')} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Due Date</label>
                       <Input type="date" {...form.register('due_date')} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Currency</label>
                       <select
                         {...form.register('currency')}
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -376,7 +371,7 @@ export default function InvoicesPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Template</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Template</label>
                       <select
                         {...form.register('template')}
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -396,20 +391,20 @@ export default function InvoicesPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Company Name</label>
                       <Input {...form.register('company_name')} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Email</label>
                       <Input type="email" {...form.register('company_email')} className={errors.company_email ? 'border-red-400' : ''} />
                       <FieldError message={errors.company_email?.message} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
                       <Input {...form.register('company_phone')} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Address</label>
                       <Input {...form.register('company_address')} />
                     </div>
                   </div>
@@ -422,17 +417,17 @@ export default function InvoicesPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Client Name</label>
                       <Input {...form.register('client_name')} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">Email</label>
                       <Input type="email" {...form.register('client_email')} className={errors.client_email ? 'border-red-400' : ''} />
                       <FieldError message={errors.client_email?.message} />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">Address</label>
                     <Input {...form.register('client_address')} />
                   </div>
                 </CardContent>
@@ -462,7 +457,7 @@ export default function InvoicesPage() {
                   )}
                   <div className="space-y-3">
                     {/* Header */}
-                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-500 uppercase">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase">
                       <div className="col-span-5">Description</div>
                       <div className="col-span-2">Qty</div>
                       <div className="col-span-2">Unit Price</div>
@@ -523,7 +518,7 @@ export default function InvoicesPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => { if (fields.length > 1) remove(i); }}
-                              className="text-gray-400 hover:text-red-500"
+                              className="text-muted-foreground hover:text-red-500"
                               disabled={fields.length <= 1}
                             >
                               <TrashIcon className="h-4 w-4" />
@@ -545,12 +540,12 @@ export default function InvoicesPage() {
                   {/* Totals */}
                   <div className="mt-6 border-t pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Subtotal</span>
+                      <span className="text-muted-foreground">Subtotal</span>
                       <span className="font-medium">{formatMoney(liveData.subtotal, liveData.currency)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Tax Rate (%)</span>
+                        <span className="text-muted-foreground">Tax Rate (%)</span>
                         <Controller
                           control={form.control}
                           name="tax_rate"
@@ -572,7 +567,7 @@ export default function InvoicesPage() {
                     {errors.tax_rate && <FieldError message={errors.tax_rate.message} />}
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500">Discount</span>
+                        <span className="text-muted-foreground">Discount</span>
                         <Controller
                           control={form.control}
                           name="discount"
@@ -622,8 +617,8 @@ export default function InvoicesPage() {
                 ) : (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                      <EyeIcon className="h-10 w-10 text-gray-300 mb-3" />
-                      <p className="text-sm text-gray-500 mb-4">
+                      <EyeIcon className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                      <p className="text-sm text-muted-foreground mb-4">
                         Live preview renders the PDF in real time as you type
                       </p>
                       <Button type="button" variant="outline" onClick={() => setShowLivePreview(true)} className="flex items-center gap-2">
@@ -644,10 +639,7 @@ export default function InvoicesPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-          <p className="mt-2 text-gray-600">Create, manage, and download PDF invoices.</p>
-        </div>
+        <PageHeader title="Invoices" description="Create, manage, and download PDF invoices." />
 
         <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
@@ -675,10 +667,10 @@ export default function InvoicesPage() {
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
               </div>
             ) : invoices.length === 0 ? (
-              <div className="py-16 text-center text-gray-500">
+              <div className="py-16 text-center text-muted-foreground">
                 <p className="text-lg font-medium">No invoices yet</p>
                 <p className="mt-1 text-sm">Create your first invoice to get started.</p>
                 <Button onClick={handleNew} className="mt-4">
@@ -689,7 +681,7 @@ export default function InvoicesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b bg-gray-50">
+                    <tr className="border-b bg-muted">
                       <th className="text-left p-3 font-medium text-sm">Invoice #</th>
                       <th className="text-left p-3 font-medium text-sm">Client</th>
                       <th className="text-left p-3 font-medium text-sm">Status</th>
@@ -701,11 +693,11 @@ export default function InvoicesPage() {
                   </thead>
                   <tbody>
                     {invoices.map((inv) => (
-                      <tr key={inv.id} className="border-b hover:bg-gray-50 group/row">
+                      <tr key={inv.id} className="border-b hover:bg-muted group/row">
                         <td className="p-3">
                           <span className="font-mono text-sm font-medium">{inv.invoice_number}</span>
                         </td>
-                        <td className="p-3 text-sm text-gray-700">{inv.client_name || '-'}</td>
+                        <td className="p-3 text-sm text-foreground">{inv.client_name || '-'}</td>
                         <td className="p-3">
                           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[inv.status as InvoiceStatus] || STATUS_COLORS.draft}`}>
                             {inv.status}
@@ -714,10 +706,10 @@ export default function InvoicesPage() {
                         <td className="p-3 text-right text-sm font-medium">
                           {formatMoney(inv.total, inv.currency)}
                         </td>
-                        <td className="p-3 text-sm text-gray-500">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {inv.issued_date ? formatDate(inv.issued_date) : '-'}
                         </td>
-                        <td className="p-3 text-sm text-gray-500">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {inv.due_date ? formatDate(inv.due_date) : '-'}
                         </td>
                         <td className="p-3">
@@ -731,7 +723,7 @@ export default function InvoicesPage() {
                             <Button variant="ghost" size="sm" onClick={() => handleDuplicate(inv.id!)} title="Duplicate">
                               <DocumentDuplicateIcon className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(inv.id!)} title="Delete" className="text-gray-400 hover:text-red-500">
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(inv.id!)} title="Delete" className="text-muted-foreground hover:text-red-500">
                               <TrashIcon className="h-4 w-4" />
                             </Button>
                           </div>

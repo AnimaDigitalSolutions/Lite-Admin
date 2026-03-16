@@ -56,7 +56,7 @@
 ### Infrastructure
 
 - TypeScript monorepo — Turbo.js orchestration with pnpm workspaces and shared type/schema package
-- Multi-database support — SQLite, PostgreSQL, MySQL with seamless switching
+- Multi-database support — SQLite, (future PostgreSQL, MySQL with seamless switching)
 - Dashboard charts — 30-day trend visualizations for contacts and subscribers (Recharts)
 - Activity log — auditable admin action history with per-entry deletion
 - Multi-site support — site API keys (`X-Site-Key` header) to tag form submissions per site
@@ -64,7 +64,7 @@
 ### Security
 
 - Smart rate limiting, CORS, JWT authentication, input validation, Helmet.js
-- Geolocation — IP-based country/city/region enrichment on form submissions (MaxMind GeoLite2)
+- Geolocation — IP-based country/region enrichment on form submissions (MaxMind GeoLite2)
 - Suspicious activity detection — automatic blocking of scanning attempts
 - Integration tests — auth middleware, error handling, and validation middleware coverage
 
@@ -90,6 +90,18 @@ just quickstart
 ```
 
 If you're looking for the default logins: `admin@email.com` / `changeme` ;)
+
+Want to explore the dashboard without setting up a backend? Close the quickstart and Enable demo mode:
+
+```bash
+NEXT_PUBLIC_DEMO_MODE=true pnpm dev
+```
+
+Or seed real data into your database and start it up again afterwards:
+
+```bash
+pnpm db:seed
+```
 
 ---
 
@@ -225,5 +237,6 @@ docker-compose -f docker/docker-compose.prod.yml up -d     # Production
 MIT — see [LICENSE](LICENSE) for details.
 
 ## Support
-We are open to PRs :)
+We are open to PRs ☕
+
 Open an issue on GitHub or contact us at animadigitalsolutions.com.

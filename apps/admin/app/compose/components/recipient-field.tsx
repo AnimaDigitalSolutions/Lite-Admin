@@ -100,10 +100,10 @@ export default function RecipientField({
   return (
     <div ref={containerRef}>
       <div className="flex items-center justify-between mb-1">
-        <label className="text-xs font-medium text-gray-500">{label} {required && '*'}</label>
+        <label className="text-xs font-medium text-muted-foreground">{label} {required && '*'}</label>
         <div className="flex items-center gap-2">
           {onCollapse && (
-            <button type="button" onClick={onCollapse} className="text-xs text-gray-400 hover:text-gray-600">Remove</button>
+            <button type="button" onClick={onCollapse} className="text-xs text-muted-foreground hover:text-foreground">Remove</button>
           )}
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function RecipientField({
             <span
               key={r.email}
               className={`group/chip inline-flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 text-xs font-medium transition-colors ${
-                r.isContact ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-gray-50 text-gray-700 border border-gray-200'
+                r.isContact ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-muted text-foreground border border-border'
               }`}
               title={r.name ? `${r.name} <${r.email}>` : r.email}
             >
@@ -137,13 +137,13 @@ export default function RecipientField({
             onFocus={() => setShowDropdown(true)}
             onKeyDown={handleKeyDown}
             placeholder={recipients.length === 0 ? 'Type a name or email...' : ''}
-            className="flex-1 min-w-[140px] bg-transparent text-sm outline-none placeholder:text-gray-400"
+            className="flex-1 min-w-[140px] bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
         <button
           type="button"
           onClick={onOpenPicker}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-input bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-input bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           title="Browse contacts"
         >
           <UsersIcon className="h-4 w-4" />
@@ -153,9 +153,9 @@ export default function RecipientField({
 
       {showDropdown && options.length > 0 && (
         <div className="relative z-10">
-          <div className="absolute top-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto py-1">
+          <div className="absolute top-1 left-0 right-0 bg-white border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto py-1">
             {!query.trim() && filteredContacts.length > 0 && (
-              <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Contacts</div>
+              <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Contacts</div>
             )}
             {options.map((opt, i) => (
               <button
@@ -167,7 +167,7 @@ export default function RecipientField({
                   else if (opt.type === 'raw' && opt.email) addRecipient({ email: opt.email });
                 }}
                 onMouseEnter={() => setHighlightIndex(i)}
-                className={`w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors ${i === highlightIndex ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                className={`w-full text-left px-3 py-2 flex items-center gap-2.5 transition-colors ${i === highlightIndex ? 'bg-blue-50' : 'hover:bg-accent'}`}
               >
                 {opt.type === 'contact' ? (
                   <>
@@ -175,19 +175,19 @@ export default function RecipientField({
                       {opt.contact!.name.charAt(0).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 truncate">
+                      <div className="text-sm font-medium text-foreground truncate">
                         {opt.contact!.name}
-                        {opt.contact!.company && <span className="text-gray-400 font-normal ml-1.5 text-xs">({opt.contact!.company})</span>}
+                        {opt.contact!.company && <span className="text-muted-foreground font-normal ml-1.5 text-xs">({opt.contact!.company})</span>}
                       </div>
-                      <div className="text-xs text-gray-500 truncate">{opt.contact!.email}</div>
+                      <div className="text-xs text-muted-foreground truncate">{opt.contact!.email}</div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 text-gray-500 text-xs shrink-0">@</span>
+                    <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-muted text-muted-foreground text-xs shrink-0">@</span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm text-gray-600">Add <span className="font-medium text-gray-900">{opt.email}</span></div>
-                      <div className="text-xs text-gray-400">New email address</div>
+                      <div className="text-sm text-muted-foreground">Add <span className="font-medium text-foreground">{opt.email}</span></div>
+                      <div className="text-xs text-muted-foreground">New email address</div>
                     </div>
                   </>
                 )}
@@ -197,7 +197,7 @@ export default function RecipientField({
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); onOpenPicker(); setShowDropdown(false); }}
-                className="w-full text-left px-3 py-2 flex items-center gap-2.5 text-blue-600 hover:bg-blue-50 border-t border-gray-100"
+                className="w-full text-left px-3 py-2 flex items-center gap-2.5 text-blue-600 hover:bg-blue-50 border-t border-border"
               >
                 <UsersIcon className="h-4 w-4" />
                 <span className="text-sm font-medium">Browse all {contacts.length} contacts...</span>

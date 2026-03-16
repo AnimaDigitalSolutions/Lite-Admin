@@ -162,10 +162,10 @@ export default function ComposePage() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <PencilSquareIcon className="h-6 w-6 text-gray-400" />
+          <PencilSquareIcon className="h-6 w-6 text-muted-foreground" />
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Compose Email</h1>
-            <p className="text-sm text-gray-500">Send an email to one or more recipients</p>
+            <h1 className="text-xl font-semibold text-foreground">Compose Email</h1>
+            <p className="text-sm text-muted-foreground">Send an email to one or more recipients</p>
           </div>
         </div>
 
@@ -189,20 +189,20 @@ export default function ComposePage() {
                   {step === 'confirm' ? 'Confirm Send' : step === 'preview' ? 'Preview Email' : 'Compose'}
                 </h3>
               </div>
-              <div className="flex items-center gap-1 text-xs text-gray-400">
-                <span className={step === 'write' ? 'text-gray-900 font-medium' : ''}>Write</span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className={step === 'write' ? 'text-foreground font-medium' : ''}>Write</span>
                 <span>&rarr;</span>
-                <span className={step === 'preview' ? 'text-gray-900 font-medium' : ''}>Preview</span>
+                <span className={step === 'preview' ? 'text-foreground font-medium' : ''}>Preview</span>
                 <span>&rarr;</span>
-                <span className={step === 'confirm' ? 'text-gray-900 font-medium' : ''}>Send</span>
+                <span className={step === 'confirm' ? 'text-foreground font-medium' : ''}>Send</span>
               </div>
             </div>
 
             {/* From field */}
             {fromAddress && (
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">From</label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-600">
+                <label className="text-xs font-medium text-muted-foreground block mb-1">From</label>
+                <div className="px-3 py-2 bg-muted rounded-md text-sm border border-border text-muted-foreground">
                   {fromAddress}
                 </div>
               </div>
@@ -264,13 +264,13 @@ export default function ComposePage() {
 
                 {/* Subject */}
                 <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Subject *</label>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Subject *</label>
                   <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Email subject..." />
                 </div>
 
                 {/* Body */}
                 <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Message *</label>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Message *</label>
                   <textarea
                     value={body}
                     onChange={e => setBody(e.target.value)}
@@ -278,7 +278,7 @@ export default function ComposePage() {
                     rows={10}
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Plain text — line breaks will be preserved.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Plain text — line breaks will be preserved.</p>
                 </div>
 
                 {/* Suggest adding non-contact recipients */}
@@ -319,12 +319,12 @@ export default function ComposePage() {
                 {ccRecipients.length > 0 && <RecipientPreview label="CC" recipients={ccRecipients} />}
                 {bccRecipients.length > 0 && <RecipientPreview label="BCC" recipients={bccRecipients} />}
                 <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Subject</label>
-                  <div className="px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 font-medium">{subject}</div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Subject</label>
+                  <div className="px-3 py-2 bg-muted rounded-md text-sm border border-border font-medium">{subject}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 block mb-1">Message Preview</label>
-                  <div className="px-3 py-3 bg-gray-50 rounded-md text-sm border border-gray-200 whitespace-pre-wrap min-h-[100px]">{body}</div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Message Preview</label>
+                  <div className="px-3 py-3 bg-muted rounded-md text-sm border border-border whitespace-pre-wrap min-h-[100px]">{body}</div>
                 </div>
               </>
             )}
@@ -396,15 +396,15 @@ export default function ComposePage() {
 function RecipientPreview({ label, recipients }: { label: string; recipients: Recipient[] }) {
   return (
     <div>
-      <label className="text-xs font-medium text-gray-500 block mb-1">{label}</label>
-      <div className="flex flex-wrap gap-1.5 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+      <label className="text-xs font-medium text-muted-foreground block mb-1">{label}</label>
+      <div className="flex flex-wrap gap-1.5 px-3 py-2 bg-muted rounded-md border border-border">
         {recipients.map(r => (
-          <span key={r.email} className="inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs font-medium bg-white border border-gray-200">
+          <span key={r.email} className="inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-0.5 text-xs font-medium bg-card border border-border">
             <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold text-white shrink-0 ${avatarColor(r.name || r.email)}`}>
               {(r.name || r.email).charAt(0).toUpperCase()}
             </span>
             <span>{r.name || r.email}</span>
-            <span className="text-gray-400 text-[10px]">{r.email}</span>
+            <span className="text-muted-foreground text-[10px]">{r.email}</span>
           </span>
         ))}
       </div>

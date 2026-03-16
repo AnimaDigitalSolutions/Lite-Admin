@@ -20,12 +20,12 @@ import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  Bars3Icon,
   LockClosedIcon,
   PencilSquareIcon,
   MegaphoneIcon,
   DocumentCurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
+import { PageHeader } from '@/components/page-header';
 
 type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
@@ -192,15 +192,7 @@ export default function MenuConfigPage() {
   return (
     <ProtectedLayout>
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Bars3Icon className="h-6 w-6 text-gray-400" />
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Configure Menu</h1>
-              <p className="text-sm text-gray-500">Show or hide sidebar navigation items</p>
-            </div>
-          </div>
+        <PageHeader title="Configure Menu" description="Show or hide sidebar navigation items">
           <Button
             onClick={resetAll}
             variant="outline"
@@ -210,11 +202,11 @@ export default function MenuConfigPage() {
             <ArrowPathIcon className="h-4 w-4" />
             Reset to defaults
           </Button>
-        </div>
+        </PageHeader>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-foreground" />
           </div>
         ) : (
           <div className="space-y-3">
@@ -233,14 +225,14 @@ export default function MenuConfigPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {isCollapsed ? (
-                          <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                          <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                          <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-gray-600">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                           {group.group}
                         </CardTitle>
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-muted-foreground">
                           {stats.visible}/{stats.total} visible
                         </span>
                       </div>
@@ -254,7 +246,7 @@ export default function MenuConfigPage() {
                             void toggleGroup(group);
                           }}
                           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                            allVisible ? 'bg-blue-600' : 'bg-gray-200'
+                            allVisible ? 'bg-blue-600' : 'bg-muted'
                           }`}
                         >
                           <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
@@ -274,15 +266,15 @@ export default function MenuConfigPage() {
                           return (
                             <li
                               key={item.name}
-                              className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-50"
+                              className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-accent"
                             >
                               <div className="flex items-center gap-2.5">
-                                <item.icon className={`h-4 w-4 ${visible ? 'text-gray-600' : 'text-gray-300'}`} />
-                                <span className={`text-sm ${visible ? 'text-gray-900' : 'text-gray-400'}`}>
+                                <item.icon className={`h-4 w-4 ${visible ? 'text-muted-foreground' : 'text-muted-foreground/50'}`} />
+                                <span className={`text-sm ${visible ? 'text-foreground' : 'text-muted-foreground'}`}>
                                   {item.name}
                                 </span>
                                 {locked && (
-                                  <LockClosedIcon className="h-3 w-3 text-gray-300" />
+                                  <LockClosedIcon className="h-3 w-3 text-muted-foreground/50" />
                                 )}
                               </div>
                               {locked ? (
@@ -290,14 +282,14 @@ export default function MenuConfigPage() {
                                   type="checkbox"
                                   checked
                                   disabled
-                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-not-allowed opacity-50"
+                                  className="h-4 w-4 rounded border-border text-blue-600 cursor-not-allowed opacity-50"
                                 />
                               ) : (
                                 <input
                                   type="checkbox"
                                   checked={visible}
                                   onChange={() => toggleItem(item.key!)}
-                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer focus:ring-blue-500"
+                                  className="h-4 w-4 rounded border-border text-blue-600 cursor-pointer focus:ring-blue-500"
                                 />
                               )}
                             </li>
@@ -312,7 +304,7 @@ export default function MenuConfigPage() {
           </div>
         )}
 
-        <p className="mt-4 text-center text-xs text-gray-400">
+        <p className="mt-4 text-center text-xs text-muted-foreground">
           Dashboard and Settings are always visible and cannot be hidden.
         </p>
       </div>

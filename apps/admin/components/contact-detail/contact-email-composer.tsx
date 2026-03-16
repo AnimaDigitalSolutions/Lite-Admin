@@ -83,7 +83,7 @@ export default function ContactEmailComposer({ contactId, contactName, contactEm
               {composeStep === 'confirm' ? 'Confirm Send' : composeStep === 'preview' ? 'Preview Email' : 'Compose Email'}
             </h3>
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
@@ -92,13 +92,13 @@ export default function ContactEmailComposer({ contactId, contactName, contactEm
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {fromAddress && (
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">From</label>
-              <div className="px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 text-gray-600">{fromAddress}</div>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">From</label>
+              <div className="px-3 py-2 bg-muted rounded-md text-sm border border-border text-muted-foreground">{fromAddress}</div>
             </div>
           )}
           <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1">To</label>
-            <div className="px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200">
+            <label className="text-xs font-medium text-muted-foreground block mb-1">To</label>
+            <div className="px-3 py-2 bg-muted rounded-md text-sm border border-border">
               {contactName} &lt;{contactEmail}&gt;
             </div>
           </div>
@@ -112,11 +112,11 @@ export default function ContactEmailComposer({ contactId, contactName, contactEm
           {composeStep === 'write' && (
             <>
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Subject *</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Subject *</label>
                 <Input value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Email subject..." />
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Message *</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Message *</label>
                 <textarea
                   value={emailBody}
                   onChange={e => setEmailBody(e.target.value)}
@@ -124,7 +124,7 @@ export default function ContactEmailComposer({ contactId, contactName, contactEm
                   rows={8}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
                 />
-                <p className="text-xs text-gray-400 mt-1">Plain text — line breaks will be preserved.</p>
+                <p className="text-xs text-muted-foreground mt-1">Plain text — line breaks will be preserved.</p>
               </div>
             </>
           )}
@@ -132,12 +132,12 @@ export default function ContactEmailComposer({ contactId, contactName, contactEm
           {composeStep === 'preview' && (
             <>
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Subject</label>
-                <div className="px-3 py-2 bg-gray-50 rounded-md text-sm border border-gray-200 font-medium">{emailSubject}</div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Subject</label>
+                <div className="px-3 py-2 bg-muted rounded-md text-sm border border-border font-medium">{emailSubject}</div>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1">Message Preview</label>
-                <div className="px-3 py-3 bg-gray-50 rounded-md text-sm border border-gray-200 whitespace-pre-wrap min-h-[100px]">{emailBody}</div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Message Preview</label>
+                <div className="px-3 py-3 bg-muted rounded-md text-sm border border-border whitespace-pre-wrap min-h-[100px]">{emailBody}</div>
               </div>
             </>
           )}
@@ -160,7 +160,7 @@ export default function ContactEmailComposer({ contactId, contactName, contactEm
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t bg-gray-50 rounded-b-lg">
+        <div className="flex items-center justify-between px-5 py-4 border-t bg-muted rounded-b-lg">
           <div>
             {composeStep !== 'write' && (
               <Button variant="ghost" size="sm" onClick={() => setComposeStep(composeStep === 'confirm' ? 'preview' : 'write')} disabled={sendingEmail}>

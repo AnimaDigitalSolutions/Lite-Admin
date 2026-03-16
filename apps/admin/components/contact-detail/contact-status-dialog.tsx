@@ -46,20 +46,20 @@ export default function ContactStatusDialog({ contact, targetStatus, targetLabel
       >
         <div className="p-6">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Change Status</h3>
-            <button type="button" onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-foreground">Change Status</h3>
+            <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
-          <p className="text-sm text-gray-600 mb-4">
-            Move <span className="font-medium text-gray-900">{contact.name}</span> to{' '}
-            <span className="font-medium text-gray-900">{targetLabel}</span>?
+          <p className="text-sm text-muted-foreground mb-4">
+            Move <span className="font-medium text-foreground">{contact.name}</span> to{' '}
+            <span className="font-medium text-foreground">{targetLabel}</span>?
           </p>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Comment <span className="text-gray-400 font-normal">(optional)</span>
+            <label className="block text-sm font-medium text-foreground mb-1">
+              Comment <span className="text-muted-foreground font-normal">(optional)</span>
             </label>
             <textarea
               ref={commentRef}
@@ -67,10 +67,10 @@ export default function ContactStatusDialog({ contact, targetStatus, targetLabel
               onChange={(e) => setStatusComment(e.target.value)}
               placeholder="Add a note about this status change..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               autoFocus
             />
-            <p className="text-xs text-gray-400 mt-1">Press Enter to confirm, Shift+Enter for new line</p>
+            <p className="text-xs text-muted-foreground mt-1">Press Enter to confirm, Shift+Enter for new line</p>
           </div>
 
           <div className="flex gap-2 justify-end">

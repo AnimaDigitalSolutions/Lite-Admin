@@ -13,6 +13,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { PageHeader } from '@/components/page-header';
 
 interface TemplateData {
   name: string;
@@ -199,7 +200,7 @@ export default function EmailTemplatesPage() {
 
   if (loading) return (
     <ProtectedLayout>
-      <div className="py-12 text-center text-sm text-gray-400">Loading...</div>
+      <div className="py-12 text-center text-sm text-muted-foreground">Loading...</div>
     </ProtectedLayout>
   );
 
@@ -208,17 +209,12 @@ export default function EmailTemplatesPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Templates</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Customize the HTML templates used for outgoing emails. Changes take effect immediately.
-          </p>
-        </div>
+        <PageHeader title="Email Templates" description="Customize the HTML templates used for outgoing emails. Changes take effect immediately." />
 
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
         {/* Template tabs + variable chips — single compact row */}
-        <div className="flex items-center justify-between gap-4 border-b border-gray-200 pb-0">
+        <div className="flex items-center justify-between gap-4 border-b border-border pb-0">
           <div className="flex gap-1">
             {templateNames.map(name => {
               const active = activeTemplate === name;
@@ -229,8 +225,8 @@ export default function EmailTemplatesPage() {
                   onClick={() => switchTemplate(name)}
                   className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
                     active
-                      ? 'text-gray-900 border-b-2 border-gray-900 -mb-px'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'text-foreground border-b-2 border-foreground -mb-px'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {TEMPLATE_LABELS[name] || name}
@@ -244,7 +240,7 @@ export default function EmailTemplatesPage() {
           {/* Inline variable chips */}
           {currentTemplate && (
             <div className="flex items-center gap-1.5 overflow-x-auto pb-2">
-              <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-gray-400">Variables:</span>
+              <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Variables:</span>
               {currentTemplate.variables.map(v => (
                 <button
                   key={v}
@@ -263,7 +259,7 @@ export default function EmailTemplatesPage() {
                       }, 0);
                     }
                   }}
-                  className="shrink-0 rounded border border-gray-200 bg-gray-50 px-2 py-0.5 font-mono text-[11px] text-gray-600 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+                  className="shrink-0 rounded border border-border bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground hover:bg-accent hover:border-border transition-colors"
                   title={`Insert {{${v}}}`}
                 >
                   {`{{${v}}}`}
@@ -281,18 +277,18 @@ export default function EmailTemplatesPage() {
               <Card className="flex flex-col">
                 <CardHeader className="py-2.5 px-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <CardTitle className="flex items-center gap-2 text-sm font-medium text-foreground">
                       <CodeBracketIcon className="h-4 w-4" />
                       HTML Source
                       {isDirty && <span className="text-xs text-amber-600 font-normal">(unsaved)</span>}
                       {isCustomized && !isDirty && <span className="text-xs text-blue-600 font-normal">(customized)</span>}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-gray-400 hidden sm:inline">Ctrl+S to save</span>
+                      <span className="text-[10px] text-muted-foreground hidden sm:inline">Ctrl+S to save</span>
                       <button
                         type="button"
                         onClick={() => setShowPreview(p => !p)}
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 lg:hidden"
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground lg:hidden"
                       >
                         <EyeIcon className="h-3.5 w-3.5" />
                         {showPreview ? 'Hide' : 'Show'} Preview
@@ -305,7 +301,7 @@ export default function EmailTemplatesPage() {
                     ref={textareaRef}
                     value={editorContent}
                     onChange={e => setEditorContent(e.target.value)}
-                    className="h-full min-h-[400px] w-full resize-none rounded-md border border-gray-300 bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-800 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                    className="h-full min-h-[400px] w-full resize-none rounded-md border border-border bg-muted p-3 font-mono text-xs leading-relaxed text-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
                     spellCheck={false}
                   />
                 </CardContent>
@@ -314,7 +310,7 @@ export default function EmailTemplatesPage() {
               {/* Preview */}
               <Card className={`flex flex-col ${showPreview ? '' : 'hidden lg:flex'}`}>
                 <CardHeader className="py-2.5 px-4">
-                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <CardTitle className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <EyeIcon className="h-4 w-4" />
                     Live Preview
                   </CardTitle>
@@ -323,7 +319,7 @@ export default function EmailTemplatesPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 p-3 pt-0">
-                  <div className="h-full min-h-[400px] overflow-hidden rounded-md border border-gray-200 bg-white">
+                  <div className="h-full min-h-[400px] overflow-hidden rounded-md border border-border bg-card">
                     <iframe
                       srcDoc={renderPreview(debouncedPreview, SAMPLE_DATA[activeTemplate] || {})}
                       className="h-full w-full border-0"
@@ -344,7 +340,7 @@ export default function EmailTemplatesPage() {
                 <Button
                   variant="outline"
                   onClick={() => setConfirmingReset(true)}
-                  className="text-gray-600"
+                  className="text-muted-foreground"
                 >
                   <ArrowPathIcon className="mr-1.5 h-3.5 w-3.5" />
                   Reset to Default

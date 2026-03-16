@@ -32,6 +32,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { ErrorBanner } from '@/components/ui/error-banner';
 import { useSelection } from '@/lib/hooks/use-selection';
+import { PageHeader } from '@/components/page-header';
 import AddSubscriberModal from './components/add-subscriber-modal';
 import TestEmailPanel from './components/test-email-panel';
 
@@ -241,7 +242,7 @@ function SubscribersTab() {
       {/* Search */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             ref={inputRef}
             placeholder="Search subscribers... (try has: or is:)"
@@ -256,24 +257,24 @@ function SubscribersTab() {
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <XMarkIcon className="h-4 w-4" />
             </button>
           )}
           {filteredSuggestions.length > 0 && (
-            <div ref={suggestionsRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+            <div ref={suggestionsRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden">
               {filteredSuggestions.map((s, i) => (
                 <button
                   key={s.token}
                   type="button"
                   onMouseDown={(e) => { e.preventDefault(); applySuggestion(s.token); }}
                   className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
-                    i === suggestionIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
+                    i === suggestionIndex ? 'bg-accent' : 'hover:bg-accent'
                   }`}
                 >
-                  <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">{s.token}</code>
-                  <span className="text-gray-500 text-xs">{s.label}</span>
+                  <code className="text-xs bg-accent px-1.5 py-0.5 rounded font-mono">{s.token}</code>
+                  <span className="text-muted-foreground text-xs">{s.label}</span>
                 </button>
               ))}
             </div>
@@ -296,7 +297,7 @@ function SubscribersTab() {
             <Card
               key={label}
               className={`transition-all cursor-pointer hover:shadow-md ${
-                isActive ? 'ring-2 ring-gray-900 bg-gray-50' : isNegated ? 'ring-2 ring-red-400 bg-red-50/50' : ''
+                isActive ? 'ring-2 ring-foreground bg-muted' : isNegated ? 'ring-2 ring-red-400 bg-red-50/50' : ''
               }`}
               onClick={isClear ? () => setSearchTerm('') : token ? (e: React.MouseEvent) => toggleFilter(token, e) : undefined}
             >
@@ -304,7 +305,7 @@ function SubscribersTab() {
                 <div className="flex items-center gap-3">
                   <Icon className={`h-8 w-8 ${color}`} />
                   <div>
-                    <p className="text-sm text-gray-600">{label}</p>
+                    <p className="text-sm text-muted-foreground">{label}</p>
                     <p className="text-2xl font-bold">{value}</p>
                   </div>
                 </div>
@@ -326,7 +327,7 @@ function SubscribersTab() {
           {loading ? (
             <div className="text-center py-8">Loading subscribers...</div>
           ) : filteredEntries.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {searchTerm ? 'No entries match your search' : 'No subscribers yet'}
             </div>
           ) : (
@@ -350,7 +351,7 @@ function SubscribersTab() {
                   </thead>
                   <tbody>
                     {filteredEntries.map((entry) => (
-                      <tr key={entry.id} className={`border-b ${editingId === entry.id ? 'bg-blue-50' : 'hover:bg-gray-50'} group/row`}>
+                      <tr key={entry.id} className={`border-b ${editingId === entry.id ? 'bg-blue-50' : 'hover:bg-accent'} group/row`}>
                         <td className="p-3">
                           <div className={`${selectedEntries.has(entry.id) ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
                             <input type="checkbox" checked={selectedEntries.has(entry.id)} onChange={(e) => handleSelectEntry(entry.id, e.target.checked)} className="rounded cursor-pointer" />
@@ -362,7 +363,7 @@ function SubscribersTab() {
                           ) : entry.name ? (
                             <span className="font-medium">{entry.name}</span>
                           ) : (
-                            <span className="text-gray-400 italic">No name</span>
+                            <span className="text-muted-foreground italic">No name</span>
                           )}
                         </td>
                         <td className="p-3">
@@ -378,7 +379,7 @@ function SubscribersTab() {
                                 {prefs.truncateEmails ? truncateEmail(entry.email) : entry.email}
                               </span>
                               <button type="button" onClick={() => void copyEmail(entry.email, entry.email)} title="Copy email"
-                                className={`transition-colors shrink-0 ${isEmailCopied(entry.email) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                                className={`transition-colors shrink-0 ${isEmailCopied(entry.email) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}>
                                 {isEmailCopied(entry.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
@@ -398,7 +399,7 @@ function SubscribersTab() {
                             </div>
                           )}
                         </td>
-                        <td className="p-3 text-sm text-gray-600">
+                        <td className="p-3 text-sm text-muted-foreground">
                           {formatDate(entry.signed_up_at)}
                         </td>
                         <td className="p-3">
@@ -411,8 +412,8 @@ function SubscribersTab() {
                                     {!priv && entry.country && (
                                       <span title={entry.country_name ?? entry.country}>{countryFlag(entry.country)}</span>
                                     )}
-                                    <span className="font-mono text-xs text-gray-400">{entry.ip_address}</span>
-                                    {priv && <span className="text-xs text-gray-400 italic">private</span>}
+                                    <span className="font-mono text-xs text-muted-foreground">{entry.ip_address}</span>
+                                    {priv && <span className="text-xs text-muted-foreground italic">private</span>}
                                     {(ipCounts[entry.ip_address!] ?? 0) > 1 && (
                                       <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-600"
                                         title={`${ipCounts[entry.ip_address!]} entries from this IP`}>
@@ -421,17 +422,17 @@ function SubscribersTab() {
                                     )}
                                   </span>
                                   {!priv && entry.city && (
-                                    <div className="text-xs text-gray-400 mt-0.5">
+                                    <div className="text-xs text-muted-foreground mt-0.5">
                                       {entry.city}{entry.country_name ? `, ${entry.country_name}` : ''}
                                     </div>
                                   )}
                                 </div>
                               );
                             })() : (
-                              <span className="text-gray-400">-</span>
+                              <span className="text-muted-foreground">-</span>
                             )
                           ) : (
-                            <span className="text-gray-400">&mdash;</span>
+                            <span className="text-muted-foreground">&mdash;</span>
                           )}
                         </td>
                         <td className="p-3">
@@ -478,7 +479,7 @@ function SubscribersTab() {
               <ArrowDownTrayIcon className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Export CSV</div>
-                <div className="text-xs text-gray-500">Download all data</div>
+                <div className="text-xs text-muted-foreground">Download all data</div>
               </div>
             </Button>
             <Button variant="outline" className="flex items-center justify-center gap-2 h-20" onClick={() => {
@@ -488,7 +489,7 @@ function SubscribersTab() {
               <ClipboardDocumentIcon className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Copy All Emails</div>
-                <div className="text-xs text-gray-500">Comma-separated list</div>
+                <div className="text-xs text-muted-foreground">Comma-separated list</div>
               </div>
             </Button>
           </div>
@@ -511,10 +512,7 @@ export default function SubscribersPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Subscribers</h1>
-          <p className="mt-2 text-gray-600">Manage your subscribers</p>
-        </div>
+        <PageHeader title="Subscribers" description="Manage your subscribers" />
         <SubscribersTab />
       </div>
     </ProtectedLayout>

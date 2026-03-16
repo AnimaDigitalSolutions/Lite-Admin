@@ -83,7 +83,7 @@ export default function MediaEditModal({ item, onClose, onSave }: MediaEditModal
               name="description"
               defaultValue={item.description || ''}
               placeholder="Description..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-3 py-2 border border-border rounded-md"
               rows={3}
             />
           </div>

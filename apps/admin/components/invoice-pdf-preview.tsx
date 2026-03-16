@@ -15,7 +15,7 @@ export default function InvoicePDFPreview({ data, onDisable }: { data: InvoiceDa
           <CardTitle>Live Preview</CardTitle>
           <div className="flex items-center gap-1.5">
             {onDisable && (
-              <Button variant="ghost" size="sm" onClick={onDisable} className="flex items-center gap-1 text-gray-500 hover:text-gray-700">
+              <Button variant="ghost" size="sm" onClick={onDisable} className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
                 <EyeSlashIcon className="h-3.5 w-3.5" />
                 Hide
               </Button>
@@ -35,7 +35,7 @@ export default function InvoicePDFPreview({ data, onDisable }: { data: InvoiceDa
         </div>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-lg overflow-hidden bg-gray-50" style={{ height: 680 }}>
+        <div className="border rounded-lg overflow-hidden bg-muted" style={{ height: 680 }}>
           <PDFViewer width="100%" height="100%" showToolbar={false}>
             <InvoicePDF data={data} />
           </PDFViewer>

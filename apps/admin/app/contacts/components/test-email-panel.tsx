@@ -65,13 +65,13 @@ export default function TestEmailPanel({ onEmailSent }: TestEmailPanelProps) {
           <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
           Test Contact Email
         </CardTitle>
-        <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${show ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${show ? 'rotate-180' : ''}`} />
       </button>
       {show && (
-        <CardContent className="space-y-4 border-t border-gray-100 pt-4">
+        <CardContent className="space-y-4 border-t border-border pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Test Email Address *</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Test Email Address *</label>
               <Input
                 type="email"
                 value={data.test_email}
@@ -81,7 +81,7 @@ export default function TestEmailPanel({ onEmailSent }: TestEmailPanelProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Test Name</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Test Name</label>
               <Input
                 value={data.name}
                 onChange={(e) => setData(prev => ({ ...prev, name: e.target.value }))}
@@ -89,7 +89,7 @@ export default function TestEmailPanel({ onEmailSent }: TestEmailPanelProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Test Company</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Test Company</label>
               <Input
                 value={data.company}
                 onChange={(e) => setData(prev => ({ ...prev, company: e.target.value }))}
@@ -97,11 +97,11 @@ export default function TestEmailPanel({ onEmailSent }: TestEmailPanelProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Project Type</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Project Type</label>
               <select
                 value={data.project_type}
                 onChange={(e) => setData(prev => ({ ...prev, project_type: e.target.value as ProjectType }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="web">Web Application</option>
                 <option value="mobile">Mobile App</option>
@@ -112,12 +112,12 @@ export default function TestEmailPanel({ onEmailSent }: TestEmailPanelProps) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Test Message</label>
+            <label className="block text-sm font-medium text-foreground mb-2">Test Message</label>
             <textarea
               value={data.message}
               onChange={(e) => setData(prev => ({ ...prev, message: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Test message content..."
             />
           </div>

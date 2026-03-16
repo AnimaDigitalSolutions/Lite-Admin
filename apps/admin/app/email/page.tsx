@@ -16,6 +16,7 @@ import {
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { ErrorBanner } from '@/components/ui/error-banner';
+import { PageHeader } from '@/components/page-header';
 
 interface EmailConfig {
   active_provider: string;
@@ -131,7 +132,7 @@ export default function EmailPage() {
 
   if (loading) return (
     <ProtectedLayout>
-      <div className="py-12 text-center text-sm text-gray-400">Loading…</div>
+      <div className="py-12 text-center text-sm text-muted-foreground">Loading…</div>
     </ProtectedLayout>
   );
 
@@ -143,12 +144,7 @@ export default function EmailPage() {
   return (
     <ProtectedLayout>
       <div className="max-w-2xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Configure how outgoing emails are sent and where admin notifications go.
-          </p>
-        </div>
+        <PageHeader title="Email" description="Configure how outgoing emails are sent and where admin notifications go." />
 
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
@@ -168,16 +164,16 @@ export default function EmailPage() {
                   key={id}
                   onClick={() => setConfig(prev => ({ ...prev, active_provider: id }))}
                   className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                    active ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-300'
+                    active ? 'border-foreground bg-muted' : 'border-border hover:border-border'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      active ? 'border-gray-900' : 'border-gray-300'
+                      active ? 'border-foreground' : 'border-border'
                     }`}>
-                      {active && <div className="h-2 w-2 rounded-full bg-gray-900" />}
+                      {active && <div className="h-2 w-2 rounded-full bg-foreground" />}
                     </div>
-                    <span className={`text-sm font-semibold ${active ? 'text-gray-900' : 'text-gray-500'}`}>{label}</span>
+                    <span className={`text-sm font-semibold ${active ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
                     {v === 'ok' && <span className="ml-auto flex items-center gap-1 text-xs text-emerald-600"><CheckCircleIcon className="h-3.5 w-3.5" />Verified</span>}
                     {v === 'fail' && <span className="ml-auto flex items-center gap-1 text-xs text-red-600"><XCircleIcon className="h-3.5 w-3.5" />Invalid</span>}
                   </div>
@@ -257,7 +253,7 @@ export default function EmailPage() {
                 />
               </div>
             </div>
-            <p className="rounded bg-gray-50 px-3 py-2 text-xs text-gray-500 border">
+            <p className="rounded bg-muted px-3 py-2 text-xs text-muted-foreground border">
               Recipients will see: <span className="font-mono">{config.display_name || 'Lite Admin'} &lt;{config.from_address || 'noreply@…'}&gt;</span>
             </p>
           </CardContent>
@@ -316,10 +312,10 @@ export default function EmailPage() {
               </CardTitle>
               <CardDescription className="mt-1">Verify your config is working before going live.</CardDescription>
             </div>
-            <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${testOpen ? 'rotate-180' : ''}`} />
+            <ChevronDownIcon className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${testOpen ? 'rotate-180' : ''}`} />
           </button>
           {testOpen && (
-            <CardContent className="space-y-3 border-t border-gray-100 pt-4">
+            <CardContent className="space-y-3 border-t border-border pt-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-sm font-medium">Send to</Label>
@@ -337,7 +333,7 @@ export default function EmailPage() {
                   <select
                     value={testType}
                     onChange={e => setTestType(e.target.value as 'contact' | 'waitlist')}
-                    className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    className="mt-1.5 w-full rounded-md border border-border px-3 py-2 text-sm"
                   >
                     <option value="contact">Contact notification</option>
                     <option value="waitlist">Waitlist confirmation</option>

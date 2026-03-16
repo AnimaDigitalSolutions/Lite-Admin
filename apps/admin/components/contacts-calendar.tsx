@@ -255,7 +255,7 @@ export default function ContactsCalendar({
                 Today
               </Button>
             </div>
-            <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
               {Object.entries(STATUS_BAR_COLORS).map(([status, color]) => (
                 <span key={status} className="flex items-center gap-1">
                   <span className={`h-2 w-6 rounded ${color} inline-block ${TERMINAL_STATUSES.has(status) ? 'opacity-70' : ''}`} />
@@ -268,8 +268,8 @@ export default function ContactsCalendar({
           {/* Bottom row: time filter + zoom + pagination info */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-medium">Show:</span>
-              <div className="flex rounded-md border border-gray-200 overflow-hidden">
+              <span className="text-xs text-muted-foreground font-medium">Show:</span>
+              <div className="flex rounded-md border border-border overflow-hidden">
                 {([
                   { value: 'last30' as TimeFilter, label: 'Last 30 days' },
                   { value: 'last90' as TimeFilter, label: 'Last 90 days' },
@@ -282,22 +282,22 @@ export default function ContactsCalendar({
                     onClick={() => setTimeFilter(value)}
                     className={`px-3 py-1 text-xs font-medium transition-colors ${
                       timeFilter === value
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                        ? 'bg-foreground text-background'
+                        : 'bg-background text-muted-foreground hover:bg-accent'
                     }`}
                   >
                     {label}
                   </button>
                 ))}
               </div>
-              <span className="text-xs text-gray-400 ml-2">
+              <span className="text-xs text-muted-foreground ml-2">
                 {sortedContacts.length} contacts
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               {/* Zoom controls */}
-              <span className="text-xs text-gray-500 font-medium">Zoom:</span>
+              <span className="text-xs text-muted-foreground font-medium">Zoom:</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -307,7 +307,7 @@ export default function ContactsCalendar({
               >
                 <MagnifyingGlassMinusIcon className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs text-gray-400 w-8 text-center">
+              <span className="text-xs text-muted-foreground w-8 text-center">
                 {Math.round((DAY_WIDTH / ZOOM_LEVELS[DEFAULT_ZOOM]) * 100)}%
               </span>
               <Button
@@ -325,15 +325,15 @@ export default function ContactsCalendar({
       </CardHeader>
       <CardContent className="p-0">
         {sortedContacts.length === 0 ? (
-          <div className="text-center py-12 text-gray-400 text-sm">No contacts to display</div>
+          <div className="text-center py-12 text-muted-foreground text-sm">No contacts to display</div>
         ) : (
           <>
-            <div className="flex border-t border-gray-200">
+            <div className="flex border-t border-border">
               {/* Fixed left column — contact labels */}
-              <div className="shrink-0 border-r border-gray-200 z-10" style={{ width: LABEL_WIDTH }}>
+              <div className="shrink-0 border-r border-border z-10" style={{ width: LABEL_WIDTH }}>
                 {/* Header spacer */}
-                <div className="h-[52px] border-b border-gray-200 px-3 flex items-end pb-1 bg-white">
-                  <span className="text-xs font-medium text-gray-500">Contact</span>
+                <div className="h-[52px] border-b border-border px-3 flex items-end pb-1 bg-white">
+                  <span className="text-xs font-medium text-muted-foreground">Contact</span>
                 </div>
                 {/* Contact rows */}
                 {paginatedContacts.map((contact, idx) => {
@@ -344,8 +344,8 @@ export default function ContactsCalendar({
                       key={contact.id}
                       onClick={() => onSelectContact(contact)}
                       className={`flex items-center gap-2 px-3 cursor-pointer transition-colors ${
-                        isSelected ? 'bg-amber-100 relative z-50 border-l-[3px] border-l-amber-400' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                      } hover:bg-gray-100`}
+                        isSelected ? 'bg-amber-100 relative z-50 border-l-[3px] border-l-amber-400' : idx % 2 === 0 ? 'bg-white' : 'bg-muted/50'
+                      } hover:bg-accent`}
                       style={{ height: ROW_HEIGHT }}
                     >
                       <span className={`h-2 w-2 rounded-full shrink-0 ${STATUS_BAR_COLORS[contact.status || 'new']}`} />
@@ -362,7 +362,7 @@ export default function ContactsCalendar({
               <div ref={scrollRef} className="overflow-x-auto flex-1">
                 <div style={{ width: totalDays * DAY_WIDTH, minWidth: '100%' }} className="relative">
                   {/* Timeline header — month labels + week ticks */}
-                  <div className="h-[52px] border-b border-gray-200 relative">
+                  <div className="h-[52px] border-b border-border relative">
                     {/* Month labels */}
                     {(() => {
                       const months: { label: string; startPx: number; widthPx: number }[] = [];
@@ -384,10 +384,10 @@ export default function ContactsCalendar({
                       return months.map((m, i) => (
                         <div
                           key={i}
-                          className="absolute top-0 h-6 flex items-center border-r border-gray-200"
+                          className="absolute top-0 h-6 flex items-center border-r border-border"
                           style={{ left: m.startPx, width: m.widthPx }}
                         >
-                          <span className="text-xs font-medium text-gray-600 px-2 truncate">{m.label}</span>
+                          <span className="text-xs font-medium text-muted-foreground px-2 truncate">{m.label}</span>
                         </div>
                       ));
                     })()}
@@ -398,10 +398,10 @@ export default function ContactsCalendar({
                       return (
                         <div
                           key={i}
-                          className="absolute bottom-0 h-5 border-l border-gray-200 flex items-end"
+                          className="absolute bottom-0 h-5 border-l border-border flex items-end"
                           style={{ left: offset * DAY_WIDTH }}
                         >
-                          <span className="text-[10px] text-gray-400 pl-1">{w.label}</span>
+                          <span className="text-[10px] text-muted-foreground pl-1">{w.label}</span>
                         </div>
                       );
                     })}
@@ -490,7 +490,7 @@ export default function ContactsCalendar({
                       <div
                         key={contact.id}
                         className={`relative ${
-                          isSelected ? 'bg-amber-100 z-50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                          isSelected ? 'bg-amber-100 z-50' : idx % 2 === 0 ? 'bg-white' : 'bg-muted/50'
                         }`}
                         style={{ height: ROW_HEIGHT }}
                       >
@@ -549,7 +549,7 @@ export default function ContactsCalendar({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-3 py-3 border-t border-gray-200">
+              <div className="flex items-center justify-center gap-3 py-3 border-t border-border">
                 <Button
                   variant="outline"
                   size="sm"
@@ -558,7 +558,7 @@ export default function ContactsCalendar({
                 >
                   <ChevronLeftIcon className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button

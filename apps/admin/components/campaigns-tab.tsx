@@ -275,7 +275,7 @@ export default function CampaignsTab() {
             <Card
               key={label}
               className={`transition-all cursor-pointer hover:shadow-md ${
-                isActive ? 'ring-2 ring-gray-900 bg-gray-50' : ''
+                isActive ? 'ring-2 ring-foreground bg-muted' : ''
               }`}
               onClick={() => isClear ? setCampaignFilter(null) : toggleCampaignFilter(filter)}
             >
@@ -283,7 +283,7 @@ export default function CampaignsTab() {
                 <div className="flex items-center gap-3">
                   <Icon className={`h-8 w-8 ${color}`} />
                   <div>
-                    <p className="text-sm text-gray-600">{label}</p>
+                    <p className="text-sm text-muted-foreground">{label}</p>
                     <p className="text-2xl font-bold">{value}</p>
                   </div>
                 </div>
@@ -302,7 +302,7 @@ export default function CampaignsTab() {
           {loading ? (
             <div className="text-center py-8">Loading campaigns...</div>
           ) : filteredCampaigns.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               {campaigns.length === 0 ? 'No campaigns yet. Create your first one!' : 'No campaigns match this filter'}
             </div>
           ) : (
@@ -320,9 +320,9 @@ export default function CampaignsTab() {
                 </thead>
                 <tbody>
                   {filteredCampaigns.map((campaign) => (
-                    <tr key={campaign.id} className="border-b hover:bg-gray-50">
+                    <tr key={campaign.id} className="border-b hover:bg-accent">
                       <td className="p-3 font-medium">{campaign.name}</td>
-                      <td className="p-3 text-sm text-gray-600 max-w-[200px] truncate">{campaign.subject}</td>
+                      <td className="p-3 text-sm text-muted-foreground max-w-[200px] truncate">{campaign.subject}</td>
                       <td className="p-3">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                           campaign.status === 'sent'
@@ -332,12 +332,12 @@ export default function CampaignsTab() {
                           {campaign.status === 'sent' ? 'Sent' : 'Draft'}
                         </span>
                       </td>
-                      <td className="p-3 text-sm text-gray-600">
+                      <td className="p-3 text-sm text-muted-foreground">
                         {campaign.status === 'sent'
                           ? (campaign.sent_count ?? campaign.recipient_count ?? '-')
                           : (() => {
                               const type = campaign.target_type || 'all';
-                              if (type === 'all') return <span className="text-gray-400">All</span>;
+                              if (type === 'all') return <span className="text-muted-foreground">All</span>;
                               const tags = campaign.target_tags ? JSON.parse(campaign.target_tags) as string[] : [];
                               return tags.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
@@ -345,11 +345,11 @@ export default function CampaignsTab() {
                                     <span key={t} className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px] font-medium">{t}</span>
                                   ))}
                                 </div>
-                              ) : <span className="text-gray-400">All</span>;
+                              ) : <span className="text-muted-foreground">All</span>;
                             })()
                         }
                       </td>
-                      <td className="p-3 text-sm text-gray-600">
+                      <td className="p-3 text-sm text-muted-foreground">
                         {campaign.status === 'sent' && campaign.sent_at
                           ? formatDate(campaign.sent_at)
                           : formatDate(campaign.created_at)}
@@ -395,23 +395,23 @@ export default function CampaignsTab() {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name {!viewOnly && '*'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Campaign Name {!viewOnly && '*'}</label>
                   <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="March Newsletter" readOnly={viewOnly} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Line {!viewOnly && '*'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Subject Line {!viewOnly && '*'}</label>
                   <Input value={formData.subject} onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))} placeholder="Exciting news from our team" readOnly={viewOnly} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preheader {!viewOnly && '(optional)'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Preheader {!viewOnly && '(optional)'}</label>
                   <Input value={formData.preheader} onChange={e => setFormData(p => ({ ...p, preheader: e.target.value }))} placeholder="Preview text shown in email clients" readOnly={viewOnly} />
                 </div>
 
                 {/* Audience / Targeting */}
                 {viewOnly ? (
-                  <div className="rounded-lg border border-gray-200 p-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Audience</label>
-                    <p className="text-sm text-gray-600">
+                  <div className="rounded-lg border border-border p-4 space-y-2">
+                    <label className="block text-sm font-medium text-foreground">Audience</label>
+                    <p className="text-sm text-muted-foreground">
                       {formData.target_type === 'all'
                         ? 'All subscribers'
                         : formData.target_tags.length > 0
@@ -420,8 +420,8 @@ export default function CampaignsTab() {
                     </p>
                   </div>
                 ) : (
-                <div className="rounded-lg border border-gray-200 p-4 space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">Audience</label>
+                <div className="rounded-lg border border-border p-4 space-y-3">
+                  <label className="block text-sm font-medium text-foreground">Audience</label>
                   <div className="flex gap-3">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -431,7 +431,7 @@ export default function CampaignsTab() {
                           setFormData(p => ({ ...p, target_type: 'all', target_tags: [] }));
                           void updateTargetCount('all', []);
                         }}
-                        className="accent-gray-900"
+                        className="accent-foreground"
                       />
                       <span className="text-sm">All subscribers</span>
                     </label>
@@ -443,7 +443,7 @@ export default function CampaignsTab() {
                           setFormData(p => ({ ...p, target_type: 'tagged' }));
                           void updateTargetCount('tagged', formData.target_tags);
                         }}
-                        className="accent-gray-900"
+                        className="accent-foreground"
                       />
                       <span className="text-sm">Subscribers with tags</span>
                     </label>
@@ -532,7 +532,7 @@ export default function CampaignsTab() {
                   )}
                   {targetCount !== null && (
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Will send to <strong>{targetCount}</strong> subscriber{targetCount !== 1 ? 's' : ''}
                       </p>
                       {targetCount > 0 && (
@@ -552,18 +552,18 @@ export default function CampaignsTab() {
                     </div>
                   )}
                   {showRecipientPreview && (
-                    <div className="border border-gray-200 rounded-md max-h-[160px] overflow-y-auto">
+                    <div className="border border-border rounded-md max-h-[160px] overflow-y-auto">
                       {recipientPreviewLoading ? (
-                        <p className="text-xs text-gray-400 p-3">Loading...</p>
+                        <p className="text-xs text-muted-foreground p-3">Loading...</p>
                       ) : recipientPreview.length === 0 ? (
-                        <p className="text-xs text-gray-400 p-3">No matching subscribers</p>
+                        <p className="text-xs text-muted-foreground p-3">No matching subscribers</p>
                       ) : (
                         <table className="w-full text-xs">
-                          <thead className="sticky top-0 bg-gray-50">
+                          <thead className="sticky top-0 bg-muted">
                             <tr className="border-b">
-                              <th className="text-left px-3 py-1.5 font-medium text-gray-500">Email</th>
-                              <th className="text-left px-3 py-1.5 font-medium text-gray-500">Name</th>
-                              <th className="text-left px-3 py-1.5 font-medium text-gray-500">Tags</th>
+                              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Email</th>
+                              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Name</th>
+                              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Tags</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -571,9 +571,9 @@ export default function CampaignsTab() {
                               let tags: string[] = [];
                               try { tags = s.tags ? JSON.parse(s.tags) : []; } catch { /* skip */ }
                               return (
-                                <tr key={s.id} className="border-b last:border-0 hover:bg-gray-50">
-                                  <td className="px-3 py-1.5 text-gray-700">{s.email}</td>
-                                  <td className="px-3 py-1.5 text-gray-500">{s.name || '-'}</td>
+                                <tr key={s.id} className="border-b last:border-0 hover:bg-accent">
+                                  <td className="px-3 py-1.5 text-foreground">{s.email}</td>
+                                  <td className="px-3 py-1.5 text-muted-foreground">{s.name || '-'}</td>
                                   <td className="px-3 py-1.5">
                                     {tags.length > 0 ? (
                                       <div className="flex flex-wrap gap-0.5">
@@ -581,7 +581,7 @@ export default function CampaignsTab() {
                                           <span key={t} className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]">{t}</span>
                                         ))}
                                       </div>
-                                    ) : <span className="text-gray-300">-</span>}
+                                    ) : <span className="text-muted-foreground/50">-</span>}
                                   </td>
                                 </tr>
                               );
@@ -595,9 +595,9 @@ export default function CampaignsTab() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content {!viewOnly && '*'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">HTML Content {!viewOnly && '*'}</label>
                   <textarea
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono min-h-[200px] focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-md border border-border px-3 py-2 text-sm font-mono min-h-[200px] focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
                     value={formData.html_content}
                     onChange={e => setFormData(p => ({ ...p, html_content: e.target.value }))}
                     placeholder="<html><body>Your email content here...</body></html>"
@@ -605,9 +605,9 @@ export default function CampaignsTab() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Text Fallback {!viewOnly && '(optional)'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">Text Fallback {!viewOnly && '(optional)'}</label>
                   <textarea
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-md border border-border px-3 py-2 text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
                     value={formData.text_content}
                     onChange={e => setFormData(p => ({ ...p, text_content: e.target.value }))}
                     placeholder="Plain text version of your email"
@@ -637,7 +637,7 @@ export default function CampaignsTab() {
           <div className="bg-white rounded-lg max-w-lg w-full max-h-[80vh] flex flex-col">
             <div className="p-6 flex flex-col gap-4">
               <h2 className="text-xl font-semibold">Send Campaign</h2>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Are you sure you want to send this campaign to{' '}
                 <strong>
                   {subscriberCount !== null
@@ -658,13 +658,13 @@ export default function CampaignsTab() {
                     {showSendRecipients ? 'Hide recipient list' : `View all ${sendRecipients.length} recipients`}
                   </button>
                   {showSendRecipients && (
-                    <div className="border border-gray-200 rounded-md max-h-[200px] overflow-y-auto">
+                    <div className="border border-border rounded-md max-h-[200px] overflow-y-auto">
                       <table className="w-full text-xs">
-                        <thead className="sticky top-0 bg-gray-50">
+                        <thead className="sticky top-0 bg-muted">
                           <tr className="border-b">
-                            <th className="text-left px-3 py-1.5 font-medium text-gray-500">Email</th>
-                            <th className="text-left px-3 py-1.5 font-medium text-gray-500">Name</th>
-                            <th className="text-left px-3 py-1.5 font-medium text-gray-500">Tags</th>
+                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Email</th>
+                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Name</th>
+                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Tags</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -672,9 +672,9 @@ export default function CampaignsTab() {
                             let tags: string[] = [];
                             try { tags = s.tags ? JSON.parse(s.tags) : []; } catch { /* skip */ }
                             return (
-                              <tr key={s.id} className="border-b last:border-0 hover:bg-gray-50">
-                                <td className="px-3 py-1.5 text-gray-700">{s.email}</td>
-                                <td className="px-3 py-1.5 text-gray-500">{s.name || '-'}</td>
+                              <tr key={s.id} className="border-b last:border-0 hover:bg-accent">
+                                <td className="px-3 py-1.5 text-foreground">{s.email}</td>
+                                <td className="px-3 py-1.5 text-muted-foreground">{s.name || '-'}</td>
                                 <td className="px-3 py-1.5">
                                   {tags.length > 0 ? (
                                     <div className="flex flex-wrap gap-0.5">
@@ -682,7 +682,7 @@ export default function CampaignsTab() {
                                         <span key={t} className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]">{t}</span>
                                       ))}
                                     </div>
-                                  ) : <span className="text-gray-300">-</span>}
+                                  ) : <span className="text-muted-foreground/50">-</span>}
                                 </td>
                               </tr>
                             );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ProtectedLayout from '@/components/protected-layout';
+import { PageHeader } from '@/components/page-header';
 import { statsApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -62,7 +63,7 @@ export default function StatsPage() {
   if (loading) {
     return (
       <ProtectedLayout>
-        <div className="py-12 text-center text-gray-500">Loading statistics...</div>
+        <div className="py-12 text-center text-muted-foreground">Loading statistics...</div>
       </ProtectedLayout>
     );
   }
@@ -88,10 +89,7 @@ export default function StatsPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Statistics</h1>
-          <p className="mt-2 text-gray-600">30-day activity breakdowns</p>
-        </div>
+        <PageHeader title="Statistics" description="30-day activity breakdowns" />
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -99,12 +97,12 @@ export default function StatsPage() {
             { label: 'Total Contacts', value: stats.contacts.total, color: 'text-blue-600' },
             { label: 'Waitlist Signups', value: stats.waitlist.total, color: 'text-green-600' },
             { label: 'Media Items', value: stats.media.total, color: 'text-purple-600' },
-            { label: 'Node', value: stats.system.node_version, color: 'text-gray-600' },
+            { label: 'Node', value: stats.system.node_version, color: 'text-muted-foreground' },
           ].map(({ label, value, color }) => (
             <Card key={label}>
               <CardContent className="pt-6">
                 <div className={`text-2xl font-bold ${color}`}>{value}</div>
-                <div className="text-sm text-gray-500 mt-1">{label}</div>
+                <div className="text-sm text-muted-foreground mt-1">{label}</div>
               </CardContent>
             </Card>
           ))}
@@ -163,14 +161,14 @@ export default function StatsPage() {
             <div className="space-y-3">
               {memBreakdown.map(({ label, value }) => (
                 <div key={label} className="flex items-center gap-3">
-                  <div className="w-28 text-sm text-gray-600">{label}</div>
-                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div className="w-28 text-sm text-muted-foreground">{label}</div>
+                  <div className="flex-1 bg-accent rounded-full h-2 overflow-hidden">
                     <div
                       className="bg-blue-500 h-2 rounded-full"
                       style={{ width: `${Math.min(100, (value / mem.rss) * 100)}%` }}
                     />
                   </div>
-                  <div className="w-20 text-right text-sm font-medium text-gray-700">
+                  <div className="w-20 text-right text-sm font-medium text-foreground">
                     {formatMemory(value)}
                   </div>
                 </div>

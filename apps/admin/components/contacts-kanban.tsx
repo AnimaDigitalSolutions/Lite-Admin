@@ -208,9 +208,9 @@ export default function ContactsKanban({
     <>
       {/* Column Filter Toolbar */}
       <div className="flex items-center gap-2 mb-3">
-        <FunnelIcon className="h-4 w-4 text-gray-400" />
-        <span className="text-xs text-gray-500 font-medium">Columns:</span>
-        <div className="flex rounded-md border border-gray-200 overflow-hidden">
+        <FunnelIcon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground font-medium">Columns:</span>
+        <div className="flex rounded-md border border-border overflow-hidden">
           {([
             { value: 'populated' as ColumnFilter, label: 'Populated' },
             { value: 'all' as ColumnFilter, label: 'All' },
@@ -225,8 +225,8 @@ export default function ContactsKanban({
               }}
               className={`px-3 py-1 text-xs font-medium transition-colors ${
                 columnFilter === value
-                  ? 'bg-gray-900 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  ? 'bg-foreground text-background'
+                  : 'bg-background text-muted-foreground hover:bg-accent'
               }`}
             >
               {label}
@@ -243,7 +243,7 @@ export default function ContactsKanban({
           </button>
         )}
         {columnFilter !== 'all' && (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-muted-foreground">
             {visibleStages.length} of {PIPELINE_STAGES.length} columns
           </span>
         )}
@@ -263,7 +263,7 @@ export default function ContactsKanban({
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
                   isSelected
                     ? `${stage.color} border-transparent`
-                    : 'bg-gray-50 text-gray-400 border-gray-200 hover:border-gray-300'
+                    : 'bg-muted text-muted-foreground border-border hover:border-border'
                 }`}
               >
                 {isSelected ? (
@@ -302,12 +302,12 @@ export default function ContactsKanban({
                     isDropZone
                       ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
                       : isDragSource
-                        ? 'bg-gray-100 border-gray-300'
-                        : 'bg-gray-50 border-gray-200'
+                        ? 'bg-accent border-border'
+                        : 'bg-muted border-border'
                   }`}
                 >
                   {stageContacts.length === 0 ? (
-                    <p className={`text-xs text-center py-4 ${isDropZone ? 'text-blue-400 font-medium' : 'text-gray-400'}`}>
+                    <p className={`text-xs text-center py-4 ${isDropZone ? 'text-blue-400 font-medium' : 'text-muted-foreground'}`}>
                       {isDropZone ? 'Drop here' : 'No contacts'}
                     </p>
                   ) : (
@@ -326,19 +326,19 @@ export default function ContactsKanban({
                               ? 'opacity-50 ring-2 ring-blue-300'
                               : isViewing
                                 ? 'border-amber-400 ring-1 ring-amber-200 relative z-50'
-                                : 'border-gray-200 hover:border-gray-300'
+                                : 'border-border hover:border-border'
                           }`}
                         >
                           <p className="font-medium text-sm truncate">{highlightMatch(contact.name, searchTerm)}</p>
                           {contact.company && (
-                            <p className="text-xs text-gray-500 truncate mt-0.5">{highlightMatch(contact.company, searchTerm)}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">{highlightMatch(contact.company, searchTerm)}</p>
                           )}
-                          <p className="text-xs text-gray-400 mt-1">{getColumnDate(contact)}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{getColumnDate(contact)}</p>
                           {contact.follow_up_at && (() => {
                             const diff = Math.ceil((new Date(contact.follow_up_at).getTime() - Date.now()) / 86400000);
                             return (
                               <div className={`flex items-center gap-1 mt-1.5 text-xs ${
-                                diff < 0 ? 'text-red-500' : diff === 0 ? 'text-amber-600' : 'text-gray-400'
+                                diff < 0 ? 'text-red-500' : diff === 0 ? 'text-amber-600' : 'text-muted-foreground'
                               }`}>
                                 <ClockIcon className="h-3 w-3" />
                                 <span>
@@ -367,24 +367,24 @@ export default function ContactsKanban({
           >
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Move Contact</h3>
+                <h3 className="text-lg font-semibold text-foreground">Move Contact</h3>
                 <button
                   type="button"
                   onClick={handleCancelMove}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
               </div>
 
-              <p className="text-sm text-gray-600 mb-4">
-                Move <span className="font-medium text-gray-900">{confirmDialog.contact.name}</span> to{' '}
-                <span className="font-medium text-gray-900">{confirmDialog.targetLabel}</span>?
+              <p className="text-sm text-muted-foreground mb-4">
+                Move <span className="font-medium text-foreground">{confirmDialog.contact.name}</span> to{' '}
+                <span className="font-medium text-foreground">{confirmDialog.targetLabel}</span>?
               </p>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Comment <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Comment <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <textarea
                   ref={commentRef}
@@ -392,9 +392,9 @@ export default function ContactsKanban({
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Add a note about this status change..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
-                <p className="text-xs text-gray-400 mt-1">Press Enter to confirm, Shift+Enter for new line</p>
+                <p className="text-xs text-muted-foreground mt-1">Press Enter to confirm, Shift+Enter for new line</p>
               </div>
 
               <div className="flex gap-2 justify-end">
