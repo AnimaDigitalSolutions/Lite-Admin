@@ -4,29 +4,75 @@
 
 <h1 align="center">Lite Admin</h1>
 
-<p align="center">A lightweight, modular TypeScript/Express monorepo with database abstraction, multi-provider email, S3 media storage, and a full-featured Next.js admin dashboard.</p>
+<p align="center">A lightweight TypeScript admin platform with CRM, email campaigns, media management, and invoicing — powered by Express and Next.js.</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node 20+" />
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
+  <img src="https://img.shields.io/badge/TypeScript-strict-blue?logo=typescript&logoColor=white" alt="TypeScript" />
+</p>
+
+---
+
+## Preview
+
+<!-- Add screenshots here as they become available -->
+<!-- screenshot: Dashboard — 30-day trend charts and at-a-glance stats -->
+<!-- screenshot: CRM Kanban — Drag-and-drop contact pipeline -->
+<!-- screenshot: Invoice Preview — PDF generation with line items -->
+<!-- screenshot: Email Compose — Multi-recipient with contact picker -->
+<!-- screenshot: Campaigns — Create and target email campaigns -->
+<!-- screenshot: Media Gallery — Multi-format uploads with thumbnails -->
 
 ---
 
 ## Features
 
-- **TypeScript Monorepo** — Turbo.js orchestration with pnpm workspaces
-- **Multi-Database Support** — SQLite, PostgreSQL, MySQL with seamless switching
-- **Multi-Provider Email** — AHASEND and Resend with runtime hot-swap
-- **Flexible Storage** — Local filesystem and AWS S3
-- **Image Optimization** — Automatic resizing and WebP conversion via Sharp
-- **Admin Dashboard** — Next.js 15 App Router with authentication and sidebar navigation
-- **Settings Management** — Runtime toggles, maintenance mode, provider credentials (no restart required for email)
-- **Activity Log** — Auditable admin action history with per-entry deletion
-- **Multi-Site Support** — Site API keys (`X-Site-Key` header) to tag form submissions per site
-- **Dashboard Charts** — 30-day trend visualizations for contacts and waitlist (Recharts)
-- **Bulk Operations** — Multi-select delete for contacts and waitlist entries
-- **IP Duplicate Detection** — Badge on repeated IPs in waitlist view
-- **Advanced Security** — Smart rate limiting, CORS, JWT authentication, input validation, Helmet.js
+### CRM
+
+- Kanban, Calendar, and Table views with 8-stage contact status workflow
+- Notes & todos per contact with follow-up scheduling
+- Bulk operations — multi-select delete for contacts
+- IP duplicate detection with badge on repeated IPs
+
+### Email
+
+- Multi-recipient compose (To/CC/BCC) with contact picker and rich preview
+- Campaigns — create, target by tags or all subscribers, track delivery
+- Multi-provider support — AHASEND and Resend with runtime hot-swap
+- Customizable HTML templates for contact and subscriber confirmation emails
+
+### Invoicing
+
+- Full CRUD with PDF generation and download
+- Line items, tax/discount, multi-currency, templates
+
+### Media
+
+- Multi-format upload — video, PDF, and images
+- Server-side thumbnail generation (Sharp + ffmpeg + MuPDF)
+- Flexible storage — local filesystem and AWS S3
+
+### Infrastructure
+
+- TypeScript monorepo — Turbo.js orchestration with pnpm workspaces and shared type/schema package
+- Multi-database support — SQLite, PostgreSQL, MySQL with seamless switching
+- Dashboard charts — 30-day trend visualizations for contacts and subscribers (Recharts)
+- Activity log — auditable admin action history with per-entry deletion
+- Multi-site support — site API keys (`X-Site-Key` header) to tag form submissions per site
+
+### Security
+
+- Smart rate limiting, CORS, JWT authentication, input validation, Helmet.js
+- Geolocation — IP-based country/city/region enrichment on form submissions (MaxMind GeoLite2)
+- Suspicious activity detection — automatic blocking of scanning attempts
+- Integration tests — auth middleware, error handling, and validation middleware coverage
 
 ---
 
 ## Quick Start
+
+> **Requires:** Node.js >= 20, pnpm >= 9. Docker is optional.
 
 ```bash
 git clone https://github.com/AnimaDigitalSolutions/Lite-Admin.git
@@ -43,57 +89,25 @@ Or with the interactive setup:
 just quickstart
 ```
 
----
-
-## Prerequisites
-
-- Node.js >= 20.0.0
-- pnpm >= 9.0.0
-- Docker & Docker Compose (optional)
+If you're looking for the default logins: `admin@email.com` / `changeme` ;)
 
 ---
 
-## Configuration
+## Technology Stack
 
-### Environment Variables
+| Layer | Technology |
+|---|---|
+| Language | TypeScript (strict) |
+| Monorepo | Turbo.js + pnpm workspaces |
+| Backend | Express.js |
+| Frontend | Next.js 15 (App Router) |
+| Database | SQLite (default) · PostgreSQL, MySQL planned |
+| Email | AHASEND (default) · Resend planned |
+| Storage | Local filesystem (default) · AWS S3 planned |
+| Validation | Zod |
+| Containerization | Docker + PM2 |
 
-```env
-# apps/backend/.env
-
-NODE_ENV=development
-PORT=3001
-
-# Admin Authentication
-ADMIN_USERNAME=admin@example.com
-ADMIN_PASSWORD=your-secure-password
-JWT_SECRET=your-jwt-secret
-JWT_REFRESH_SECRET=your-jwt-refresh-secret
-
-# Database (choose one)
-DB_TYPE=sqlite                 # sqlite | postgres | mysql
-DB_PATH=./database/lite.db     # SQLite only
-DB_URL=                        # PostgreSQL / MySQL connection string
-
-# Email Provider (choose one)
-EMAIL_PROVIDER=ahasend         # ahasend | resend
-AHASEND_API_KEY=
-RESEND_API_KEY=
-
-# Storage Provider (choose one)
-STORAGE_PROVIDER=local         # local | s3
-AWS_ACCESS_KEY_ID=             # S3 only
-AWS_SECRET_ACCESS_KEY=         # S3 only
-AWS_REGION=                    # S3 only
-AWS_S3_BUCKET=                 # S3 only
-
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3002
-
-# apps/admin/.env
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-```
-
-> Provider credentials can also be overridden at runtime via the Settings → Provider Credentials page in the admin dashboard. Email changes take effect immediately without a restart.
+> **Defaults vs planned:** SQLite, AHASEND, and local storage are the tested defaults shipped today. PostgreSQL, MySQL, Resend, and S3 adapters are implemented but untested. GeoIP city-level enrichment is stubbed out. Contributions welcome.
 
 ---
 
@@ -101,142 +115,17 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api
 
 Access the dashboard at `http://localhost:3002` after starting the dev server.
 
-### Pages
-
 | Page | Route | Description |
 |---|---|---|
-| Dashboard | `/` | 30-day contact and waitlist trend charts, at-a-glance stats |
-| Media Gallery | `/media` | Upload, view, and delete portfolio images |
-| Contacts | `/contacts` | View, export CSV, and bulk-delete contact submissions |
-| Waitlist | `/waitlist` | View signups with IP duplicate badges, bulk-delete, export CSV |
+| Dashboard | `/` | 30-day trend charts, at-a-glance stats |
+| Contacts | `/contacts` | CRM with Table, Kanban, Calendar views; status pipeline; notes |
+| Compose | `/compose` | Multi-recipient email with contact picker |
+| Campaigns | `/campaigns` | Create, target, and send email campaigns |
+| Invoices | `/invoices` | Create, preview, and download PDF invoices |
+| Subscribers | `/subscribers` | Audience management with tags and segmentation |
+| Media Gallery | `/media` | Upload and manage portfolio media with thumbnails |
 | Statistics | `/stats` | Bar charts and server memory breakdown |
-| Activity Log | `/logs` | Admin action history with per-entry and clear-all delete |
-| Settings | `/settings` | Maintenance mode, email toggle, site API keys, provider credentials |
-
----
-
-## API Documentation
-
-### Public Endpoints
-
-#### Contact Form Submission
-
-```http
-POST /api/forms/contact
-Content-Type: application/json
-X-Site-Key: lsk_...   (optional — tags the submission to a site)
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "company": "ACME Corp",
-  "project_type": "web",
-  "message": "I need a custom ERP solution"
-}
-```
-
-#### Waitlist Signup
-
-```http
-POST /api/forms/waitlist
-Content-Type: application/json
-X-Site-Key: lsk_...   (optional)
-
-{
-  "email": "user@example.com",
-  "name": "Jane Doe"
-}
-```
-
-#### Portfolio Media
-
-```http
-GET /api/media/portfolio?limit=50&offset=0&project=MY_PROJECT
-GET /api/media/:id
-GET /api/media/:id/thumb?width=300&height=300&quality=85
-```
-
-### Admin Endpoints
-
-All admin endpoints require a JWT token:
-
-```http
-Authorization: Bearer your-jwt-token
-```
-
-#### Authentication
-
-```http
-POST /api/auth/login
-POST /api/auth/refresh
-POST /api/auth/logout
-GET  /api/auth/me
-```
-
-#### Media Management
-
-```http
-POST   /api/admin/media/upload
-PUT    /api/admin/media/:id
-DELETE /api/admin/media/:id
-```
-
-#### Form Data
-
-```http
-GET    /api/admin/submissions
-DELETE /api/admin/submission/:id
-POST   /api/admin/submissions/bulk-delete   { "ids": [1, 2, 3] }
-
-GET    /api/admin/waitlist
-GET    /api/admin/waitlist/export
-POST   /api/admin/waitlist/bulk-delete      { "ids": [1, 2, 3] }
-```
-
-#### Settings & Credentials
-
-```http
-GET /api/admin/settings
-PUT /api/admin/settings         { "key": "maintenance_mode", "value": "true" }
-
-GET /api/admin/credentials
-PUT /api/admin/credentials      { "email_ahasend_api_key": "...", ... }
-```
-
-Available setting keys: `email_enabled`, `maintenance_mode`, `maintenance_message`
-
-#### Activity Log
-
-```http
-GET    /api/admin/logs?limit=50&offset=0
-DELETE /api/admin/logs/:id
-DELETE /api/admin/logs          (clear all)
-```
-
-#### Sites (Multi-Site API Keys)
-
-```http
-GET    /api/admin/sites
-POST   /api/admin/sites                     { "name": "My Site" }
-POST   /api/admin/sites/:id/regenerate      (rotate API key)
-PATCH  /api/admin/sites/:id                 { "active": false }
-DELETE /api/admin/sites/:id
-```
-
-#### System
-
-```http
-POST /api/admin/migrate
-GET  /api/admin/stats
-```
-
----
-
-## Multi-Site Support
-
-Create a site in Settings → Sites & API Keys to get an `lsk_` prefixed API key. Send it with every form submission via the `X-Site-Key` header. Submissions tagged to a site appear with the `site_id` in the database.
-
-The header is optional — existing integrations without it continue to work unchanged.
+| Settings | `/settings` | Maintenance mode, email toggle, provider credentials |
 
 ---
 
@@ -251,7 +140,7 @@ pnpm dev:admin       # Admin dashboard only (port 3002)
 pnpm build           # Production build
 pnpm lint            # Lint all packages
 pnpm type-check      # TypeScript check all packages
-pnpm clean           # Remove build artifacts
+pnpm test            # Run test suite
 ```
 
 ### Just Commands
@@ -261,160 +150,34 @@ just                 # List all commands
 just quickstart      # Interactive setup
 just dev             # Start development servers
 just status          # Check service health
-just logs            # Tail logs
-just db-init         # Initialize database
-just db-backup       # Backup database
-just db-reset        # Reset database
-just docker-build    # Build Docker images
+just test            # Run tests
+just validate        # Lint + type-check
 just docker-up       # Start Docker stack
 just docker-down     # Stop Docker stack
 just doctor          # Environment diagnostics
-just clean           # Clean build artifacts
-```
-
-### CLI Scripts
-
-```bash
-# Upload images
-pnpm --filter backend exec tsx scripts/upload-image.ts --file ./image.jpg --project "MY_PROJECT"
-pnpm --filter backend exec tsx scripts/upload-image.ts --folder ./portfolio-images/
-
-# Export data
-pnpm --filter backend exec tsx scripts/export-submissions.ts --type contacts --format csv
-pnpm --filter backend exec tsx scripts/export-submissions.ts --type waitlist --format json
-
-# Database cleanup
-pnpm --filter backend exec tsx scripts/clean-database.ts --days 90
-pnpm --filter backend exec tsx scripts/clean-database.ts --days 90 --dry-run
-
-# Interactive admin CLI
-pnpm --filter backend exec tsx tools/admin-cli.ts
 ```
 
 ---
 
 ## Architecture
 
-### Directory Structure
-
 ```
 lite-admin/
 ├── apps/
-│   ├── backend/               # Express.js backend
+│   ├── backend/               # Express.js API
 │   │   └── src/
-│   │       ├── app.ts
-│   │       ├── server.ts
-│   │       ├── config/
-│   │       ├── routes/        # API route handlers
-│   │       ├── services/
-│   │       │   ├── auth/
-│   │       │   ├── email/     # Multi-provider email factory
-│   │       │   ├── forms/     # Contact & waitlist processing
-│   │       │   ├── settings/  # Runtime settings (singleton)
-│   │       │   └── storage/
+│   │       ├── routes/        # Auth, forms, media, admin/*
+│   │       ├── services/      # Email, storage, geo, auth
 │   │       ├── middleware/
-│   │       ├── schemas/       # Zod validation
-│   │       └── types/
-│   └── admin/                 # Next.js 15 admin dashboard
+│   │       └── schemas/       # Zod validation
+│   └── admin/                 # Next.js 15 dashboard
 │       ├── app/               # App Router pages
-│       │   ├── page.tsx       # Dashboard
-│       │   ├── contacts/
-│       │   ├── waitlist/
-│       │   ├── media/
-│       │   ├── stats/
-│       │   ├── logs/
-│       │   └── settings/
-│       ├── components/
-│       └── lib/               # API client, auth context
-├── packages/                  # Shared packages
+│       ├── components/        # UI primitives, contact detail
+│       └── lib/               # API client, auth, theme
+├── packages/
+│   └── shared/                # @lite/shared — types, schemas, utils
 ├── docker/
 └── turbo.json
-```
-
-### Technology Stack
-
-| Layer | Technology |
-|---|---|
-| Language | TypeScript |
-| Monorepo | Turbo.js + pnpm workspaces |
-| Backend | Express.js |
-| Frontend | Next.js 15 (App Router) |
-| UI | Radix UI + Tailwind CSS + Recharts |
-| Auth | JWT with refresh tokens |
-| Validation | Zod |
-| Database | SQLite / PostgreSQL / MySQL |
-| Email | AHASEND / Resend |
-| Storage | Local / AWS S3 |
-| Image Processing | Sharp |
-| Logging | Pino |
-| Security | Helmet, CORS, Smart Rate Limiting |
-| Process Manager | PM2 |
-| Containerization | Docker |
-
----
-
-## Database Schema
-
-```sql
-CREATE TABLE contacts (
-  id          INTEGER PRIMARY KEY,
-  name        VARCHAR(100),
-  email       VARCHAR(255),
-  company     VARCHAR(100),
-  project_type VARCHAR(50),
-  message     TEXT,
-  submitted_at TIMESTAMP,
-  ip_address  VARCHAR(45),
-  user_agent  TEXT,
-  site_id     INTEGER REFERENCES sites(id)
-);
-
-CREATE TABLE waitlist (
-  id          INTEGER PRIMARY KEY,
-  email       VARCHAR(255) UNIQUE,
-  name        VARCHAR(100),
-  signed_up_at TIMESTAMP,
-  ip_address  VARCHAR(45),
-  site_id     INTEGER REFERENCES sites(id)
-);
-
-CREATE TABLE portfolio_media (
-  id               INTEGER PRIMARY KEY,
-  filename         VARCHAR(255),
-  original_name    VARCHAR(255),
-  project_name     VARCHAR(100),
-  description      TEXT,
-  file_size        INTEGER,
-  width            INTEGER,
-  height           INTEGER,
-  mime_type        VARCHAR(50),
-  storage_provider VARCHAR(20),
-  storage_path     VARCHAR(500),
-  uploaded_at      TIMESTAMP
-);
-
-CREATE TABLE admin_logs (
-  id          INTEGER PRIMARY KEY,
-  action      VARCHAR(100),
-  resource    VARCHAR(100),
-  resource_id INTEGER,
-  details     TEXT,
-  ip_address  VARCHAR(45),
-  created_at  TIMESTAMP
-);
-
-CREATE TABLE settings (
-  key   VARCHAR(100) PRIMARY KEY,
-  value TEXT NOT NULL
-);
-
-CREATE TABLE sites (
-  id         INTEGER PRIMARY KEY,
-  name       VARCHAR(100) NOT NULL,
-  api_key    VARCHAR(64) UNIQUE,
-  active     BOOLEAN DEFAULT 1,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 ```
 
 ---
@@ -426,19 +189,13 @@ CREATE TABLE sites (
 ```bash
 cd apps/backend
 pm2 start ecosystem.config.js
-pm2 monit
-pm2 logs lite-admin
 ```
 
 ### Docker
 
 ```bash
-# Development
-docker-compose -f docker/docker-compose.yml up -d
-
-# Production
-docker-compose -f docker/docker-compose.prod.yml up -d
-docker-compose logs -f app
+docker-compose -f docker/docker-compose.yml up -d          # Development
+docker-compose -f docker/docker-compose.prod.yml up -d     # Production
 ```
 
 ### Production Checklist
@@ -448,25 +205,18 @@ docker-compose logs -f app
 3. Set up S3 for media storage
 4. Configure email provider API keys
 5. Update `ALLOWED_ORIGINS` for your domain
-6. Set up SSL/TLS (nginx reverse proxy)
-7. Configure backup strategy for the database
-8. Set up monitoring and alerts
-9. Build and serve the admin dashboard (`pnpm build`)
+6. Set up SSL/TLS (caddy/traefil/nginx reverse proxy)
+7. Build and serve the admin dashboard (`pnpm build`)
 
 ---
 
-## Security
+## Documentation
 
-- **Smart Rate Limiting** — origin-based adaptive limiting with strict mode for form endpoints
-- **CORS** — configurable origin whitelist
-- **Input Validation** — Zod schemas on all endpoints
-- **File Upload** — type and size restrictions with automatic image optimization
-- **JWT Authentication** — short-lived access tokens + refresh token rotation
-- **SQL Injection Protection** — parameterized queries throughout
-- **XSS Prevention** — input sanitization
-- **Helmet.js** — security headers
-- **Suspicious Activity Detection** — automatic blocking of scanning attempts
-- **Site API Keys** — `lsk_`-prefixed keys for multi-site form attribution
+| Document | Description |
+|---|---|
+| [API Reference](docs/api.md) | Full endpoint documentation for public and admin APIs |
+| [Configuration](docs/configuration.md) | Environment variables and runtime settings |
+| [Database Schema](docs/schema.md) | Complete SQL schema for all tables |
 
 ---
 
@@ -475,5 +225,5 @@ docker-compose logs -f app
 MIT — see [LICENSE](LICENSE) for details.
 
 ## Support
-
-Open an issue on GitHub or email support@animadigitalsolutions.com.
+We are open to PRs :)
+Open an issue on GitHub or contact us at animadigitalsolutions.com.
