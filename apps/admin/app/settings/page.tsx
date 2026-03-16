@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import ProtectedLayout from '@/components/protected-layout';
 import { settingsApi, credentialsApi, menuApi } from '@/lib/api';
 import { useDisplayPrefs } from '@/lib/display-prefs';
+import { SecretField } from '@/components/ui/secret-field';
+import { Toggle } from '@/components/ui/toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +14,6 @@ import {
   WrenchScrewdriverIcon,
   CheckCircleIcon,
   ServerStackIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  ClipboardDocumentIcon,
   Bars3Icon,
   ChevronRightIcon,
   ChevronDownIcon,
@@ -46,47 +45,6 @@ interface StorageConfig {
   s3_secret_access_key: string;
   s3_bucket: string;
   s3_region: string;
-}
-
-function Toggle({ checked, onChange, accent = 'blue' }: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  accent?: 'blue' | 'orange';
-}) {
-  const active = accent === 'orange' ? 'bg-orange-500' : 'bg-blue-600';
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${checked ? active : 'bg-gray-200'}`}
-    >
-      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
-    </button>
-  );
-}
-
-function SecretField({ value, onChange, label, placeholder }: {
-  value: string; onChange: (v: string) => void; label: string; placeholder?: string;
-}) {
-  const [revealed, setRevealed] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copy = async () => { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  return (
-    <div>
-      <Label className="text-sm font-medium">{label}</Label>
-      <div className="mt-1.5 flex gap-1.5">
-        <Input type={revealed ? 'text' : 'password'} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder ?? '••••••••'} className="font-mono text-sm" />
-        <button type="button" onClick={() => setRevealed(r => !r)} className="rounded border px-2 text-gray-500 hover:bg-gray-50" title={revealed ? 'Hide' : 'Reveal'}>
-          {revealed ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-        </button>
-        <button type="button" onClick={() => void copy()} className="rounded border px-2 text-gray-500 hover:bg-gray-50" title="Copy">
-          <ClipboardDocumentIcon className={`h-4 w-4 ${copied ? 'text-emerald-600' : ''}`} />
-        </button>
-      </div>
-    </div>
-  );
 }
 
 type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -246,7 +204,7 @@ export default function SettingsPage() {
                   <Label className="text-sm font-medium">Email delivery enabled</Label>
                   <p className="text-xs text-gray-500 mt-0.5">When off, forms save to DB but no emails are sent.</p>
                 </div>
-                <Toggle checked={settings.email_enabled} onChange={v => setSettings(p => ({ ...p, email_enabled: v }))} />
+                <Toggle checked={settings.email_enabled} onChange={v => setSettings(p => ({ ...p, email_enabled: v }))} accent="bg-blue-600" />
               </div>
             </CardContent>
           </Card>
@@ -266,7 +224,7 @@ export default function SettingsPage() {
                   <Label className="text-sm font-medium">Enable maintenance mode</Label>
                   <p className="text-xs text-gray-500 mt-0.5">Returns 503 on all contact + waitlist POSTs.</p>
                 </div>
-                <Toggle checked={settings.maintenance_mode} onChange={v => setSettings(p => ({ ...p, maintenance_mode: v }))} accent="orange" />
+                <Toggle checked={settings.maintenance_mode} onChange={v => setSettings(p => ({ ...p, maintenance_mode: v }))} accent="bg-orange-500" />
               </div>
               <div>
                 <Label htmlFor="maintenance_message" className="text-sm font-medium">Maintenance message</Label>

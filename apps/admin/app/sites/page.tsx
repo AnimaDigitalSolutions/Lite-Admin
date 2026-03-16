@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ProtectedLayout from '@/components/protected-layout';
 import { sitesApi } from '@/lib/api';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ import {
   ClipboardDocumentIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
+import { Toggle } from '@/components/ui/toggle';
 
 interface Site {
   id: number;
@@ -26,22 +28,6 @@ interface Site {
   created_at: string;
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-        checked ? 'bg-emerald-500' : 'bg-gray-200'
-      }`}
-    >
-      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
-    </button>
-  );
-}
-
 export default function SitesPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +35,7 @@ export default function SitesPage() {
   const [showNewSite, setShowNewSite] = useState(false);
   const [newSite, setNewSite] = useState({ name: '', domain: '', description: '' });
   const [adding, setAdding] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<number | null>(null);
+  const { copy: copyToClipboard, isCopied } = useCopyToClipboard();
 
   const load = useCallback(async () => {
     try {
@@ -106,12 +92,6 @@ export default function SitesPage() {
     } catch {
       setError('Failed to delete site.');
     }
-  };
-
-  const copyKey = async (id: number, key: string) => {
-    await navigator.clipboard.writeText(key);
-    setCopiedKey(id);
-    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   return (
@@ -224,11 +204,11 @@ export default function SitesPage() {
                         {site.api_key}
                       </code>
                       <button
-                        onClick={() => void copyKey(site.id, site.api_key)}
+                        onClick={() => void copyToClipboard(site.api_key, site.id)}
                         className="rounded p-1 hover:bg-gray-100 transition-colors"
                         title="Copy key"
                       >
-                        {copiedKey === site.id
+                        {isCopied(site.id)
                           ? <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-500" />
                           : <ClipboardDocumentIcon className="h-3.5 w-3.5 text-gray-400" />
                         }
@@ -239,7 +219,7 @@ export default function SitesPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Toggle checked={site.is_active} onChange={v => void handleToggle(site.id, v)} />
+                    <Toggle checked={site.is_active} onChange={v => void handleToggle(site.id, v)} size="sm" />
                     <button
                       onClick={() => void handleRegenerate(site.id)}
                       className="rounded p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition-colors"

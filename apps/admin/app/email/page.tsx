@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ProtectedLayout from '@/components/protected-layout';
 import { credentialsApi, emailTestApi } from '@/lib/api';
+import { SecretField } from '@/components/ui/secret-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,9 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   AtSymbolIcon,
   CheckCircleIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  ClipboardDocumentIcon,
   PaperAirplaneIcon,
   XCircleIcon,
   ChevronDownIcon,
@@ -30,43 +28,6 @@ interface EmailConfig {
 
 type Provider = 'ahasend' | 'resend';
 type VerifyState = null | 'verifying' | 'ok' | 'fail';
-
-function SecretField({ value, onChange, label, placeholder }: {
-  value: string;
-  onChange: (v: string) => void;
-  label: string;
-  placeholder?: string;
-}) {
-  const [revealed, setRevealed] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <div>
-      <Label className="text-sm font-medium">{label}</Label>
-      <div className="mt-1.5 flex gap-1.5">
-        <Input
-          type={revealed ? 'text' : 'password'}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder ?? '••••••••'}
-          className="font-mono text-sm"
-        />
-        <button type="button" onClick={() => setRevealed(r => !r)}
-          className="rounded border px-2 text-gray-500 hover:bg-gray-50" title={revealed ? 'Hide' : 'Reveal'}>
-          {revealed ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-        </button>
-        <button type="button" onClick={() => void copy()}
-          className="rounded border px-2 text-gray-500 hover:bg-gray-50" title="Copy">
-          <ClipboardDocumentIcon className={`h-4 w-4 ${copied ? 'text-emerald-600' : ''}`} />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function EmailPage() {
   const [config, setConfig] = useState<EmailConfig>({

@@ -10,6 +10,7 @@ import {
   MagnifyingGlassMinusIcon,
 } from '@heroicons/react/24/outline';
 import { getStatusBadge } from '@/components/contact-detail-panel';
+import { highlightMatch } from '@/lib/utils';
 
 type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
 
@@ -38,23 +39,6 @@ interface ContactsCalendarProps {
   selectedContactId?: string;
   searchTerm?: string;
   statusHistory?: Record<number, StatusChange[]>;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in calendar cell rendering below
-function highlightMatch(text: string, search?: string): React.ReactNode {
-  if (!search || !text) return text;
-  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-  if (parts.length === 1) return text;
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === search.toLowerCase()
-          ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark>
-          : part
-      )}
-    </>
-  );
 }
 
 // Status → bar color mapping

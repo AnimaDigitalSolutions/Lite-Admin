@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
-import { isPrivateIp, truncateEmail } from '@/lib/utils';
+import { isPrivateIp, truncateEmail, highlightMatch } from '@/lib/utils';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
+import { useFacetedSearch } from '@/lib/hooks/use-faceted-search';
+import { countryFlag, getProjectTypeColor } from '@/components/contact-detail/contact-utils';
+import { Pagination } from '@/components/ui/pagination';
 import ProtectedLayout from '@/components/protected-layout';
 import { submissionsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -59,7 +63,6 @@ export default function ContactsPage() {
   const { prefs } = useDisplayPrefs();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,7 +70,7 @@ export default function ContactsPage() {
   const itemsPerPage = 20;
 
   const [pageError, setPageError] = useState<string | null>(null);
-  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const { copy: copyEmail, isCopied: isEmailCopied } = useCopyToClipboard();
   const [statusFilter, setStatusFilter] = useState<ContactStatus | ''>('');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [todosSummary, setTodosSummary] = useState<{ total: number; contacts: number } | null>(null);
@@ -78,12 +81,24 @@ export default function ContactsPage() {
   });
   const [statusHistory, setStatusHistory] = useState<Record<number, { status: string; changed_at: string }[]>>({});
 
+  const FILTER_SUGGESTIONS = [
+    { token: 'is:this-month', label: 'Submitted this month' },
+    { token: 'is:last-7-days', label: 'Last 7 days' },
+    { token: 'has:company', label: 'Has company field' },
+    { token: 'has:todos', label: 'Has open todos' },
+    { token: '-is:this-month', label: 'Not this month' },
+    { token: '-is:last-7-days', label: 'Not last 7 days' },
+    { token: '-has:company', label: 'No company field' },
+    { token: '-has:todos', label: 'No open todos' },
+  ] as const;
 
-  const copyEmail = async (email: string) => {
-    await navigator.clipboard.writeText(email);
-    setCopiedEmail(email);
-    setTimeout(() => setCopiedEmail(null), 2000);
-  };
+  const {
+    searchTerm, setSearchTerm, searchText,
+    activeFilters, negatedFilters, testFilter, toggleFilter,
+    setShowSuggestions, suggestionIndex,
+    suggestionsRef, inputRef, filteredSuggestions, applySuggestion,
+    onInputChange, onInputKeyDown,
+  } = useFacetedSearch({ suggestions: FILTER_SUGGESTIONS });
 
   const handleContactUpdated = (updated: Contact) => {
     setSelectedContact(updated);
@@ -197,90 +212,6 @@ export default function ContactsPage() {
     }
   };
 
-  // Parse filter tokens (e.g. "has:company is:this-month john") from search
-  const parseSearch = (raw: string) => {
-    const tokens = new Set<string>();
-    const negated = new Set<string>();
-    const textParts: string[] = [];
-    for (const part of raw.split(/\s+/)) {
-      if (/^(has|is):[\w-]+$/i.test(part)) {
-        tokens.add(part.toLowerCase());
-      } else if (/^-(has|is):[\w-]+$/i.test(part)) {
-        negated.add(part.slice(1).toLowerCase());
-      } else if (part) {
-        textParts.push(part);
-      }
-    }
-    return { tokens, negated, text: textParts.join(' ') };
-  };
-
-  const toggleFilter = (token: string, e?: React.MouseEvent) => {
-    const additive = e?.ctrlKey || e?.metaKey;
-    const { tokens, negated, text } = parseSearch(searchTerm);
-    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const negEscaped = `-${escaped}`;
-
-    if (tokens.has(token)) {
-      // Active → negated
-      const replaced = searchTerm.replace(new RegExp(`(?<=^|\\s)${escaped}(?=\\s|$)`, 'gi'), `-${token}`);
-      setSearchTerm(replaced.trim());
-    } else if (negated.has(token)) {
-      // Negated → off
-      setSearchTerm(searchTerm.replace(new RegExp(`\\s*${negEscaped}\\s*`, 'gi'), ' ').trim());
-    } else if (additive) {
-      setSearchTerm((searchTerm + ' ' + token).trim());
-    } else {
-      setSearchTerm((token + (text ? ' ' + text : '')).trim());
-    }
-  };
-
-  // Autocomplete suggestions
-  const FILTER_SUGGESTIONS = [
-    { token: 'is:this-month', label: 'Submitted this month' },
-    { token: 'is:last-7-days', label: 'Last 7 days' },
-    { token: 'has:company', label: 'Has company field' },
-    { token: 'has:todos', label: 'Has open todos' },
-    { token: '-is:this-month', label: 'Not this month' },
-    { token: '-is:last-7-days', label: 'Not last 7 days' },
-    { token: '-has:company', label: 'No company field' },
-    { token: '-has:todos', label: 'No open todos' },
-  ] as const;
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestionIndex, setSuggestionIndex] = useState(0);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const getFilteredSuggestions = () => {
-    const words = searchTerm.split(/\s+/);
-    const lastWord = words[words.length - 1]?.toLowerCase() ?? '';
-    if (!lastWord || (!lastWord.startsWith('i') && !lastWord.startsWith('h') && !lastWord.startsWith('-'))) return [];
-    const { tokens, negated } = parseSearch(searchTerm);
-    return FILTER_SUGGESTIONS.filter(s => {
-      const bare = s.token.replace(/^-/, '');
-      const isNeg = s.token.startsWith('-');
-      if (isNeg ? negated.has(bare) : tokens.has(bare)) return false;
-      return s.token.startsWith(lastWord);
-    });
-  };
-
-  const filteredSuggestions = showSuggestions ? getFilteredSuggestions() : [];
-
-  const applySuggestion = (token: string) => {
-    const words = searchTerm.split(/\s+/);
-    words[words.length - 1] = token;
-    setSearchTerm(words.join(' ') + ' ');
-    setShowSuggestions(false);
-    inputRef.current?.focus();
-  };
-
-  const { tokens: activeFilters, negated: negatedFilters, text: searchText } = parseSearch(searchTerm);
-
-  const testFilter = (key: string) => {
-    if (activeFilters.has(key)) return true;
-    if (negatedFilters.has(key)) return false;
-    return null; // not set
-  };
-
   const filteredContacts = contacts.filter(contact => {
     if (statusFilter && (contact.status || 'new') !== statusFilter) return false;
 
@@ -324,38 +255,6 @@ export default function ContactsPage() {
     );
   });
 
-  const countryFlag = (iso: string) => {
-    if (!iso || iso.length !== 2) return '';
-    return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
-  };
-
-  const highlightMatch = (text: string, search: string): React.ReactNode => {
-    if (!search || !text) return text;
-    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-    if (parts.length === 1) return text;
-    return (
-      <>
-        {parts.map((part, i) =>
-          part.toLowerCase() === search.toLowerCase()
-            ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark>
-            : part
-        )}
-      </>
-    );
-  };
-
-  const getProjectTypeColor = (type?: string) => {
-    const colors: Record<string, string> = {
-      'web': 'bg-blue-100 text-blue-800',
-      'mobile': 'bg-green-100 text-green-800',
-      'desktop': 'bg-purple-100 text-purple-800',
-      'consulting': 'bg-yellow-100 text-yellow-800',
-      'other': 'bg-gray-100 text-gray-800'
-    };
-    return colors[type || 'other'] || colors.other;
-  };
-
   return (
     <ProtectedLayout>
       <div className="space-y-6">
@@ -396,16 +295,10 @@ export default function ContactsPage() {
               ref={inputRef}
               placeholder="Search contacts... (try has: or is:)"
               value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); setSuggestionIndex(0); }}
+              onChange={(e) => onInputChange(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              onKeyDown={(e) => {
-                if (!filteredSuggestions.length) return;
-                if (e.key === 'ArrowDown') { e.preventDefault(); setSuggestionIndex(i => Math.min(i + 1, filteredSuggestions.length - 1)); }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); setSuggestionIndex(i => Math.max(i - 1, 0)); }
-                else if (e.key === 'Enter' && filteredSuggestions[suggestionIndex]) { e.preventDefault(); applySuggestion(filteredSuggestions[suggestionIndex].token); }
-                else if (e.key === 'Escape') setShowSuggestions(false);
-              }}
+              onKeyDown={onInputKeyDown}
               className="pl-10 pr-8"
             />
             {searchTerm && (
@@ -615,9 +508,9 @@ export default function ContactsPage() {
                                 title={prefs.truncateEmails && truncateEmail(contact.email) !== contact.email ? contact.email : !prefs.truncateEmails ? contact.email : undefined}>
                                 {prefs.truncateEmails ? truncateEmail(contact.email) : contact.email}
                               </span>
-                              <button type="button" onClick={() => void copyEmail(contact.email)} title="Copy email"
-                                className={`transition-colors shrink-0 ${copiedEmail === contact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                                {copiedEmail === contact.email ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                              <button type="button" onClick={() => void copyEmail(contact.email, contact.email)} title="Copy email"
+                                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                                {isEmailCopied(contact.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           </td>
@@ -688,27 +581,7 @@ export default function ContactsPage() {
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-6">
-                    <Button
-                      variant="outline"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(prev => prev - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-gray-600">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage(prev => prev + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                )}
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
               </>
             )}
           </CardContent>

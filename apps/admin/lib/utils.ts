@@ -1,3 +1,4 @@
+import React from 'react';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -24,6 +25,20 @@ export function truncateEmail(email: string): string {
   const domainName = dotIdx !== -1 ? domain.slice(0, dotIdx) : domain;
   const truncDomain = domainName.length > maxDomain ? domainName.slice(0, maxDomain) + '****' + tld : domain;
   return `${truncLocal}@${truncDomain}`;
+}
+
+export function highlightMatch(text: string, search?: string): React.ReactNode {
+  if (!search || !text) return text;
+  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if (parts.length === 1) return text;
+  return React.createElement(React.Fragment, null,
+    ...parts.map((part, i) =>
+      part.toLowerCase() === search.toLowerCase()
+        ? React.createElement('mark', { key: i, className: 'bg-yellow-200 rounded-sm px-0.5' }, part)
+        : part
+    )
+  );
 }
 
 export function isPrivateIp(ip: string): boolean {

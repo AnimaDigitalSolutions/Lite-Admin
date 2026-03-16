@@ -22,6 +22,7 @@ import type { InvoiceData } from '@/components/invoice-pdf-template';
 import { TEMPLATES } from '@/components/invoice-pdf-template';
 import { invoiceFormSchema, formToInvoiceData, FieldError } from './schemas/invoice-form';
 import type { InvoiceFormValues } from './schemas/invoice-form';
+import { Pagination } from '@/components/ui/pagination';
 
 // Lazy-load PDF components (client-side only) to avoid SSR issues with @react-pdf/renderer
 const InvoicePDFPreview = dynamic(
@@ -764,17 +765,7 @@ export default function InvoicesPage() {
         </Card>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2">
-            <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
-              Previous
-            </Button>
-            <span className="text-sm text-gray-600">Page {currentPage} of {totalPages}</span>
-            <Button variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
-              Next
-            </Button>
-          </div>
-        )}
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="" />
       </div>
     </ProtectedLayout>
   );

@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { ClockIcon, XMarkIcon, FunnelIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { submissionsApi } from '@/lib/api';
+import { highlightMatch } from '@/lib/utils';
 
 type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
 
@@ -44,22 +45,6 @@ interface ContactsKanbanProps {
   onContactUpdated: (contact: Contact) => void;
   formatDate: (date: string, options?: Intl.DateTimeFormatOptions) => string;
   searchTerm?: string;
-}
-
-function highlightMatch(text: string, search?: string): React.ReactNode {
-  if (!search || !text) return text;
-  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-  if (parts.length === 1) return text;
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === search.toLowerCase()
-          ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark>
-          : part
-      )}
-    </>
-  );
 }
 
 interface DragState {

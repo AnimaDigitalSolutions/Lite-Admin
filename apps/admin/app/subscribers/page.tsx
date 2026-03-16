@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail } from '@/lib/utils';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
+import { useFacetedSearch } from '@/lib/hooks/use-faceted-search';
+import { countryFlag } from '@/components/contact-detail/contact-utils';
+import { Pagination } from '@/components/ui/pagination';
 import ProtectedLayout from '@/components/protected-layout';
 import { waitlistApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -50,14 +54,30 @@ function SubscribersTab() {
   const { prefs } = useDisplayPrefs();
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 20;
 
   const [pageError, setPageError] = useState<string | null>(null);
-  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const { copy: copyEmail, isCopied: isEmailCopied } = useCopyToClipboard();
+
+  const FILTER_SUGGESTIONS = [
+    { token: 'is:this-month', label: 'Signed up this month' },
+    { token: 'is:last-7-days', label: 'Last 7 days' },
+    { token: 'has:name', label: 'Has name field' },
+    { token: '-is:this-month', label: 'Not this month' },
+    { token: '-is:last-7-days', label: 'Not last 7 days' },
+    { token: '-has:name', label: 'No name field' },
+  ] as const;
+
+  const {
+    searchTerm, setSearchTerm, searchText,
+    activeFilters, negatedFilters, testFilter, toggleFilter,
+    setShowSuggestions, suggestionIndex,
+    suggestionsRef, inputRef, filteredSuggestions, applySuggestion,
+    onInputChange, onInputKeyDown,
+  } = useFacetedSearch({ suggestions: FILTER_SUGGESTIONS });
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -96,12 +116,6 @@ function SubscribersTab() {
     } finally {
       setEditSaving(false);
     }
-  };
-
-  const copyEmail = async (email: string) => {
-    await navigator.clipboard.writeText(email);
-    setCopiedEmail(email);
-    setTimeout(() => setCopiedEmail(null), 2000);
   };
 
   // Add subscriber modal
@@ -170,88 +184,6 @@ function SubscribersTab() {
     return acc;
   }, {});
 
-  // Parse filter tokens from search
-  const parseSearch = (raw: string) => {
-    const tokens = new Set<string>();
-    const negated = new Set<string>();
-    const textParts: string[] = [];
-    for (const part of raw.split(/\s+/)) {
-      if (/^(has|is):[\w-]+$/i.test(part)) {
-        tokens.add(part.toLowerCase());
-      } else if (/^-(has|is):[\w-]+$/i.test(part)) {
-        negated.add(part.slice(1).toLowerCase());
-      } else if (part) {
-        textParts.push(part);
-      }
-    }
-    return { tokens, negated, text: textParts.join(' ') };
-  };
-
-  const toggleFilter = (token: string, e?: React.MouseEvent) => {
-    const additive = e?.ctrlKey || e?.metaKey;
-    const { tokens, negated, text } = parseSearch(searchTerm);
-    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const negEscaped = `-${escaped}`;
-
-    if (tokens.has(token)) {
-      // Active → negated
-      const replaced = searchTerm.replace(new RegExp(`(?<=^|\\s)${escaped}(?=\\s|$)`, 'gi'), `-${token}`);
-      setSearchTerm(replaced.trim());
-    } else if (negated.has(token)) {
-      // Negated → off
-      setSearchTerm(searchTerm.replace(new RegExp(`\\s*${negEscaped}\\s*`, 'gi'), ' ').trim());
-    } else if (additive) {
-      setSearchTerm((searchTerm + ' ' + token).trim());
-    } else {
-      setSearchTerm((token + (text ? ' ' + text : '')).trim());
-    }
-  };
-
-  // Autocomplete suggestions
-  const FILTER_SUGGESTIONS = [
-    { token: 'is:this-month', label: 'Signed up this month' },
-    { token: 'is:last-7-days', label: 'Last 7 days' },
-    { token: 'has:name', label: 'Has name field' },
-    { token: '-is:this-month', label: 'Not this month' },
-    { token: '-is:last-7-days', label: 'Not last 7 days' },
-    { token: '-has:name', label: 'No name field' },
-  ] as const;
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestionIndex, setSuggestionIndex] = useState(0);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const getFilteredSuggestions = () => {
-    const words = searchTerm.split(/\s+/);
-    const lastWord = words[words.length - 1]?.toLowerCase() ?? '';
-    if (!lastWord || (!lastWord.startsWith('i') && !lastWord.startsWith('h') && !lastWord.startsWith('-'))) return [];
-    const { tokens, negated } = parseSearch(searchTerm);
-    return FILTER_SUGGESTIONS.filter(s => {
-      const bare = s.token.replace(/^-/, '');
-      const isNeg = s.token.startsWith('-');
-      if (isNeg ? negated.has(bare) : tokens.has(bare)) return false;
-      return s.token.startsWith(lastWord);
-    });
-  };
-
-  const filteredSuggestions = showSuggestions ? getFilteredSuggestions() : [];
-
-  const applySuggestion = (token: string) => {
-    const words = searchTerm.split(/\s+/);
-    words[words.length - 1] = token;
-    setSearchTerm(words.join(' ') + ' ');
-    setShowSuggestions(false);
-    inputRef.current?.focus();
-  };
-
-  const { tokens: activeFilters, negated: negatedFilters, text: searchText } = parseSearch(searchTerm);
-
-  const testFilter = (key: string) => {
-    if (activeFilters.has(key)) return true;
-    if (negatedFilters.has(key)) return false;
-    return null; // not set
-  };
-
   const filteredEntries = entries.filter(entry => {
     // Apply filter tokens (positive and negated)
     const thisMonth = testFilter('is:this-month');
@@ -283,11 +215,6 @@ function SubscribersTab() {
       (entry.tags && entry.tags.toLowerCase().includes(search))
     );
   });
-
-  const countryFlag = (iso: string) => {
-    if (!iso || iso.length !== 2) return '';
-    return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)));
-  };
 
   const getRecentSignups = () => {
     const sevenDaysAgo = new Date();
@@ -342,16 +269,10 @@ function SubscribersTab() {
             ref={inputRef}
             placeholder="Search subscribers... (try has: or is:)"
             value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); setSuggestionIndex(0); }}
+            onChange={(e) => onInputChange(e.target.value)}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-            onKeyDown={(e) => {
-              if (!filteredSuggestions.length) return;
-              if (e.key === 'ArrowDown') { e.preventDefault(); setSuggestionIndex(i => Math.min(i + 1, filteredSuggestions.length - 1)); }
-              else if (e.key === 'ArrowUp') { e.preventDefault(); setSuggestionIndex(i => Math.max(i - 1, 0)); }
-              else if (e.key === 'Enter' && filteredSuggestions[suggestionIndex]) { e.preventDefault(); applySuggestion(filteredSuggestions[suggestionIndex].token); }
-              else if (e.key === 'Escape') setShowSuggestions(false);
-            }}
+            onKeyDown={onInputKeyDown}
             className="pl-10 pr-8"
           />
           {searchTerm && (
@@ -479,9 +400,9 @@ function SubscribersTab() {
                                 title={prefs.truncateEmails && truncateEmail(entry.email) !== entry.email ? entry.email : !prefs.truncateEmails ? entry.email : undefined}>
                                 {prefs.truncateEmails ? truncateEmail(entry.email) : entry.email}
                               </span>
-                              <button type="button" onClick={() => void copyEmail(entry.email)} title="Copy email"
-                                className={`transition-colors shrink-0 ${copiedEmail === entry.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                                {copiedEmail === entry.email ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                              <button type="button" onClick={() => void copyEmail(entry.email, entry.email)} title="Copy email"
+                                className={`transition-colors shrink-0 ${isEmailCopied(entry.email) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                                {isEmailCopied(entry.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           )}
@@ -563,13 +484,7 @@ function SubscribersTab() {
                 </table>
               </div>
 
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-6">
-                  <Button variant="outline" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}>Previous</Button>
-                  <span className="text-sm text-gray-600">Page {currentPage} of {totalPages}</span>
-                  <Button variant="outline" disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)}>Next</Button>
-                </div>
-              )}
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </>
           )}
         </CardContent>
@@ -589,9 +504,9 @@ function SubscribersTab() {
                 <div className="text-xs text-gray-500">Download all data</div>
               </div>
             </Button>
-            <Button variant="outline" className="flex items-center justify-center gap-2 h-20" onClick={async () => {
+            <Button variant="outline" className="flex items-center justify-center gap-2 h-20" onClick={() => {
               const emails = entries.map(e => e.email).join(', ');
-              await navigator.clipboard.writeText(emails);
+              void copyEmail(emails, '__all_emails__');
             }}>
               <ClipboardDocumentIcon className="h-6 w-6" />
               <div className="text-center">

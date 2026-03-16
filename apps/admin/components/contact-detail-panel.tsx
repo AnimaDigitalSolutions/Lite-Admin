@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail } from '@/lib/utils';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { submissionsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,7 +40,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
   const { prefs } = useDisplayPrefs();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const { copy: copyEmail, isCopied: isEmailCopied } = useCopyToClipboard();
   const [expanded, setExpanded] = useState(false);
 
   // Edit mode
@@ -83,12 +84,6 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
       document.removeEventListener('mousedown', handleClick);
     };
   }, [onClose, hasModalOpen]);
-
-  const copyEmail = async (email: string) => {
-    await navigator.clipboard.writeText(email);
-    setCopiedEmail(email);
-    setTimeout(() => setCopiedEmail(null), 2000);
-  };
 
   const openEditMode = () => {
     setEditForm({
@@ -158,11 +153,11 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
               </span>
               <button
                 type="button"
-                onClick={() => void copyEmail(contact.email)}
+                onClick={() => void copyEmail(contact.email, contact.email)}
                 title="Copy email"
-                className={`transition-colors shrink-0 ${copiedEmail === contact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}
+                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}
               >
-                {copiedEmail === contact.email ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                {isEmailCopied(contact.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
               </button>
             </div>
             {contact.company && <p className="text-sm text-gray-500 mt-0.5">{contact.company}</p>}

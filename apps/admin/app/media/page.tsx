@@ -6,6 +6,8 @@ import Image from 'next/image';
 import ProtectedLayout from '@/components/protected-layout';
 import { mediaApi } from '@/lib/api';
 import { useDisplayPrefs } from '@/lib/display-prefs';
+import { highlightMatch } from '@/lib/utils';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -146,27 +148,11 @@ function formatDateFull(dateString: string): string {
   });
 }
 
-function highlightMatch(text: string, search: string): React.ReactNode {
-  if (!search || !text) return text;
-  const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-  if (parts.length === 1) return text;
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === search.toLowerCase()
-          ? <mark key={i} className="bg-yellow-200 rounded-sm px-0.5">{part}</mark>
-          : part
-      )}
-    </>
-  );
-}
-
 // --- Component ---
 
 export default function MediaPage() {
   const { prefs } = useDisplayPrefs();
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { copy: clipboardCopy, isCopied } = useCopyToClipboard();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
@@ -298,7 +284,7 @@ export default function MediaPage() {
       const filename = item.storage_path ? item.storage_path.split('/').pop() : item.filename;
       return `${base}/${filename}`;
     });
-    await navigator.clipboard.writeText(paths.join('\n'));
+    await clipboardCopy(paths.join('\n'), '__bulk_paths__');
   };
 
   const handleDownload = (item: MediaItem) => {
@@ -327,9 +313,7 @@ export default function MediaPage() {
   const copyMediaPath = async (item: MediaItem) => {
     const base = (prefs.mediaBasePath || '/uploads/portfolio').replace(/\/+$/, '');
     const filename = item.storage_path ? item.storage_path.split('/').pop() : item.filename;
-    await navigator.clipboard.writeText(`${base}/${filename}`);
-    setCopiedId(item.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    await clipboardCopy(`${base}/${filename}`, item.id);
   };
 
   // --- Selection ---
@@ -682,9 +666,9 @@ export default function MediaPage() {
                         type="button"
                         onClick={() => void copyMediaPath(item)}
                         title="Copy media path"
-                        className={`shrink-0 transition-colors ${copiedId === item.id ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
+                        className={`shrink-0 transition-colors ${isCopied(item.id) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
                       >
-                        {copiedId === item.id ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                        {isCopied(item.id) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                       </button>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
@@ -804,9 +788,9 @@ export default function MediaPage() {
                                 type="button"
                                 onClick={() => void copyMediaPath(item)}
                                 title="Copy media path"
-                                className={`shrink-0 transition-colors ${copiedId === item.id ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
+                                className={`shrink-0 transition-colors ${isCopied(item.id) ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
                               >
-                                {copiedId === item.id ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                                {isCopied(item.id) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                             <div className="text-xs text-gray-500">{getFormatLabel(item.mime_type)}</div>

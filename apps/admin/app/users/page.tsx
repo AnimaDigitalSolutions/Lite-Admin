@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ProtectedLayout from '@/components/protected-layout';
 import { usersApi, settingsApi } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,7 +29,7 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailCopied, setEmailCopied] = useState(false);
+  const { copy: copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Timezone settings
   const [timezone, setTimezone] = useState('UTC');
@@ -63,13 +64,6 @@ export default function UsersPage() {
     } finally {
       setTzSaving(false);
     }
-  };
-
-  const copyEmail = async () => {
-    if (!user?.email) return;
-    await navigator.clipboard.writeText(user.email);
-    setEmailCopied(true);
-    setTimeout(() => setEmailCopied(false), 2000);
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -130,8 +124,8 @@ export default function UsersPage() {
                     title={prefs.truncateEmails && truncateEmail(user?.email ?? '') !== (user?.email ?? '') ? user?.email : !prefs.truncateEmails ? user?.email : undefined}>
                     {prefs.truncateEmails ? truncateEmail(user?.email ?? '') : user?.email}
                   </p>
-                  <button type="button" onClick={() => void copyEmail()} title="Copy email"
-                    className={`transition-colors ${emailCopied ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
+                  <button type="button" onClick={() => { if (user?.email) void copyToClipboard(user.email, 'email'); }} title="Copy email"
+                    className={`transition-colors ${isCopied('email') ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
                     <ClipboardDocumentIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
