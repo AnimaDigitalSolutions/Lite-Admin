@@ -23,13 +23,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Play,
   FileText,
   Copy,
   Check,
   Download,
   Eye,
 } from 'lucide-react';
+import PdfThumbnail from '@/components/pdf-thumbnail';
 
 // --- Types ---
 
@@ -249,7 +249,7 @@ export default function MediaPage() {
 
   const maxSizeBytes = (prefs.maxUploadSizeMB || 10) * 1024 * 1024;
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif'],
@@ -473,6 +473,25 @@ export default function MediaPage() {
               </p>
             </div>
 
+            {/* Rejection Messages */}
+            {fileRejections.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {fileRejections.map(({ file, errors }, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                    <span className="font-medium truncate">{file.name}</span>
+                    <span>—</span>
+                    <span>{errors.map(e =>
+                      e.code === 'file-too-large'
+                        ? `Too large (max ${prefs.maxUploadSizeMB || 10} MB)`
+                        : e.code === 'file-invalid-type'
+                        ? 'File type not allowed'
+                        : e.message
+                    ).join(', ')}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Upload Progress */}
             {uploads.length > 0 && (
               <div className="mt-4 space-y-2">
@@ -596,9 +615,15 @@ export default function MediaPage() {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       />
                     ) : mediaType === 'video' ? (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <Play className="h-12 w-12 text-gray-400" />
-                      </div>
+                      <video
+                        src={`${item.url}#t=0.5`}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    ) : item.mime_type === 'application/pdf' ? (
+                      <PdfThumbnail url={item.url} className="w-full h-full" />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                         <FileText className="h-12 w-12 text-gray-400" />
@@ -765,11 +790,21 @@ export default function MediaPage() {
                                   sizes="48px"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  {mediaType === 'video'
-                                    ? <Play className="h-5 w-5 text-gray-400" />
-                                    : <FileText className="h-5 w-5 text-gray-400" />}
-                                </div>
+                                mediaType === 'video' ? (
+                                  <video
+                                    src={`${item.url}#t=0.5`}
+                                    preload="metadata"
+                                    muted
+                                    playsInline
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : item.mime_type === 'application/pdf' ? (
+                                  <PdfThumbnail url={item.url} className="w-full h-full" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <FileText className="h-5 w-5 text-gray-400" />
+                                  </div>
+                                )
                               )}
                             </div>
                           </td>
