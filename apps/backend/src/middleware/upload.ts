@@ -32,8 +32,12 @@ const fileFilter = (_req: Request, file: UploadedFile, cb: multer.FileFilterCall
   
   // Additional security checks
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
-  
+  const allowedExtensions = [
+    '.jpg', '.jpeg', '.png', '.webp', '.gif',  // images
+    '.mp4', '.webm', '.mov',                     // video
+    '.pdf',                                       // documents
+  ];
+
   if (!allowedExtensions.includes(ext)) {
     const error = new Error(`File extension ${ext} is not allowed`) as MulterError;
     error.code = 'INVALID_FILE_EXTENSION';

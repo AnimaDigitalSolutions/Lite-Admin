@@ -102,12 +102,16 @@ const config: Config = {
   },
   
   upload: {
-    maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10), // 10MB
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '52428800', 10), // 50MB (videos need more)
     allowedTypes: process.env.ALLOWED_FILE_TYPES?.split(',') || [
       'image/jpeg',
       'image/png',
       'image/webp',
       'image/gif',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'application/pdf',
     ],
   },
   
