@@ -143,6 +143,35 @@ class ResendProvider {
     });
   }
 
+  async sendDirect(
+    to: { email: string; name?: string },
+    subject: string,
+    content: string,
+    options?: { plainText?: boolean; cc?: { email: string; name?: string }[]; bcc?: { email: string; name?: string }[] },
+  ): Promise<void> {
+    try {
+      if (!this.resend) throw new Error('RESEND_API_KEY is not configured');
+
+      const from = this.fromName ? `${this.fromName} <${this.fromAddress}>` : this.fromAddress;
+
+      const base = { to: [to.email], from, subject };
+      const ccList = options?.cc?.length ? options.cc.map(r => r.email) : undefined;
+      const bccList = options?.bcc?.length ? options.bcc.map(r => r.email) : undefined;
+
+      const payload = options?.plainText
+        ? { ...base, text: content, ...(ccList && { cc: ccList }), ...(bccList && { bcc: bccList }) }
+        : { ...base, html: content, text: this.htmlToText(content), ...(ccList && { cc: ccList }), ...(bccList && { bcc: bccList }) };
+
+      await this.resend.emails.send(payload);
+
+      logger.info({ message: `Direct email sent via Resend to ${to.email}`, data: { subject } });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error({ message: `Failed to send direct email via Resend: ${msg}` });
+      throw new Error(`Email sending failed: ${msg}`);
+    }
+  }
+
   async sendCampaign(
     subscriber: { email: string; name?: string },
     campaign: { subject: string; preheader?: string; html: string; text?: string },

@@ -156,6 +156,56 @@ class AhasendProvider {
     });
   }
 
+  async sendDirect(
+    to: { email: string; name?: string },
+    subject: string,
+    content: string,
+    options?: { plainText?: boolean; cc?: { email: string; name?: string }[]; bcc?: { email: string; name?: string }[] },
+  ): Promise<void> {
+    try {
+      if (!this.apiKey) throw new Error('AHASEND_API_KEY is not configured');
+      if (!this.accountId) throw new Error('AHASEND_ACCOUNT_ID is not configured');
+
+      const payload: Record<string, unknown> = {
+        from: { email: this.fromAddress, name: this.fromName },
+        recipients: [{ email: to.email, name: to.name || '' }],
+        subject,
+      };
+
+      if (options?.plainText) {
+        payload.text_content = content;
+      } else {
+        payload.html_content = content;
+        payload.text_content = this.htmlToText(content);
+      }
+
+      if (options?.cc?.length) {
+        payload.cc = options.cc.map(r => ({ email: r.email, name: r.name || '' }));
+      }
+      if (options?.bcc?.length) {
+        payload.bcc = options.bcc.map(r => ({ email: r.email, name: r.name || '' }));
+      }
+
+      await axios.post(
+        `https://api.ahasend.com/v2/accounts/${this.accountId}/messages`,
+        payload,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => status === 200 || status === 202,
+        },
+      );
+
+      logger.info({ message: `Direct email sent via AhaSend to ${to.email}`, data: { subject } });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error({ message: `Failed to send direct email via AhaSend: ${msg}` });
+      throw new Error(`Email sending failed: ${msg}`);
+    }
+  }
+
   async sendCampaign(
     subscriber: { email: string; name?: string },
     campaign: { subject: string; preheader?: string; html: string; text?: string },
