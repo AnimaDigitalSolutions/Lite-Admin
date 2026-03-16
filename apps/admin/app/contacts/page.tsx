@@ -5,7 +5,7 @@ import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail } from '@/lib/utils';
 import ProtectedLayout from '@/components/protected-layout';
-import { submissionsApi, emailTestApi } from '@/lib/api';
+import { submissionsApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,8 +18,6 @@ import {
   EnvelopeIcon,
   BuildingOfficeIcon,
   XMarkIcon,
-  PaperAirplaneIcon,
-  ChevronDownIcon,
   PlusIcon,
   TableCellsIcon,
   ViewColumnsIcon,
@@ -31,8 +29,9 @@ import {
 import ContactDetailPanel, { getStatusBadge } from '@/components/contact-detail-panel';
 import ContactsCalendar from '@/components/contacts-calendar';
 import ContactsKanban from '@/components/contacts-kanban';
+import AddContactModal from './components/add-contact-modal';
+import TestEmailPanel from './components/test-email-panel';
 
-type ProjectType = 'web' | 'mobile' | 'erp' | 'consulting' | 'other';
 type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
 type ViewMode = 'table' | 'kanban' | 'calendar';
 
@@ -54,14 +53,6 @@ interface Contact {
   follow_up_at?: string;
   status_changed_at?: string;
 }
-
-const EMPTY_CONTACT_FORM = {
-  name: '',
-  email: '',
-  company: '',
-  project_type: 'web' as ProjectType,
-  message: '',
-};
 
 export default function ContactsPage() {
   const { formatDate } = useTimezone();
@@ -99,29 +90,8 @@ export default function ContactsPage() {
     setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
   };
 
-  // Add contact states
+  // Add contact modal
   const [showAddContact, setShowAddContact] = useState(false);
-  const [addContactLoading, setAddContactLoading] = useState(false);
-  const [addContactError, setAddContactError] = useState<string | null>(null);
-  const [addContactForm, setAddContactForm] = useState(EMPTY_CONTACT_FORM);
-
-  // Test email states
-  const [showTestEmail, setShowTestEmail] = useState(false);
-  const [testEmailLoading, setTestEmailLoading] = useState(false);
-  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [testEmailData, setTestEmailData] = useState<{
-    test_email: string;
-    name: string;
-    company: string;
-    project_type: ProjectType;
-    message: string;
-  }>({
-    test_email: '',
-    name: 'John Doe',
-    company: 'Test Company',
-    project_type: 'web',
-    message: 'This is a test message from the admin dashboard to verify email functionality is working correctly.'
-  });
 
   const loadContacts = useCallback(async () => {
     try {
@@ -199,26 +169,6 @@ export default function ContactsPage() {
     }
   };
 
-  const handleAddContact = async () => {
-    if (!addContactForm.name || !addContactForm.email || !addContactForm.message) {
-      setAddContactError('Name, email, and message are required.');
-      return;
-    }
-    setAddContactLoading(true);
-    setAddContactError(null);
-    try {
-      await submissionsApi.create(addContactForm);
-      setShowAddContact(false);
-      setAddContactForm(EMPTY_CONTACT_FORM);
-      void loadContacts();
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setAddContactError(e.response?.data?.error?.message ?? e.message ?? 'Failed to add contact');
-    } finally {
-      setAddContactLoading(false);
-    }
-  };
-
   const handleExportCSV = async () => {
     try {
       // Create CSV content
@@ -244,38 +194,6 @@ export default function ContactsPage() {
       link.click();
     } catch {
       setPageError('Failed to export CSV. Please try again.');
-    }
-  };
-
-  const handleTestEmail = async () => {
-    if (!testEmailData.test_email) {
-      setTestEmailResult({ success: false, message: 'Please enter a test email address' });
-      return;
-    }
-
-    setTestEmailLoading(true);
-    setTestEmailResult(null);
-
-    try {
-      const result = await emailTestApi.testContact(testEmailData);
-      
-      setTestEmailResult({
-        success: result.success,
-        message: result.success 
-          ? `Test email sent successfully! ${result.data.email_sent ? 'Email delivered.' : 'Email queued.'} Test entry ID: ${result.data.id}`
-          : result.error?.message || 'Failed to send test email'
-      });
-
-      // Reload contacts to show the new test entry
-      void loadContacts();
-    } catch (error) {
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setTestEmailResult({
-        success: false,
-        message: err.response?.data?.error?.message ?? err.message ?? 'Failed to send test email'
-      });
-    } finally {
-      setTestEmailLoading(false);
     }
   };
 
@@ -459,7 +377,7 @@ export default function ContactsPage() {
                 Delete ({selectedIds.size})
               </Button>
             )}
-            <Button variant="outline" onClick={() => { setShowAddContact(true); setAddContactError(null); }} className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowAddContact(true)} className="flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />
               Add Contact
             </Button>
@@ -609,117 +527,7 @@ export default function ContactsPage() {
         </div>
 
         {/* Email Testing */}
-        <Card>
-          <button
-            type="button"
-            onClick={() => setShowTestEmail(!showTestEmail)}
-            className="flex w-full items-center justify-between px-6 py-4 text-left"
-          >
-            <CardTitle className="flex items-center gap-2">
-              <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
-              Test Contact Email
-            </CardTitle>
-            <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${showTestEmail ? 'rotate-180' : ''}`} />
-          </button>
-          {showTestEmail && (
-            <CardContent className="space-y-4 border-t border-gray-100 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Test Email Address *
-                  </label>
-                  <Input
-                    type="email"
-                    value={testEmailData.test_email}
-                    onChange={(e) => setTestEmailData(prev => ({ ...prev, test_email: e.target.value }))}
-                    placeholder="your.email@example.com"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Test Name
-                  </label>
-                  <Input
-                    value={testEmailData.name}
-                    onChange={(e) => setTestEmailData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="John Doe"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Test Company
-                  </label>
-                  <Input
-                    value={testEmailData.company}
-                    onChange={(e) => setTestEmailData(prev => ({ ...prev, company: e.target.value }))}
-                    placeholder="Test Company"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Type
-                  </label>
-                  <select
-                    value={testEmailData.project_type}
-                    onChange={(e) => setTestEmailData(prev => ({ ...prev, project_type: e.target.value as ProjectType }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="web">Web Application</option>
-                    <option value="mobile">Mobile App</option>
-                    <option value="erp">ERP System</option>
-                    <option value="consulting">Consulting</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Test Message
-                </label>
-                <textarea
-                  value={testEmailData.message}
-                  onChange={(e) => setTestEmailData(prev => ({ ...prev, message: e.target.value }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Test message content..."
-                />
-              </div>
-              
-              {testEmailResult && (
-                <div className={`p-3 rounded-md ${testEmailResult.success ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-                  {testEmailResult.message}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleTestEmail}
-                  disabled={testEmailLoading || !testEmailData.test_email}
-                  className="flex items-center gap-2"
-                >
-                  <PaperAirplaneIcon className="h-4 w-4" />
-                  {testEmailLoading ? 'Sending...' : 'Send Test Email'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setTestEmailData({
-                      test_email: '',
-                      name: 'John Doe',
-                      company: 'Test Company',
-                      project_type: 'web',
-                      message: 'This is a test message from the admin dashboard to verify email functionality is working correctly.'
-                    });
-                    setTestEmailResult(null);
-                  }}
-                >
-                  Reset Form
-                </Button>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+        <TestEmailPanel onEmailSent={() => void loadContacts()} />
 
         {/* Kanban View */}
         {viewMode === 'kanban' && (
@@ -907,88 +715,11 @@ export default function ContactsPage() {
         </Card>}
 
         {/* Add Contact Modal */}
-        {showAddContact && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-lg w-full">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold">Add Contact Manually</h2>
-                  <Button variant="ghost" size="sm" onClick={() => setShowAddContact(false)}>
-                    <XMarkIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                      <Input
-                        value={addContactForm.name}
-                        onChange={e => setAddContactForm(p => ({ ...p, name: e.target.value }))}
-                        placeholder="John Doe"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                      <Input
-                        type="email"
-                        value={addContactForm.email}
-                        onChange={e => setAddContactForm(p => ({ ...p, email: e.target.value }))}
-                        placeholder="john@example.com"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
-                      <Input
-                        value={addContactForm.company}
-                        onChange={e => setAddContactForm(p => ({ ...p, company: e.target.value }))}
-                        placeholder="ACME Corp"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Project Type</label>
-                      <select
-                        value={addContactForm.project_type}
-                        onChange={e => setAddContactForm(p => ({ ...p, project_type: e.target.value as ProjectType }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="web">Web Application</option>
-                        <option value="mobile">Mobile App</option>
-                        <option value="erp">ERP System</option>
-                        <option value="consulting">Consulting</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
-                    <textarea
-                      value={addContactForm.message}
-                      onChange={e => setAddContactForm(p => ({ ...p, message: e.target.value }))}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Project details..."
-                    />
-                  </div>
-
-                  {addContactError && (
-                    <div className="p-3 rounded-md bg-red-50 text-red-800 border border-red-200 text-sm">
-                      {addContactError}
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 pt-2">
-                    <Button onClick={() => void handleAddContact()} disabled={addContactLoading} className="flex items-center gap-2">
-                      <PlusIcon className="h-4 w-4" />
-                      {addContactLoading ? 'Adding...' : 'Add Contact'}
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowAddContact(false)}>Cancel</Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <AddContactModal
+          open={showAddContact}
+          onClose={() => setShowAddContact(false)}
+          onCreated={() => void loadContacts()}
+        />
 
         {/* Contact Detail Panel */}
         {selectedContact && (
