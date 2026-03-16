@@ -2,7 +2,7 @@ import { Router } from 'express';
 import authRouter from './auth.js';
 import formsRouter from './forms.js';
 import mediaRouter from './media.js';
-import adminRouter from './admin.js';
+import adminRouter from './admin/index.js';
 import healthRouter from './health.js';
 import { generalRateLimiter, formsRateLimiter } from '../middleware/smartRateLimit.js';
 
