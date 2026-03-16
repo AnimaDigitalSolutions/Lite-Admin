@@ -24,6 +24,18 @@ async function startServer() {
     server = app.listen(config.port, () => {
       logger.info(`Server running on port ${config.port} in ${config.env} mode`);
     });
+
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        logger.error(`\n❌ Port ${config.port} is already in use.\n`);
+        logger.error(`Fix it by either:`);
+        logger.error(`  1. Kill the process:  kill -9 $(lsof -t -i:${config.port})`);
+        logger.error(`  2. Change PORT in .env to a different value\n`);
+      } else {
+        logger.error({ message: 'Failed to start server', error: err });
+      }
+      process.exit(1);
+    });
   } catch (error) {
     logger.error({
       message: 'Failed to start server',

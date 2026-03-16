@@ -11,6 +11,7 @@ import {
 } from '../schemas/media.js';
 import { contactListQuerySchema, contactIdSchema, contactTestEmailSchema } from '../schemas/contact.js';
 import { waitlistListQuerySchema, waitlistTestEmailSchema } from '../schemas/waitlist.js';
+import { invoiceListQuerySchema, invoiceIdSchema, invoiceCreateSchema, invoiceUpdateSchema } from '../schemas/invoice.js';
 import contactService from '../services/forms/contact.js';
 import waitlistService from '../services/forms/waitlist.js';
 import DatabaseService from '../services/database.service.js';
@@ -43,9 +44,9 @@ const initServices = async (): Promise<{
 
 // === MEDIA MANAGEMENT ===
 
-// Upload portfolio image
+// Upload portfolio media (images, videos, PDFs)
 router.post('/media/upload',
-  uploadSingle('image'),
+  uploadSingle('file'),
   requireFile,
   validateBody(mediaUploadSchema),
   async (req, res, next) => {
@@ -374,6 +375,483 @@ router.patch('/submissions/:id', async (req, res, next) => {
     return res.json({ success: true, data: updated });
   } catch (error) {
     next(error);
+  }
+});
+
+// Update contact status
+router.patch('/submissions/:id/status', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    if (isNaN(id)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const { status, comment } = req.body as { status?: string; comment?: string };
+    const validStatuses = ['new', 'reviewed', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost', 'archived'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(422).json({ error: { message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`, status: 422 } });
+    }
+
+    const db = await DatabaseService.getInstance();
+    const existing = await db.contacts.findById(id);
+    if (!existing) return res.status(404).json({ error: { message: 'Submission not found', status: 404 } });
+
+    const oldStatus = (existing as { status?: string }).status || 'new';
+    if (oldStatus === status) return res.json({ success: true, data: existing });
+
+    const updated = await db.contacts.updateStatus(id, status as 'new');
+    // Auto-create system note for status change
+    await db.contactNotes.create({
+      contact_id: id,
+      content: `Status changed: ${oldStatus} → ${status}`,
+      type: 'system',
+    });
+
+    // If a comment was provided with the status change, add it as a manual note
+    if (comment && comment.trim()) {
+      await db.contactNotes.create({
+        contact_id: id,
+        content: comment.trim(),
+        type: 'manual',
+        color: 'blue',
+        subtype: 'note',
+      });
+    }
+
+    await db.adminLogs.create({
+      action: 'contact_status_update',
+      resource: 'contacts',
+      resource_id: id,
+      details: `Status: ${oldStatus} → ${status}${comment ? ` (with comment)` : ''}`,
+      ip_address: req.ip,
+    });
+
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update contact follow-up date
+router.patch('/submissions/:id/follow-up', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    if (isNaN(id)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const { follow_up_at } = req.body as { follow_up_at?: string | null };
+
+    const db = await DatabaseService.getInstance();
+    const existing = await db.contacts.findById(id);
+    if (!existing) return res.status(404).json({ error: { message: 'Submission not found', status: 404 } });
+
+    const updated = await db.contacts.updateFollowUp(id, follow_up_at ?? null);
+
+    // Auto-create system note
+    const noteContent = follow_up_at
+      ? `Follow-up set: ${new Date(follow_up_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`
+      : 'Follow-up date cleared';
+    await db.contactNotes.create({
+      contact_id: id,
+      content: noteContent,
+      type: 'system',
+    });
+
+    await db.adminLogs.create({
+      action: 'contact_followup_update',
+      resource: 'contacts',
+      resource_id: id,
+      details: follow_up_at ? `Follow-up set to ${follow_up_at}` : 'Follow-up cleared',
+      ip_address: req.ip,
+    });
+
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get contact activity for calendar (all contacts, date range)
+router.get('/submissions/activity', async (req, res, next) => {
+  try {
+    const { start, end } = req.query as { start?: string; end?: string };
+    if (!start || !end) return res.status(400).json({ error: { message: 'start and end query params required (YYYY-MM-DD)', status: 400 } });
+
+    const db = await DatabaseService.getInstance();
+
+    // Get notes in range (includes system notes for status changes)
+    const notes = await db.contactNotes.findByDateRange(start, end);
+
+    // Get contacts submitted in range
+    const submissions = await db.all<{
+      id: number; name: string; email: string; company: string; status: string;
+      submitted_at: string; follow_up_at: string;
+    }>(
+      `SELECT id, name, email, company, COALESCE(status, 'new') as status, submitted_at, follow_up_at
+       FROM contacts
+       WHERE date(submitted_at) >= ? AND date(submitted_at) <= ?
+       ORDER BY submitted_at ASC`,
+      [start, end]
+    );
+
+    // Get contacts with follow-ups in range
+    const followUps = await db.all<{
+      id: number; name: string; email: string; company: string; status: string;
+      follow_up_at: string;
+    }>(
+      `SELECT id, name, email, company, COALESCE(status, 'new') as status, follow_up_at
+       FROM contacts
+       WHERE date(follow_up_at) >= ? AND date(follow_up_at) <= ?
+       ORDER BY follow_up_at ASC`,
+      [start, end]
+    );
+
+    return res.json({ success: true, data: { notes, submissions, followUps } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get contact notes
+router.get('/submissions/:id/notes', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    if (isNaN(id)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const db = await DatabaseService.getInstance();
+    const contact = await db.contacts.findById(id);
+    if (!contact) return res.status(404).json({ error: { message: 'Submission not found', status: 404 } });
+
+    const notes = await db.contactNotes.findByContactId(id);
+    return res.json({ success: true, data: notes });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Add contact note
+router.post('/submissions/:id/notes', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    if (isNaN(id)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const { content, color, subtype, due_at } = req.body as { content?: string; color?: string; subtype?: string; due_at?: string };
+    if (!content || !content.trim()) {
+      return res.status(422).json({ error: { message: 'Content is required', status: 422 } });
+    }
+
+    const validColors = ['gray', 'blue', 'green', 'amber', 'red'];
+    const noteColor = color && validColors.includes(color) ? color : undefined;
+    const validSubtypes = ['note', 'todo', 'message', 'reply'];
+    const noteSubtype = subtype && validSubtypes.includes(subtype) ? subtype as 'note' | 'todo' | 'message' | 'reply' : 'note';
+
+    const db = await DatabaseService.getInstance();
+    const contact = await db.contacts.findById(id);
+    if (!contact) return res.status(404).json({ error: { message: 'Submission not found', status: 404 } });
+
+    const note = await db.contactNotes.create({
+      contact_id: id,
+      content: content.trim(),
+      type: 'manual',
+      color: noteColor,
+      subtype: noteSubtype,
+      due_at: noteSubtype === 'todo' && due_at ? due_at : undefined,
+    });
+
+    await db.adminLogs.create({
+      action: 'contact_note_add',
+      resource: 'contacts',
+      resource_id: id,
+      details: `Added note to contact #${id}`,
+      ip_address: req.ip,
+    });
+
+    return res.status(201).json({ success: true, data: note });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Delete contact note (manual only)
+router.delete('/submissions/:id/notes/:noteId', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    const noteId = parseInt(req.params.noteId ?? '', 10);
+    if (isNaN(id) || isNaN(noteId)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const db = await DatabaseService.getInstance();
+    const note = await db.contactNotes.findById(noteId);
+    if (!note) return res.status(404).json({ error: { message: 'Note not found', status: 404 } });
+    if (note.type === 'system') return res.status(403).json({ error: { message: 'System notes cannot be deleted', status: 403 } });
+    if (note.contact_id !== id) return res.status(404).json({ error: { message: 'Note not found for this contact', status: 404 } });
+
+    await db.contactNotes.deleteById(noteId);
+
+    await db.adminLogs.create({
+      action: 'contact_note_delete',
+      resource: 'contacts',
+      resource_id: id,
+      details: `Deleted note #${noteId} from contact #${id}`,
+      ip_address: req.ip,
+    });
+
+    return res.json({ success: true, message: 'Note deleted' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Toggle todo done/undone
+router.patch('/submissions/:id/notes/:noteId/toggle', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    const noteId = parseInt(req.params.noteId ?? '', 10);
+    if (isNaN(id) || isNaN(noteId)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const db = await DatabaseService.getInstance();
+    const note = await db.contactNotes.findById(noteId);
+    if (!note) return res.status(404).json({ error: { message: 'Note not found', status: 404 } });
+    if (note.contact_id !== id) return res.status(404).json({ error: { message: 'Note not found for this contact', status: 404 } });
+    if ((note as { subtype?: string }).subtype !== 'todo') return res.status(400).json({ error: { message: 'Only todos can be toggled', status: 400 } });
+
+    const updated = await db.contactNotes.toggleDone(noteId);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update todo due date
+router.patch('/submissions/:id/notes/:noteId/due', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    const noteId = parseInt(req.params.noteId ?? '', 10);
+    if (isNaN(id) || isNaN(noteId)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const { due_at } = req.body as { due_at?: string | null };
+
+    const db = await DatabaseService.getInstance();
+    const note = await db.contactNotes.findById(noteId);
+    if (!note) return res.status(404).json({ error: { message: 'Note not found', status: 404 } });
+    if (note.contact_id !== id) return res.status(404).json({ error: { message: 'Note not found for this contact', status: 404 } });
+    if ((note as { subtype?: string }).subtype !== 'todo') return res.status(400).json({ error: { message: 'Only todos can have due dates', status: 400 } });
+
+    const updated = await db.contactNotes.updateDueAt(noteId, due_at ?? null);
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get open todos summary across all contacts
+router.get('/submissions/todos-summary', async (_req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const summary = await db.contactNotes.openTodosCount();
+    return res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/submissions/todo-contact-ids', async (_req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const ids = await db.contactNotes.openTodoContactIds();
+    return res.json({ success: true, data: ids });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get status change history for a batch of contacts (used by Gantt view)
+router.post('/submissions/status-history', async (req, res, next) => {
+  try {
+    const { ids } = req.body as { ids?: number[] };
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.json({ success: true, data: {} });
+    }
+    // Limit to 100 IDs to prevent abuse
+    const limitedIds = ids.slice(0, 100);
+    const db = await DatabaseService.getInstance();
+    const notes = await db.contactNotes.findStatusChangesByContactIds(limitedIds);
+
+    // Group by contact_id and parse "Status changed: old → new"
+    const history: Record<number, { status: string; changed_at: string }[]> = {};
+    for (const note of notes) {
+      const match = note.content.match(/Status changed: \w+ → (\w+)/);
+      if (match) {
+        if (!history[note.contact_id]) history[note.contact_id] = [];
+        history[note.contact_id].push({
+          status: match[1],
+          changed_at: note.created_at,
+        });
+      }
+    }
+
+    res.json({ success: true, data: history });
+  } catch (error) { next(error); }
+});
+
+// Send email directly to a contact
+router.post('/submissions/:id/send-email', async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id ?? '', 10);
+    if (isNaN(id)) return res.status(400).json({ error: { message: 'Invalid id', status: 400 } });
+
+    const { subject, body } = req.body as { subject?: string; body?: string };
+    if (!subject || !subject.trim()) {
+      return res.status(422).json({ error: { message: 'Subject is required', status: 422 } });
+    }
+    if (!body || !body.trim()) {
+      return res.status(422).json({ error: { message: 'Message body is required', status: 422 } });
+    }
+
+    const db = await DatabaseService.getInstance();
+    const contact = await db.contacts.findById(id);
+    if (!contact) return res.status(404).json({ error: { message: 'Contact not found', status: 404 } });
+
+    const contactEmail = (contact as { email: string }).email;
+    const contactName = (contact as { name: string }).name;
+
+    // Determine provider
+    let providerName: string = config.email.provider;
+    try {
+      const settings = await SettingsService.getInstance();
+      providerName = settings.get('email_provider') || providerName;
+    } catch {
+      // use default
+    }
+
+    const provider = await EmailFactory.create(providerName);
+
+    await (provider as { sendDirect: (to: { email: string; name?: string }, subject: string, content: string, options?: { plainText?: boolean }) => Promise<void> })
+      .sendDirect({ email: contactEmail, name: contactName }, subject.trim(), body, { plainText: true });
+
+    // Log as a 'message' note in the activity thread
+    await db.contactNotes.create({
+      contact_id: id,
+      content: `Email sent — Subject: ${subject.trim()}`,
+      type: 'manual',
+      color: 'green',
+      subtype: 'message',
+    });
+
+    await db.adminLogs.create({
+      action: 'contact_email_sent',
+      resource: 'contacts',
+      resource_id: id,
+      details: `Email sent to ${contactEmail}: "${subject.trim()}"`,
+      ip_address: req.ip,
+    });
+
+    return res.json({ success: true, data: { email_sent: true, to: contactEmail } });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed to send email';
+    logger.error({ message: `Send email to contact failed: ${msg}`, error });
+    return res.status(500).json({ error: { message: msg, status: 500 } });
+  }
+});
+
+// Compose email to multiple recipients (standalone compose page)
+router.post('/email/compose', async (req, res, next) => {
+  try {
+    const { to, cc, bcc, subject, body } = req.body as {
+      to?: { email: string; name?: string }[];
+      cc?: { email: string; name?: string }[];
+      bcc?: { email: string; name?: string }[];
+      subject?: string;
+      body?: string;
+    };
+
+    if (!to || !Array.isArray(to) || to.length === 0) {
+      return res.status(422).json({ error: { message: 'At least one TO recipient is required', status: 422 } });
+    }
+    if (!subject || !subject.trim()) {
+      return res.status(422).json({ error: { message: 'Subject is required', status: 422 } });
+    }
+    if (!body || !body.trim()) {
+      return res.status(422).json({ error: { message: 'Message body is required', status: 422 } });
+    }
+
+    // Validate all email addresses
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const allRecipients = [...to, ...(cc || []), ...(bcc || [])];
+    for (const r of allRecipients) {
+      if (!emailRegex.test(r.email)) {
+        return res.status(422).json({ error: { message: `Invalid email address: ${r.email}`, status: 422 } });
+      }
+    }
+
+    // Get email provider
+    let providerName: string = config.email.provider;
+    try {
+      const settings = await SettingsService.getInstance();
+      providerName = settings.get('email_provider') || providerName;
+    } catch {
+      // use default
+    }
+
+    const provider = await EmailFactory.create(providerName);
+
+    // Send to the first TO recipient with CC/BCC
+    const primaryTo = to[0];
+    const additionalTo = to.slice(1);
+    const mergedCc = [...additionalTo, ...(cc || [])];
+
+    await (provider as { sendDirect: (to: { email: string; name?: string }, subject: string, content: string, options?: { plainText?: boolean; cc?: { email: string; name?: string }[]; bcc?: { email: string; name?: string }[] }) => Promise<void> })
+      .sendDirect(primaryTo, subject.trim(), body, {
+        plainText: true,
+        cc: mergedCc.length ? mergedCc : undefined,
+        bcc: bcc?.length ? bcc : undefined,
+      });
+
+    // Auto-log notes on matching contacts
+    const db = await DatabaseService.getInstance();
+    const allToEmails = to.map(r => r.email.toLowerCase());
+    const contacts = await db.contacts.findAll();
+    const contactsByEmail = new Map<string, { id: number }>();
+    for (const c of contacts) {
+      contactsByEmail.set((c as { email: string }).email.toLowerCase(), c as { id: number });
+    }
+
+    for (const email of allToEmails) {
+      const match = contactsByEmail.get(email);
+      if (match) {
+        await db.contactNotes.create({
+          contact_id: match.id,
+          content: `Email sent — Subject: ${subject.trim()}`,
+          type: 'manual',
+          color: 'green',
+          subtype: 'message',
+        });
+      }
+    }
+
+    // Also check CC recipients for contact matches
+    for (const r of (cc || [])) {
+      const match = contactsByEmail.get(r.email.toLowerCase());
+      if (match) {
+        await db.contactNotes.create({
+          contact_id: match.id,
+          content: `CC'd on email — Subject: ${subject.trim()}`,
+          type: 'manual',
+          color: 'green',
+          subtype: 'message',
+        });
+      }
+    }
+
+    const recipientSummary = allToEmails.join(', ');
+    await db.adminLogs.create({
+      action: 'compose_email_sent',
+      resource: 'email',
+      details: `Compose email sent to ${recipientSummary}: "${subject.trim()}"`,
+      ip_address: req.ip,
+    });
+
+    return res.json({ success: true, data: { email_sent: true, to: allToEmails } });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed to send email';
+    logger.error({ message: `Compose email failed: ${msg}`, error });
+    return res.status(500).json({ error: { message: msg, status: 500 } });
   }
 });
 
@@ -1188,6 +1666,54 @@ router.post('/waitlist/bulk-delete', async (req, res, next) => {
 
 // === CAMPAIGNS ===
 
+// Get all unique tags from subscribers
+router.get('/waitlist/tags', async (_req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const tags = await db.waitlist.getAllTags();
+    res.json({ data: tags });
+  } catch (error) { next(error); }
+});
+
+// Count subscribers matching a target (used by campaign form)
+router.get('/waitlist/count-by-target', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const targetType = (req.query['target_type'] as string) || 'all';
+    const tagsParam = req.query['tags'] as string;
+    const tags = tagsParam ? tagsParam.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const count = await db.waitlist.countByTarget(
+      targetType === 'tagged' ? 'tagged' : 'all',
+      tags,
+    );
+    res.json({ data: { count } });
+  } catch (error) { next(error); }
+});
+
+// Preview recipients matching a target (returns subscriber list for preview)
+router.get('/waitlist/preview-recipients', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const targetType = (req.query['target_type'] as string) || 'all';
+    const tagsParam = req.query['tags'] as string;
+    const tags = tagsParam ? tagsParam.split(',').map(t => t.trim()).filter(Boolean) : [];
+    let subscribers;
+    if (targetType === 'tagged' && tags.length > 0) {
+      subscribers = await db.waitlist.findActiveByTags(tags);
+    } else {
+      subscribers = await db.waitlist.findAllActive();
+    }
+    // Return only the fields needed for preview
+    const preview = subscribers.map(s => ({
+      id: s.id,
+      email: s.email,
+      name: s.name,
+      tags: s.tags,
+    }));
+    res.json({ data: preview, total: preview.length });
+  } catch (error) { next(error); }
+});
+
 // List all campaigns
 router.get('/campaigns', async (req, res, next) => {
   try {
@@ -1204,15 +1730,20 @@ router.get('/campaigns', async (req, res, next) => {
 router.post('/campaigns', async (req, res, next) => {
   try {
     const db = await DatabaseService.getInstance();
-    const { name, subject, preheader, html_content, text_content } = req.body as {
+    const { name, subject, preheader, html_content, text_content, target_type, target_tags } = req.body as {
       name: string; subject: string; preheader?: string; html_content: string; text_content?: string;
+      target_type?: 'all' | 'tagged'; target_tags?: string[];
     };
 
     if (!name || !subject || !html_content) {
       return res.status(400).json({ error: { message: 'name, subject, and html_content are required', status: 400 } });
     }
 
-    const campaign = await db.campaigns.create({ name, subject, preheader, html_content, text_content, status: 'draft' });
+    const campaign = await db.campaigns.create({
+      name, subject, preheader, html_content, text_content, status: 'draft',
+      target_type: target_type || 'all',
+      target_tags: target_tags && target_tags.length ? JSON.stringify(target_tags) : undefined,
+    });
 
     await db.adminLogs.create({
       action: 'campaign_create',
@@ -1251,8 +1782,9 @@ router.patch('/campaigns/:id', async (req, res, next) => {
     if (!existing) return res.status(404).json({ error: { message: 'Campaign not found', status: 404 } });
     if (existing.status !== 'draft') return res.status(400).json({ error: { message: 'Only draft campaigns can be edited', status: 400 } });
 
-    const { name, subject, preheader, html_content, text_content } = req.body as {
+    const { name, subject, preheader, html_content, text_content, target_type, target_tags } = req.body as {
       name?: string; subject?: string; preheader?: string; html_content?: string; text_content?: string;
+      target_type?: 'all' | 'tagged'; target_tags?: string[];
     };
 
     const data: Record<string, string | undefined> = {};
@@ -1261,6 +1793,8 @@ router.patch('/campaigns/:id', async (req, res, next) => {
     if (preheader !== undefined) data.preheader = preheader;
     if (html_content !== undefined) data.html_content = html_content;
     if (text_content !== undefined) data.text_content = text_content;
+    if (target_type !== undefined) data.target_type = target_type;
+    if (target_tags !== undefined) data.target_tags = JSON.stringify(target_tags);
 
     if (!Object.keys(data).length) return res.status(400).json({ error: { message: 'No fields to update', status: 400 } });
 
@@ -1300,7 +1834,7 @@ router.delete('/campaigns/:id', async (req, res, next) => {
   } catch (error) { next(error); }
 });
 
-// Send campaign to all active subscribers
+// Send campaign to targeted subscribers
 router.post('/campaigns/:id/send', async (req, res, next) => {
   try {
     const db = await DatabaseService.getInstance();
@@ -1311,8 +1845,14 @@ router.post('/campaigns/:id/send', async (req, res, next) => {
     if (!campaign) return res.status(404).json({ error: { message: 'Campaign not found', status: 404 } });
     if (campaign.status !== 'draft') return res.status(400).json({ error: { message: 'Campaign has already been sent', status: 400 } });
 
-    // Load all active subscribers
-    const subscribers = await db.waitlist.findAllActive();
+    // Load subscribers based on campaign targeting
+    let subscribers;
+    if (campaign.target_type === 'tagged' && campaign.target_tags) {
+      const tags = JSON.parse(campaign.target_tags) as string[];
+      subscribers = tags.length ? await db.waitlist.findActiveByTags(tags) : await db.waitlist.findAllActive();
+    } else {
+      subscribers = await db.waitlist.findAllActive();
+    }
     if (subscribers.length === 0) {
       return res.status(400).json({ error: { message: 'No active subscribers to send to', status: 400 } });
     }
@@ -1363,6 +1903,165 @@ router.post('/campaigns/:id/send', async (req, res, next) => {
       data: updated,
       stats: { sent: sentCount, total: subscribers.length, errors: errors.length },
     });
+  } catch (error) { next(error); }
+});
+
+// ─── INVOICES ────────────────────────────────────────────────────────────────
+
+// List invoices
+router.get('/invoices', validateQuery(invoiceListQuerySchema), async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const { limit, offset, status } = req.validatedQuery;
+    const [invoices, total] = await Promise.all([
+      db.invoices.findAll(limit, offset, status),
+      db.invoices.count(status),
+    ]);
+    res.json({ success: true, data: invoices, pagination: { limit, offset, total } });
+  } catch (error) { next(error); }
+});
+
+// Get single invoice with items
+router.get('/invoices/:id', validateParams(invoiceIdSchema), async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const { id } = req.validatedParams;
+    const invoice = await db.invoices.findById(id);
+    if (!invoice) return res.status(404).json({ error: { message: 'Invoice not found', status: 404 } });
+    const items = await db.invoiceItems.findByInvoiceId(id);
+    res.json({ success: true, data: { ...invoice, items } });
+  } catch (error) { next(error); }
+});
+
+// Create invoice
+router.post('/invoices', validateBody(invoiceCreateSchema), async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const data = req.validatedBody;
+    const items = data.items || [];
+
+    // Calculate totals
+    const subtotal = items.reduce((sum: number, item: { quantity: number; unit_price: number }) => sum + item.quantity * item.unit_price, 0);
+    const taxAmount = subtotal * (data.tax_rate || 0) / 100;
+    const total = subtotal + taxAmount - (data.discount || 0);
+
+    // Auto-generate invoice number if not provided
+    const invoiceNumber = data.invoice_number || await db.invoices.nextNumber();
+
+    const invoice = await db.invoices.create({
+      ...data,
+      invoice_number: invoiceNumber,
+      subtotal,
+      tax_amount: taxAmount,
+      total,
+    });
+
+    if (items.length > 0 && invoice.id) {
+      await db.invoiceItems.createMany(
+        invoice.id,
+        items.map((item: { description: string; quantity: number; unit_price: number }) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          amount: item.quantity * item.unit_price,
+        }))
+      );
+    }
+
+    const createdItems = invoice.id ? await db.invoiceItems.findByInvoiceId(invoice.id) : [];
+
+    await db.adminLogs.create({
+      action: 'create',
+      resource: 'invoice',
+      resource_id: invoice.id,
+      details: `Created invoice ${invoiceNumber}`,
+      ip_address: req.ip,
+    });
+
+    res.status(201).json({ success: true, data: { ...invoice, items: createdItems } });
+  } catch (error) { next(error); }
+});
+
+// Update invoice
+router.patch('/invoices/:id', validateParams(invoiceIdSchema), validateBody(invoiceUpdateSchema), async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const { id } = req.validatedParams;
+    const data = req.validatedBody;
+
+    const existing = await db.invoices.findById(id);
+    if (!existing) return res.status(404).json({ error: { message: 'Invoice not found', status: 404 } });
+
+    // If items are provided, recalculate totals
+    const items = data.items;
+    if (items) {
+      const subtotal = items.reduce((sum: number, item: { quantity: number; unit_price: number }) => sum + item.quantity * item.unit_price, 0);
+      const taxRate = data.tax_rate ?? existing.tax_rate;
+      const discount = data.discount ?? existing.discount;
+      const taxAmount = subtotal * taxRate / 100;
+      data.subtotal = subtotal;
+      data.tax_amount = taxAmount;
+      data.total = subtotal + taxAmount - discount;
+
+      // Replace items
+      await db.invoiceItems.deleteByInvoiceId(id);
+      await db.invoiceItems.createMany(
+        id,
+        items.map((item: { description: string; quantity: number; unit_price: number }) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          amount: item.quantity * item.unit_price,
+        }))
+      );
+    }
+
+    // Remove items from update data (it's not a column)
+    delete data.items;
+
+    const updated = await db.invoices.updateById(id, data);
+    const updatedItems = await db.invoiceItems.findByInvoiceId(id);
+
+    await db.adminLogs.create({
+      action: 'update',
+      resource: 'invoice',
+      resource_id: id,
+      details: `Updated invoice ${existing.invoice_number}`,
+      ip_address: req.ip,
+    });
+
+    res.json({ success: true, data: { ...updated, items: updatedItems } });
+  } catch (error) { next(error); }
+});
+
+// Delete invoice
+router.delete('/invoices/:id', validateParams(invoiceIdSchema), async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const { id } = req.validatedParams;
+    const invoice = await db.invoices.findById(id);
+    if (!invoice) return res.status(404).json({ error: { message: 'Invoice not found', status: 404 } });
+
+    await db.invoices.deleteById(id);
+
+    await db.adminLogs.create({
+      action: 'delete',
+      resource: 'invoice',
+      resource_id: id,
+      details: `Deleted invoice ${invoice.invoice_number}`,
+      ip_address: req.ip,
+    });
+
+    res.json({ success: true, message: 'Invoice deleted' });
+  } catch (error) { next(error); }
+});
+
+// Get next invoice number
+router.get('/invoices-next-number', async (req, res, next) => {
+  try {
+    const db = await DatabaseService.getInstance();
+    const nextNumber = await db.invoices.nextNumber();
+    res.json({ success: true, data: { invoice_number: nextNumber } });
   } catch (error) { next(error); }
 });
 
