@@ -105,17 +105,45 @@ export const createPaginatedResponse = <T>(
 
 // Error utilities
 export class AppError extends Error {
-  constructor(
-    public message: string,
-    public statusCode: number = 500,
-    public details?: any
-  ) {
+  public readonly statusCode: number;
+  public readonly details?: unknown;
+
+  constructor(message: string, statusCode = 500, details?: unknown) {
     super(message);
     this.name = 'AppError';
-    // Only capture stack trace if available (Node.js)
+    this.statusCode = statusCode;
+    this.details = details;
     if (typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(this, this.constructor);
     }
+  }
+}
+
+export class ValidationError extends AppError {
+  constructor(message = 'Validation failed', details?: unknown) {
+    super(message, 400, details);
+    this.name = 'ValidationError';
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message = 'Resource not found') {
+    super(message, 404);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Unauthorized access') {
+    super(message, 401);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Access forbidden') {
+    super(message, 403);
+    this.name = 'ForbiddenError';
   }
 }
 

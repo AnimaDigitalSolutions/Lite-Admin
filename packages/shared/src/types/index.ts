@@ -154,6 +154,77 @@ export interface StorageConfig {
   };
 }
 
+// Contact Note Types
+export type NoteSubtype = 'note' | 'todo' | 'message' | 'reply';
+
+export interface ContactNote {
+  id: number;
+  contactId: number;
+  content: string;
+  type: 'manual' | 'system';
+  subtype?: NoteSubtype;
+  color?: string;
+  dueAt?: string | null;
+  isDone?: boolean;
+  createdAt: Date;
+}
+
+// Invoice Types
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  currency: string;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discount: number;
+  total: number;
+  notes?: string;
+  dueDate?: string;
+  issuedDate?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientAddress?: string;
+  companyName?: string;
+  companyEmail?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyLogoUrl?: string;
+  template: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InvoiceItem {
+  id: number;
+  invoiceId: number;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+}
+
+// Site Types
+export interface Site {
+  id: number;
+  name: string;
+  domain?: string;
+  description?: string;
+  apiKey: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Contact Status Types
+export const CONTACT_STATUSES = [
+  'new', 'reviewed', 'contacted', 'qualified',
+  'proposal_sent', 'won', 'lost', 'archived',
+] as const;
+
+export type ContactStatus = typeof CONTACT_STATUSES[number];
+
 // Statistics Types
 export interface SystemStats {
   contacts: {
