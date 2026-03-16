@@ -12,6 +12,7 @@ import {
   CodeBracketIcon,
   EyeIcon,
 } from '@heroicons/react/24/outline';
+import { ErrorBanner } from '@/components/ui/error-banner';
 
 interface TemplateData {
   name: string;
@@ -214,12 +215,7 @@ export default function EmailTemplatesPage() {
           </p>
         </div>
 
-        {error && (
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-            <button type="button" onClick={() => setError(null)} className="ml-4 text-red-400 hover:text-red-600">&#x2715;</button>
-          </div>
-        )}
+        <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
         {/* Template tabs + variable chips — single compact row */}
         <div className="flex items-center justify-between gap-4 border-b border-gray-200 pb-0">

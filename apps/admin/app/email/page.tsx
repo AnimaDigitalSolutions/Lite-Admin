@@ -15,6 +15,7 @@ import {
   XCircleIcon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
+import { ErrorBanner } from '@/components/ui/error-banner';
 
 interface EmailConfig {
   active_provider: string;
@@ -149,12 +150,7 @@ export default function EmailPage() {
           </p>
         </div>
 
-        {error && (
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-            <button type="button" onClick={() => setError(null)} className="ml-4 text-red-400 hover:text-red-600">✕</button>
-          </div>
-        )}
+        <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
         {/* Unified Email Provider card */}
         <Card>

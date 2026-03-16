@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePaginatedData } from '@/lib/hooks/use-paginated-data';
 import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail, highlightMatch } from '@/lib/utils';
@@ -30,6 +31,8 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { useSelection } from '@/lib/hooks/use-selection';
 import ContactDetailPanel, { getStatusBadge } from '@/components/contact-detail-panel';
 import ContactsCalendar from '@/components/contacts-calendar';
 import ContactsKanban from '@/components/contacts-kanban';
@@ -61,13 +64,16 @@ interface Contact {
 export default function ContactsPage() {
   const { formatDate } = useTimezone();
   const { prefs } = useDisplayPrefs();
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: contacts, loading, currentPage, totalPages, setCurrentPage,
+    refetch: loadContacts, setData: setContacts,
+  } = usePaginatedData<Contact>(
+    (limit, offset) => submissionsApi.list({ limit, offset }),
+    [],
+    { pageSize: 20 },
+  );
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 20;
+  const { selectedIds, setSelectedIds, selectAll, clearSelection } = useSelection<string>();
 
   const [pageError, setPageError] = useState<string | null>(null);
   const { copy: copyEmail, isCopied: isEmailCopied } = useCopyToClipboard();
@@ -108,23 +114,6 @@ export default function ContactsPage() {
   // Add contact modal
   const [showAddContact, setShowAddContact] = useState(false);
 
-  const loadContacts = useCallback(async () => {
-    try {
-      const offset = (currentPage - 1) * itemsPerPage;
-      const response = await submissionsApi.list({
-        limit: itemsPerPage,
-        offset
-      });
-      
-      setContacts(response.data || []);
-      setTotalPages(Math.ceil((response.pagination?.total || 0) / itemsPerPage));
-    } catch {
-      setPageError('Failed to load contacts. Please refresh the page.');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, itemsPerPage]);
-
   const loadTodosSummary = useCallback(async () => {
     try {
       const [summaryRes, idsRes] = await Promise.all([
@@ -139,9 +128,8 @@ export default function ContactsPage() {
   }, []);
 
   useEffect(() => {
-    void loadContacts();
     void loadTodosSummary();
-  }, [loadContacts, loadTodosSummary]);
+  }, [loadTodosSummary]);
 
   // Fetch status history for Gantt view when contacts change
   useEffect(() => {
@@ -165,7 +153,7 @@ export default function ContactsPage() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedIds(checked ? new Set(filteredContacts.map(c => c.id)) : new Set());
+    checked ? selectAll(filteredContacts.map(c => c.id)) : clearSelection();
   };
 
   const handleSelectOne = (id: string, checked: boolean) => {
@@ -178,7 +166,7 @@ export default function ContactsPage() {
     try {
       await submissionsApi.bulkDelete(Array.from(selectedIds).map(Number));
       setContacts(prev => prev.filter(c => !selectedIds.has(c.id)));
-      setSelectedIds(new Set());
+      clearSelection();
     } catch {
       setPageError('Failed to delete selected contacts. Please try again.');
     }
@@ -258,12 +246,7 @@ export default function ContactsPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        {pageError && (
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {pageError}
-            <button type="button" onClick={() => setPageError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
-          </div>
-        )}
+        <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Contact Submissions</h1>

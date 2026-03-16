@@ -16,6 +16,7 @@ import {
   ClipboardDocumentIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
+import { ErrorBanner } from '@/components/ui/error-banner';
 import { Toggle } from '@/components/ui/toggle';
 
 interface Site {
@@ -112,12 +113,7 @@ export default function SitesPage() {
           </Button>
         </div>
 
-        {error && (
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {error}
-            <button type="button" onClick={() => setError(null)} className="ml-4 text-red-400 hover:text-red-600">✕</button>
-          </div>
-        )}
+        <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
         {/* New site form */}
         {showNewSite && (

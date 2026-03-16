@@ -30,6 +30,7 @@ import {
   ArrowDownTrayIcon,
   EyeIcon,
 } from '@heroicons/react/24/outline';
+import { useSelection } from '@/lib/hooks/use-selection';
 import MediaEditModal from './components/media-edit-modal';
 // --- Types ---
 
@@ -160,7 +161,7 @@ export default function MediaPage() {
   const [filterProject, setFilterProject] = useState('');
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { selectedIds, setSelectedIds, selectAll, clearSelection, toggleOne: toggleSelectOne } = useSelection<string>();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem('media-view-mode') as ViewMode) || 'grid';
@@ -264,7 +265,7 @@ export default function MediaPage() {
         await mediaApi.delete(id);
       }
       setMediaItems(prev => prev.filter(item => !selectedIds.has(item.id)));
-      setSelectedIds(new Set());
+      clearSelection();
     } catch (error) {
       console.error('Failed to bulk delete:', error);
     }
@@ -319,15 +320,11 @@ export default function MediaPage() {
   // --- Selection ---
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedIds(checked ? new Set(filteredAndSortedItems.map(i => i.id)) : new Set());
+    checked ? selectAll(filteredAndSortedItems.map(i => i.id)) : clearSelection();
   };
 
   const handleSelectOne = (id: string, checked: boolean) => {
     setSelectedIds(prev => { const n = new Set(prev); checked ? n.add(id) : n.delete(id); return n; });
-  };
-
-  const toggleSelectOne = (id: string) => {
-    setSelectedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
   // --- Preview navigation ---
@@ -420,7 +417,7 @@ export default function MediaPage() {
                 <TrashIcon className="h-4 w-4 mr-1" />
                 Delete ({selectedIds.size})
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>
                 <XMarkIcon className="h-4 w-4" />
               </Button>
             </div>

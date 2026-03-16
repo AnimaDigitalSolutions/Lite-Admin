@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { usePaginatedData } from '@/lib/hooks/use-paginated-data';
 import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail } from '@/lib/utils';
@@ -29,6 +30,8 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
+import { ErrorBanner } from '@/components/ui/error-banner';
+import { useSelection } from '@/lib/hooks/use-selection';
 import AddSubscriberModal from './components/add-subscriber-modal';
 import TestEmailPanel from './components/test-email-panel';
 
@@ -52,12 +55,15 @@ interface WaitlistEntry {
 function SubscribersTab() {
   const { formatDate } = useTimezone();
   const { prefs } = useDisplayPrefs();
-  const [entries, setEntries] = useState<WaitlistEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 20;
+  const {
+    data: entries, loading, currentPage, totalPages, setCurrentPage,
+    refetch: loadEntries, setData: setEntries,
+  } = usePaginatedData<WaitlistEntry>(
+    (limit, offset) => waitlistApi.list({ limit, offset }),
+    [],
+    { pageSize: 20 },
+  );
+  const { selectedIds: selectedEntries, setSelectedIds: setSelectedEntries, selectAll, clearSelection } = useSelection<string>();
 
   const [pageError, setPageError] = useState<string | null>(null);
   const { copy: copyEmail, isCopied: isEmailCopied } = useCopyToClipboard();
@@ -121,23 +127,6 @@ function SubscribersTab() {
   // Add subscriber modal
   const [showAddEntry, setShowAddEntry] = useState(false);
 
-  const loadEntries = useCallback(async () => {
-    try {
-      const offset = (currentPage - 1) * itemsPerPage;
-      const response = await waitlistApi.list({ limit: itemsPerPage, offset });
-      setEntries(response.data || []);
-      setTotalPages(Math.ceil((response.pagination?.total || 0) / itemsPerPage));
-    } catch {
-      setPageError('Failed to load subscribers. Please refresh the page.');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, itemsPerPage]);
-
-  useEffect(() => {
-    void loadEntries();
-  }, [loadEntries]);
-
   const handleExportCSV = async () => {
     try {
       const blob = await waitlistApi.export();
@@ -153,18 +142,11 @@ function SubscribersTab() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedEntries(new Set(filteredEntries.map(entry => entry.id)));
-    } else {
-      setSelectedEntries(new Set());
-    }
+    checked ? selectAll(filteredEntries.map(entry => entry.id)) : clearSelection();
   };
 
   const handleSelectEntry = (id: string, checked: boolean) => {
-    const newSelected = new Set(selectedEntries);
-    if (checked) newSelected.add(id);
-    else newSelected.delete(id);
-    setSelectedEntries(newSelected);
+    setSelectedEntries(prev => { const n = new Set(prev); checked ? n.add(id) : n.delete(id); return n; });
   };
 
   const handleBulkDelete = async () => {
@@ -173,7 +155,7 @@ function SubscribersTab() {
     try {
       await waitlistApi.bulkDelete(Array.from(selectedEntries).map(Number));
       setEntries(prev => prev.filter(e => !selectedEntries.has(e.id)));
-      setSelectedEntries(new Set());
+      clearSelection();
     } catch {
       setPageError('Failed to delete selected entries. Please try again.');
     }
@@ -234,12 +216,7 @@ function SubscribersTab() {
 
   return (
     <div className="space-y-6">
-      {pageError && (
-        <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {pageError}
-          <button type="button" onClick={() => setPageError(null)} className="ml-4 text-red-500 hover:text-red-700">&#10005;</button>
-        </div>
-      )}
+      <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
       <div className="flex justify-between items-center">
         <div />

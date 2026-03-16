@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
+import { usePaginatedData } from '@/lib/hooks/use-paginated-data';
 import dynamic from 'next/dynamic';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import type { InvoiceData } from '@/components/invoice-pdf-template';
 import { TEMPLATES } from '@/components/invoice-pdf-template';
+import { ErrorBanner } from '@/components/ui/error-banner';
 import { invoiceFormSchema, formToInvoiceData, FieldError } from './schemas/invoice-form';
 import type { InvoiceFormValues } from './schemas/invoice-form';
 import { Pagination } from '@/components/ui/pagination';
@@ -75,13 +77,20 @@ export default function InvoicesPage() {
   const { formatDate } = useTimezone();
 
   // List state
-  const [invoices, setInvoices] = useState<InvoiceData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState<string | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const itemsPerPage = 20;
+  const [pageError, setPageError] = useState<string | null>(null);
+  const {
+    data: invoices, loading, currentPage, totalPages, setCurrentPage,
+    refetch: loadInvoices,
+  } = usePaginatedData<InvoiceData>(
+    (limit, offset) => {
+      const params: { limit: number; offset: number; status?: string } = { limit, offset };
+      if (statusFilter) params.status = statusFilter;
+      return invoicesApi.list(params);
+    },
+    [statusFilter],
+    { pageSize: 20 },
+  );
 
   // Editor state
   const [mode, setMode] = useState<'list' | 'edit' | 'preview'>('list');
@@ -106,24 +115,6 @@ export default function InvoicesPage() {
 
   const watchedValues = form.watch();
   const liveData = formToInvoiceData(watchedValues);
-
-  const loadInvoices = useCallback(async () => {
-    try {
-      setLoading(true);
-      const offset = (currentPage - 1) * itemsPerPage;
-      const params: { limit: number; offset: number; status?: string } = { limit: itemsPerPage, offset };
-      if (statusFilter) params.status = statusFilter;
-      const response = await invoicesApi.list(params);
-      setInvoices(response.data || []);
-      setTotalPages(Math.ceil((response.pagination?.total || 0) / itemsPerPage));
-    } catch {
-      setPageError('Failed to load invoices.');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, statusFilter]);
-
-  useEffect(() => { void loadInvoices(); }, [loadInvoices]);
 
   const openEditor = (data: InvoiceFormValues, id: number | null) => {
     form.reset(data);
@@ -332,12 +323,7 @@ export default function InvoicesPage() {
             </div>
           </div>
 
-          {pageError && (
-            <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {pageError}
-              <button type="button" onClick={() => setPageError(null)} className="ml-4 font-medium">&#x2715;</button>
-            </div>
-          )}
+          <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
           {/* Form-level error summary */}
           {Object.keys(errors).length > 0 && !pageError && (
@@ -663,12 +649,7 @@ export default function InvoicesPage() {
           <p className="mt-2 text-gray-600">Create, manage, and download PDF invoices.</p>
         </div>
 
-        {pageError && (
-          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            {pageError}
-            <button onClick={() => setPageError(null)} className="ml-4 font-medium">&#x2715;</button>
-          </div>
-        )}
+        <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
         {/* Filters & actions */}
         <div className="flex items-center justify-between">
