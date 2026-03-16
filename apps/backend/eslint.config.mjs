@@ -24,6 +24,7 @@ export default [
         URLSearchParams: 'readonly',
         AbortController: 'readonly',
         fetch: 'readonly',
+        NodeJS: 'readonly',
       },
     },
     plugins: {
@@ -45,6 +46,14 @@ export default [
       'prefer-const': 'error',
       'no-var': 'error',
       'no-console': 'warn',
+
+      // Enforce shared type imports — discourage local re-declarations
+      'no-restricted-imports': ['warn', {
+        patterns: [{
+          group: ['../errors', '../errors.js', '../../errors', '../../errors.js'],
+          message: 'Import error classes from @lite/shared instead.',
+        }],
+      }],
     },
   },
   {
@@ -54,6 +63,7 @@ export default [
       '.turbo/',
       '*.config.js',
       '*.config.mjs',
+      '**/__tests__/**',
     ],
   },
 ];
