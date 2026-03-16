@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
+
+  // If already authenticated (e.g. login succeeded but page didn't unmount), redirect
+  useEffect(() => {
+    if (user) {
+      router.replace('/');
+    }
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +32,9 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push('/');
-      // Keep loading state true during redirect
+      // login() already calls router.push('/') — no need to push again.
+      // Safety timeout: if the page doesn't unmount within 5s, clear the overlay
+      setTimeout(() => setLoading(false), 5000);
     } catch (err) {
       const error = err as { response?: { data?: { error?: { message?: string } } } };
       setError(error.response?.data?.error?.message ?? 'Invalid credentials');
