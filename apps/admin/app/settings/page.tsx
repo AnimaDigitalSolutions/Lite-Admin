@@ -20,7 +20,10 @@ import {
   HomeIcon,
   PhotoIcon,
   EnvelopeIcon,
+  PencilSquareIcon,
   UsersIcon,
+  MegaphoneIcon,
+  DocumentCurrencyDollarIcon,
   ChartBarIcon,
   ClipboardDocumentListIcon,
   GlobeAltIcon,
@@ -54,8 +57,13 @@ const menuStructure: { group: string; items: { name: string; key: string | null;
   { group: 'Content', items: [{ name: 'Media', key: 'nav_visible_media', icon: PhotoIcon }] },
   { group: 'Leads', items: [
     { name: 'Contacts', key: 'nav_visible_contacts', icon: EnvelopeIcon },
-    { name: 'Waitlist', key: 'nav_visible_waitlist', icon: UsersIcon },
+    { name: 'Compose', key: 'nav_visible_compose', icon: PencilSquareIcon },
   ]},
+  { group: 'Audience', items: [
+    { name: 'Subscribers', key: 'nav_visible_subscribers', icon: UsersIcon },
+    { name: 'Campaigns', key: 'nav_visible_campaigns', icon: MegaphoneIcon },
+  ]},
+  { group: 'Billing', items: [{ name: 'Invoices', key: 'nav_visible_invoices', icon: DocumentCurrencyDollarIcon }] },
   { group: 'Sites', items: [{ name: 'Sites & API Keys', key: 'nav_visible_sites', icon: GlobeAltIcon }] },
   { group: 'System', items: [
     { name: 'Statistics', key: 'nav_visible_stats', icon: ChartBarIcon },
@@ -98,7 +106,7 @@ export default function SettingsPage() {
   const notifySidebar = () => window.dispatchEvent(new Event('menu-prefs-updated'));
 
   const toggleMenuItem = async (key: string) => {
-    const newVal = !menuPrefs[key];
+    const newVal = menuPrefs[key] === false; // undefined/true → false, false → true
     setMenuPrefs(prev => ({ ...prev, [key]: newVal }));
     try { await menuApi.update({ [key]: newVal }); notifySidebar(); }
     catch { setMenuPrefs(prev => ({ ...prev, [key]: !newVal })); }

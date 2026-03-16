@@ -3,7 +3,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { authApi } from './api';
+import { authApi, isDemoMode } from './api';
+import { DEMO_USER } from './demo-data';
 import type { AdminUser } from '@lite/shared';
 import logger from './logger';
 
@@ -25,6 +26,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const checkAuth = async () => {
+    if (isDemoMode) {
+      setUser(DEMO_USER);
+      setLoading(false);
+      return;
+    }
     try {
       const userData = await authApi.getMe();
       setUser(userData);
@@ -71,6 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (isDemoMode) {
+      clearAuthState();
+      router.push('/');
+      return;
+    }
     try {
       await authApi.logout();
     } catch (error) {

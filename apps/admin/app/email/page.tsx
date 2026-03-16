@@ -211,7 +211,7 @@ export default function EmailPage() {
                         className="shrink-0 mb-0"
                         disabled={
                           isVerifying ||
-                          !(id === 'ahasend' ? config.ahasend_api_key : config.resend_api_key).trim()
+                          !(id === 'ahasend' ? config.ahasend_api_key : config.resend_api_key)?.trim()
                         }
                         onClick={() => void handleVerify(id)}
                       >

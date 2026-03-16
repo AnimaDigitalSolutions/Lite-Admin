@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { menuApi } from '@/lib/api';
+import { menuApi, isDemoMode } from '@/lib/api';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import {
@@ -153,8 +153,14 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Demo Banner */}
+      {isDemoMode && (
+        <div className="fixed top-0 left-0 right-0 z-[60] flex h-8 items-center justify-center bg-indigo-600 text-xs font-medium text-white">
+          Demo Mode — data is simulated
+        </div>
+      )}
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-white border-r border-gray-100 shadow-sm">
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-white border-r border-gray-100 shadow-sm ${isDemoMode ? 'top-8' : ''}`}>
         {/* Logo */}
         <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-gray-100 px-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -214,7 +220,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div className="pl-60">
+      <div className={`pl-60 ${isDemoMode ? 'pt-8' : ''}`}>
         <main className="min-h-screen p-8">
           {children}
         </main>

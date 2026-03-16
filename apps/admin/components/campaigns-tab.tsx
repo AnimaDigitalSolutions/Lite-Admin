@@ -14,6 +14,7 @@ import {
   PencilSquareIcon,
   MegaphoneIcon,
   DocumentTextIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 
 interface Campaign {
@@ -48,6 +49,7 @@ export default function CampaignsTab() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(EMPTY_CAMPAIGN_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [viewOnly, setViewOnly] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -144,6 +146,7 @@ export default function CampaignsTab() {
 
   const openCreate = () => {
     setEditingId(null);
+    setViewOnly(false);
     setFormData(EMPTY_CAMPAIGN_FORM);
     setFormError(null);
     setTargetCount(null);
@@ -156,6 +159,7 @@ export default function CampaignsTab() {
   const openEdit = (c: Campaign) => {
     const parsedTags = c.target_tags ? (JSON.parse(c.target_tags) as string[]) : [];
     setEditingId(c.id);
+    setViewOnly(false);
     setFormData({
       name: c.name,
       subject: c.subject,
@@ -170,6 +174,23 @@ export default function CampaignsTab() {
     setShowForm(true);
     void updateTargetCount(c.target_type || 'all', parsedTags);
     void loadTags();
+  };
+
+  const openView = (c: Campaign) => {
+    const parsedTags = c.target_tags ? (JSON.parse(c.target_tags) as string[]) : [];
+    setEditingId(c.id);
+    setViewOnly(true);
+    setFormData({
+      name: c.name,
+      subject: c.subject,
+      preheader: c.preheader || '',
+      html_content: c.html_content || '',
+      text_content: c.text_content || '',
+      target_type: c.target_type || 'all',
+      target_tags: parsedTags,
+    });
+    setFormError(null);
+    setShowForm(true);
   };
 
   const handleSave = async () => {
@@ -347,7 +368,9 @@ export default function CampaignsTab() {
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">Read-only</span>
+                          <Button size="sm" variant="outline" onClick={() => openView(campaign)}>
+                            <EyeIcon className="h-4 w-4" />
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -365,26 +388,38 @@ export default function CampaignsTab() {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">{editingId ? 'Edit Campaign' : 'New Campaign'}</h2>
+                <h2 className="text-xl font-semibold">{viewOnly ? 'View Campaign' : editingId ? 'Edit Campaign' : 'New Campaign'}</h2>
                 <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
                   <XMarkIcon className="h-4 w-4" />
                 </Button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name *</label>
-                  <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="March Newsletter" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name {!viewOnly && '*'}</label>
+                  <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="March Newsletter" readOnly={viewOnly} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Line *</label>
-                  <Input value={formData.subject} onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))} placeholder="Exciting news from our team" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject Line {!viewOnly && '*'}</label>
+                  <Input value={formData.subject} onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))} placeholder="Exciting news from our team" readOnly={viewOnly} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preheader (optional)</label>
-                  <Input value={formData.preheader} onChange={e => setFormData(p => ({ ...p, preheader: e.target.value }))} placeholder="Preview text shown in email clients" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Preheader {!viewOnly && '(optional)'}</label>
+                  <Input value={formData.preheader} onChange={e => setFormData(p => ({ ...p, preheader: e.target.value }))} placeholder="Preview text shown in email clients" readOnly={viewOnly} />
                 </div>
 
                 {/* Audience / Targeting */}
+                {viewOnly ? (
+                  <div className="rounded-lg border border-gray-200 p-4 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Audience</label>
+                    <p className="text-sm text-gray-600">
+                      {formData.target_type === 'all'
+                        ? 'All subscribers'
+                        : formData.target_tags.length > 0
+                          ? <span className="flex flex-wrap gap-1">{formData.target_tags.map(t => <span key={t} className="bg-blue-100 text-blue-800 rounded-full px-2.5 py-0.5 text-xs font-medium">{t}</span>)}</span>
+                          : 'All subscribers'}
+                    </p>
+                  </div>
+                ) : (
                 <div className="rounded-lg border border-gray-200 p-4 space-y-3">
                   <label className="block text-sm font-medium text-gray-700">Audience</label>
                   <div className="flex gap-3">
@@ -557,33 +592,38 @@ export default function CampaignsTab() {
                     </div>
                   )}
                 </div>
+                )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">HTML Content {!viewOnly && '*'}</label>
                   <textarea
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono min-h-[200px] focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                     value={formData.html_content}
                     onChange={e => setFormData(p => ({ ...p, html_content: e.target.value }))}
                     placeholder="<html><body>Your email content here...</body></html>"
+                    readOnly={viewOnly}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Text Fallback (optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Text Fallback {!viewOnly && '(optional)'}</label>
                   <textarea
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                     value={formData.text_content}
                     onChange={e => setFormData(p => ({ ...p, text_content: e.target.value }))}
                     placeholder="Plain text version of your email"
+                    readOnly={viewOnly}
                   />
                 </div>
-                {formError && (
+                {!viewOnly && formError && (
                   <div className="p-3 rounded-md bg-red-50 text-red-800 border border-red-200 text-sm">{formError}</div>
                 )}
                 <div className="flex gap-2 pt-2">
-                  <Button onClick={() => void handleSave()} disabled={formLoading} className="flex items-center gap-2">
-                    {formLoading ? 'Saving...' : editingId ? 'Update Campaign' : 'Create Draft'}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                  {!viewOnly && (
+                    <Button onClick={() => void handleSave()} disabled={formLoading} className="flex items-center gap-2">
+                      {formLoading ? 'Saving...' : editingId ? 'Update Campaign' : 'Create Draft'}
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setShowForm(false)}>{viewOnly ? 'Close' : 'Cancel'}</Button>
                 </div>
               </div>
             </div>

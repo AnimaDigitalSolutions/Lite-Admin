@@ -1,8 +1,12 @@
 import axios from 'axios';
 import type { AuthTokens, AdminUser } from '@lite/shared';
+import type { InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
+import { matchDemoRoute } from './demo-data';
 import logger from './logger';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+export const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 // Create axios instance with default config
 export const api = axios.create({
@@ -11,6 +15,31 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Demo mode interceptor — short-circuits all requests with mock data
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  if (!isDemoMode) return config;
+
+  const params: Record<string, string> = {};
+  if (config.params) {
+    for (const [k, v] of Object.entries(config.params)) {
+      if (v !== undefined && v !== null) params[k] = String(v);
+    }
+  }
+
+  const data = matchDemoRoute(config.url || '', params, config.method, config.data);
+
+  config.adapter = () =>
+    Promise.resolve({
+      data: data ?? { success: true },
+      status: 200,
+      statusText: 'OK',
+      headers: {} as AxiosHeaders,
+      config,
+    });
+
+  return config;
 });
 
 // Global loading state will be injected via interceptor setup function
@@ -98,9 +127,8 @@ function clearAuthAndRedirect() {
   refreshAttempts = 0;
   refreshPromise = null;
 
-  // Redirect to login (cookies are httpOnly — they are cleared by the backend on logout)
   if (typeof window !== 'undefined') {
-    window.location.href = '/login';
+    window.location.href = isDemoMode ? '/' : '/login';
   }
 }
 

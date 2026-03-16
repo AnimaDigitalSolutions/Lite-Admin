@@ -17,6 +17,20 @@ const nextConfig = {
     ];
   },
   
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: `frame-ancestors 'self' ${process.env.NEXT_PUBLIC_FRAME_ANCESTORS || 'https://animadigitalsolutions.com'}`,
+          },
+        ],
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {
