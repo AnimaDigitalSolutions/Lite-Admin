@@ -11,26 +11,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Upload,
-  X,
-  Trash2,
-  Edit,
-  Search,
-  LayoutGrid,
-  List,
-  ArrowUpDown,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Copy,
-  Check,
-  Download,
-  Eye,
-} from 'lucide-react';
-import PdfThumbnail from '@/components/pdf-thumbnail';
-
+  ArrowUpTrayIcon,
+  XMarkIcon,
+  TrashIcon,
+  PencilSquareIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+  ArrowsUpDownIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DocumentTextIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
+  ArrowDownTrayIcon,
+  EyeIcon,
+} from '@heroicons/react/24/outline';
 // --- Types ---
 
 interface MediaItem {
@@ -46,6 +44,7 @@ interface MediaItem {
   storage_path: string;
   uploaded_at: string;
   url: string;
+  thumbnailUrl?: string;
 }
 
 interface UploadProgress {
@@ -367,9 +366,9 @@ export default function MediaPage() {
   const SortIndicator = ({ column }: { column: string }) => {
     const map = COLUMN_SORT_MAP[column];
     if (!map) return null;
-    if (sortBy === map.asc) return <ChevronUp className="h-3 w-3" />;
-    if (sortBy === map.desc) return <ChevronDown className="h-3 w-3" />;
-    return <ArrowUpDown className="h-3 w-3 text-gray-300" />;
+    if (sortBy === map.asc) return <ChevronUpIcon className="h-3 w-3" />;
+    if (sortBy === map.desc) return <ChevronDownIcon className="h-3 w-3" />;
+    return <ArrowsUpDownIcon className="h-3 w-3 text-gray-300" />;
   };
 
   // --- Filter + Sort Pipeline ---
@@ -426,19 +425,19 @@ export default function MediaPage() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">{selectedIds.size} selected</span>
               <Button size="sm" variant="outline" onClick={() => void handleBulkCopyPaths()}>
-                <Copy className="h-4 w-4 mr-1" />
+                <ClipboardDocumentIcon className="h-4 w-4 mr-1" />
                 Copy Paths
               </Button>
               <Button size="sm" variant="outline" onClick={handleBulkDownload}>
-                <Download className="h-4 w-4 mr-1" />
+                <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
                 Download
               </Button>
               <Button size="sm" variant="destructive" onClick={() => void handleBulkDelete()}>
-                <Trash2 className="h-4 w-4 mr-1" />
+                <TrashIcon className="h-4 w-4 mr-1" />
                 Delete ({selectedIds.size})
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
-                <X className="h-4 w-4" />
+                <XMarkIcon className="h-4 w-4" />
               </Button>
             </div>
           )}
@@ -448,7 +447,7 @@ export default function MediaPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
+              <ArrowUpTrayIcon className="h-5 w-5" />
               Upload Files
             </CardTitle>
           </CardHeader>
@@ -462,7 +461,7 @@ export default function MediaPage() {
               }`}
             >
               <input {...getInputProps()} />
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
+              <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
               <p className="mt-2 text-sm text-gray-600">
                 {isDragActive
                   ? 'Drop the files here...'
@@ -525,7 +524,7 @@ export default function MediaPage() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 placeholder="Search media..."
                 value={searchTerm}
@@ -573,7 +572,7 @@ export default function MediaPage() {
               onClick={() => setViewMode('grid')}
               className="rounded-r-none border-0"
             >
-              <LayoutGrid className="h-4 w-4" />
+              <Squares2X2Icon className="h-4 w-4" />
             </Button>
             <Button
               variant={viewMode === 'list' ? 'secondary' : 'ghost'}
@@ -581,7 +580,7 @@ export default function MediaPage() {
               onClick={() => setViewMode('list')}
               className="rounded-l-none border-0"
             >
-              <List className="h-4 w-4" />
+              <ListBulletIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -605,7 +604,10 @@ export default function MediaPage() {
               return (
                 <Card key={item.id} className={`overflow-hidden group relative ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
                   <div className="relative h-48 cursor-pointer" onClick={() => setPreviewItem(item)}>
-                    {mediaType === 'image' ? (
+                    {item.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.thumbnailUrl} alt={item.filename} className="w-full h-full object-cover" />
+                    ) : mediaType === 'image' ? (
                       <Image
                         src={item.url}
                         alt={item.filename}
@@ -614,19 +616,9 @@ export default function MediaPage() {
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                       />
-                    ) : mediaType === 'video' ? (
-                      <video
-                        src={`${item.url}#t=0.5`}
-                        preload="metadata"
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                      />
-                    ) : item.mime_type === 'application/pdf' ? (
-                      <PdfThumbnail url={item.url} className="w-full h-full" />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <FileText className="h-12 w-12 text-gray-400" />
+                        <DocumentTextIcon className="h-12 w-12 text-gray-400" />
                       </div>
                     )}
                     {/* Hover overlay */}
@@ -638,7 +630,7 @@ export default function MediaPage() {
                         className="h-8 w-8 p-0"
                         title="Preview"
                       >
-                        <Eye className="h-4 w-4" />
+                        <EyeIcon className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -647,7 +639,7 @@ export default function MediaPage() {
                         className="h-8 w-8 p-0"
                         title="Download"
                       >
-                        <Download className="h-4 w-4" />
+                        <ArrowDownTrayIcon className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -656,7 +648,7 @@ export default function MediaPage() {
                         className="h-8 w-8 p-0"
                         title="Edit"
                       >
-                        <Edit className="h-4 w-4" />
+                        <PencilSquareIcon className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
@@ -665,7 +657,7 @@ export default function MediaPage() {
                         className="h-8 w-8 p-0"
                         title="Delete"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4" />
                       </Button>
                     </div>
                     {/* Type badge */}
@@ -692,7 +684,7 @@ export default function MediaPage() {
                         title="Copy media path"
                         className={`shrink-0 transition-colors ${copiedId === item.id ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
                       >
-                        {copiedId === item.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copiedId === item.id ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                       </button>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
@@ -780,7 +772,10 @@ export default function MediaPage() {
                               className="w-12 h-12 relative rounded overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
                               onClick={() => setPreviewItem(item)}
                             >
-                              {mediaType === 'image' ? (
+                              {item.thumbnailUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={item.thumbnailUrl} alt={item.filename} className="w-full h-full object-cover" />
+                              ) : mediaType === 'image' ? (
                                 <Image
                                   src={item.url}
                                   alt={item.filename}
@@ -790,21 +785,9 @@ export default function MediaPage() {
                                   sizes="48px"
                                 />
                               ) : (
-                                mediaType === 'video' ? (
-                                  <video
-                                    src={`${item.url}#t=0.5`}
-                                    preload="metadata"
-                                    muted
-                                    playsInline
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : item.mime_type === 'application/pdf' ? (
-                                  <PdfThumbnail url={item.url} className="w-full h-full" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <FileText className="h-5 w-5 text-gray-400" />
-                                  </div>
-                                )
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                                </div>
                               )}
                             </div>
                           </td>
@@ -823,7 +806,7 @@ export default function MediaPage() {
                                 title="Copy media path"
                                 className={`shrink-0 transition-colors ${copiedId === item.id ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover/name:opacity-100 hover:text-gray-600'}`}
                               >
-                                {copiedId === item.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                {copiedId === item.id ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                             <div className="text-xs text-gray-500">{getFormatLabel(item.mime_type)}</div>
@@ -856,7 +839,7 @@ export default function MediaPage() {
                                 className="h-8 w-8 p-0"
                                 title="Preview"
                               >
-                                <Eye className="h-4 w-4" />
+                                <EyeIcon className="h-4 w-4" />
                               </Button>
                               <Button
                                 size="sm"
@@ -865,7 +848,7 @@ export default function MediaPage() {
                                 className="h-8 w-8 p-0"
                                 title="Download"
                               >
-                                <Download className="h-4 w-4" />
+                                <ArrowDownTrayIcon className="h-4 w-4" />
                               </Button>
                               <Button
                                 size="sm"
@@ -874,7 +857,7 @@ export default function MediaPage() {
                                 className="h-8 w-8 p-0"
                                 title="Edit"
                               >
-                                <Edit className="h-4 w-4" />
+                                <PencilSquareIcon className="h-4 w-4" />
                               </Button>
                               <Button
                                 size="sm"
@@ -883,7 +866,7 @@ export default function MediaPage() {
                                 className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                 title="Delete"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <TrashIcon className="h-4 w-4" />
                               </Button>
                             </div>
                           </td>
@@ -913,7 +896,7 @@ export default function MediaPage() {
                 className="absolute top-4 right-4 text-white/70 hover:text-white z-10"
                 onClick={() => setPreviewItem(null)}
               >
-                <X className="h-6 w-6" />
+                <XMarkIcon className="h-6 w-6" />
               </button>
 
               {/* Info bar */}
@@ -932,7 +915,7 @@ export default function MediaPage() {
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                   onClick={(e) => { e.stopPropagation(); navigatePreview(-1); }}
                 >
-                  <ChevronLeft className="h-8 w-8" />
+                  <ChevronLeftIcon className="h-8 w-8" />
                 </button>
               )}
               {hasNext && (
@@ -940,7 +923,7 @@ export default function MediaPage() {
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                   onClick={(e) => { e.stopPropagation(); navigatePreview(1); }}
                 >
-                  <ChevronRight className="h-8 w-8" />
+                  <ChevronRightIcon className="h-8 w-8" />
                 </button>
               )}
 
@@ -969,7 +952,7 @@ export default function MediaPage() {
                   />
                 ) : (
                   <div className="text-center text-white/70 p-12">
-                    <FileText className="h-16 w-16 mx-auto mb-4" />
+                    <DocumentTextIcon className="h-16 w-16 mx-auto mb-4" />
                     <p className="text-lg">{previewItem.filename}</p>
                     <p className="text-sm mt-2">Preview not available for this file type</p>
                     <Button
@@ -977,7 +960,7 @@ export default function MediaPage() {
                       className="mt-4"
                       onClick={() => handleDownload(previewItem)}
                     >
-                      <Download className="h-4 w-4 mr-2" />
+                      <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
                       Download
                     </Button>
                   </div>
@@ -987,15 +970,15 @@ export default function MediaPage() {
               {/* Bottom actions */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                 <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); handleDownload(previewItem); }}>
-                  <Download className="h-4 w-4 mr-1" />
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
                   Download
                 </Button>
                 <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); void copyMediaPath(previewItem); }}>
-                  <Copy className="h-4 w-4 mr-1" />
+                  <ClipboardDocumentIcon className="h-4 w-4 mr-1" />
                   Copy Path
                 </Button>
                 <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); setPreviewItem(null); setEditingItem(previewItem); }}>
-                  <Edit className="h-4 w-4 mr-1" />
+                  <PencilSquareIcon className="h-4 w-4 mr-1" />
                   Edit
                 </Button>
               </div>
@@ -1014,7 +997,7 @@ export default function MediaPage() {
                   size="sm"
                   onClick={() => setEditingItem(null)}
                 >
-                  <X className="h-4 w-4" />
+                  <XMarkIcon className="h-4 w-4" />
                 </Button>
               </div>
 
@@ -1046,7 +1029,7 @@ export default function MediaPage() {
                     id="project_name"
                     name="project_name"
                     defaultValue={editingItem.project_name || ''}
-                    placeholder="e.g. VERSAND.GURU"
+                    placeholder="e.g. ANIMADIGITALSOLUTIONS"
                   />
                 </div>
 

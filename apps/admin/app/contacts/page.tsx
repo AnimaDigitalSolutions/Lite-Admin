@@ -25,8 +25,9 @@ import {
   ViewColumnsIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
-import { Copy, Check } from 'lucide-react';
 import ContactDetailPanel, { getStatusBadge } from '@/components/contact-detail-panel';
 import ContactsCalendar from '@/components/contacts-calendar';
 import ContactsKanban from '@/components/contacts-kanban';
@@ -808,7 +809,7 @@ export default function ContactsPage() {
                               </span>
                               <button type="button" onClick={() => void copyEmail(contact.email)} title="Copy email"
                                 className={`transition-colors shrink-0 ${copiedEmail === contact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                                {copiedEmail === contact.email ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                {copiedEmail === contact.email ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           </td>

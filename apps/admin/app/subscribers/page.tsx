@@ -24,8 +24,9 @@ import {
   PencilSquareIcon,
   CheckCircleIcon,
   TagIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
-import { Copy, Check } from 'lucide-react';
 
 // === Types ===
 
@@ -577,7 +578,7 @@ function SubscribersTab() {
                               </span>
                               <button type="button" onClick={() => void copyEmail(entry.email)} title="Copy email"
                                 className={`transition-colors shrink-0 ${copiedEmail === entry.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                                {copiedEmail === entry.email ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                {copiedEmail === entry.email ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
                               </button>
                             </div>
                           )}
@@ -689,7 +690,7 @@ function SubscribersTab() {
               const emails = entries.map(e => e.email).join(', ');
               await navigator.clipboard.writeText(emails);
             }}>
-              <Copy className="h-6 w-6" />
+              <ClipboardDocumentIcon className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Copy All Emails</div>
                 <div className="text-xs text-gray-500">Comma-separated list</div>

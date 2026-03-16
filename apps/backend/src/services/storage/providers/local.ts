@@ -23,6 +23,7 @@ interface UploadResult {
   size: number;
   mimetype: string;
   metadata: ImageMetadata | null;
+  thumbnailUrl?: string;
 }
 
 interface FileMetadata {
@@ -80,32 +81,70 @@ class LocalStorageProvider {
       
       // Generate optimized versions for images
       let optimizedData = null;
+      let thumbnailUrl: string | undefined;
+      const thumbBaseName = path.basename(fileName, fileExt);
+
       if (this.isImage(file.mimetype)) {
         optimizedData = await this.optimizer.optimize(file.buffer, {
           format: 'webp',
           quality: 85,
         });
-        
+
         // Save optimized version
         const optimizedPath = fullPath.replace(fileExt, '.webp');
         await fs.writeFile(optimizedPath, optimizedData.buffer);
-        
+
         // Generate thumbnail
         const thumbnailData = await this.optimizer.createThumbnail(file.buffer, {
           width: 300,
           height: 300,
         });
-        
+
         const thumbnailPath = path.join(
           this.uploadDir,
           'thumbnails',
-          `${path.basename(fileName, fileExt)}_thumb.webp`
+          `${thumbBaseName}_thumb.webp`
         );
         await fs.writeFile(thumbnailPath, thumbnailData.buffer);
+        thumbnailUrl = `/uploads/thumbnails/${thumbBaseName}_thumb.webp`;
       }
-      
+
+      // Generate PDF thumbnail
+      if (file.mimetype === 'application/pdf') {
+        try {
+          const { generatePdfThumbnail } = await import('../utils/pdf-thumbnail.js');
+          const result = await generatePdfThumbnail(file.buffer);
+          const thumbnailPath = path.join(
+            this.uploadDir,
+            'thumbnails',
+            `${thumbBaseName}_thumb.webp`
+          );
+          await fs.writeFile(thumbnailPath, result.buffer);
+          thumbnailUrl = `/uploads/thumbnails/${thumbBaseName}_thumb.webp`;
+        } catch (err) {
+          logger.warn({ error: err }, 'PDF thumbnail generation failed (non-fatal)');
+        }
+      }
+
+      // Generate video thumbnail
+      if (file.mimetype.startsWith('video/')) {
+        try {
+          const { generateVideoThumbnail } = await import('../utils/video-thumbnail.js');
+          const result = await generateVideoThumbnail(fullPath);
+          const thumbnailPath = path.join(
+            this.uploadDir,
+            'thumbnails',
+            `${thumbBaseName}_thumb.webp`
+          );
+          await fs.writeFile(thumbnailPath, result.buffer);
+          thumbnailUrl = `/uploads/thumbnails/${thumbBaseName}_thumb.webp`;
+        } catch (err) {
+          logger.warn({ error: err }, 'Video thumbnail generation failed (non-fatal)');
+        }
+      }
+
       logger.info(`File uploaded to local storage: ${fullPath}`);
-      
+
       return {
         provider: 'local',
         path: fullPath,
@@ -113,6 +152,7 @@ class LocalStorageProvider {
         size: file.size,
         mimetype: file.mimetype,
         metadata: optimizedData?.metadata || null,
+        thumbnailUrl,
       };
     } catch (error) {
       logger.error({

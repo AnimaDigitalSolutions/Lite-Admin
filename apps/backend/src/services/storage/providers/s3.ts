@@ -26,6 +26,7 @@ interface UploadResult {
   size: number;
   mimetype: string;
   metadata: ImageMetadata | null;
+  thumbnailUrl?: string;
 }
 
 interface S3FileItem {

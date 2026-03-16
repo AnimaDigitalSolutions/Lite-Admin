@@ -71,6 +71,7 @@ router.post('/media/upload',
         mime_type: file.mimetype,
         storage_provider: uploadResult.provider,
         storage_path: uploadResult.path,
+        thumbnail_url: uploadResult.thumbnailUrl,
       };
 
       // Save to database
@@ -95,6 +96,7 @@ router.post('/media/upload',
         data: {
           ...savedMedia,
           url: uploadResult.url,
+          thumbnailUrl: savedMedia.thumbnail_url,
         },
       });
     } catch (error) {

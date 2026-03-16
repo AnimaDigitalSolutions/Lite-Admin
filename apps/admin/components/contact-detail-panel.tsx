@@ -15,8 +15,9 @@ import {
   ArrowsPointingInIcon,
   PaperAirplaneIcon,
   ExclamationTriangleIcon,
+  ClipboardDocumentIcon,
+  CheckIcon,
 } from '@heroicons/react/24/outline';
-import { Copy, Check } from 'lucide-react';
 
 type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
 
@@ -417,7 +418,7 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
                 title="Copy email"
                 className={`transition-colors shrink-0 ${copiedEmail === contact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}
               >
-                {copiedEmail === contact.email ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copiedEmail === contact.email ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
               </button>
             </div>
             {contact.company && <p className="text-sm text-gray-500 mt-0.5">{contact.company}</p>}

@@ -1,6 +1,9 @@
 # Use official lightweight Node.js image
 FROM node:20-alpine
 
+# Install ffmpeg for video thumbnail generation
+RUN apk add --no-cache ffmpeg
+
 # Set working directory
 WORKDIR /usr/src/app
 

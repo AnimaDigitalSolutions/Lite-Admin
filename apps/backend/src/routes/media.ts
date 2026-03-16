@@ -41,12 +41,15 @@ router.get('/portfolio',
         ? media.filter(item => item.project_name === project)
         : media;
       
-      // Add public URLs
-      const mediaWithUrls = filtered.map(item => ({
-        ...item,
-        url: `/uploads/portfolio/${path.basename(item.storage_path)}`,
-        thumbnailUrl: storage.getThumbnailUrl(item.storage_path),
-      }));
+      // Add public URLs — prefer DB thumbnail_url, fall back to image thumbnail for legacy rows
+      const mediaWithUrls = filtered.map(item => {
+        const dbThumb = (item as unknown as Record<string, unknown>).thumbnail_url as string | undefined;
+        return {
+          ...item,
+          url: `/uploads/portfolio/${path.basename(item.storage_path)}`,
+          thumbnailUrl: dbThumb || (item.mime_type.startsWith('image/') ? storage.getThumbnailUrl(item.storage_path) : undefined),
+        };
+      });
       
       res.json({
         data: mediaWithUrls,
