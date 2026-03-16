@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail } from '@/lib/utils';
@@ -21,12 +21,19 @@ import {
   PaperAirplaneIcon,
   ChevronDownIcon,
   PlusIcon,
-  PencilSquareIcon,
+  TableCellsIcon,
+  ViewColumnsIcon,
+  CalendarDaysIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Copy, Check } from 'lucide-react';
+import ContactDetailPanel, { getStatusBadge } from '@/components/contact-detail-panel';
+import ContactsCalendar from '@/components/contacts-calendar';
+import ContactsKanban from '@/components/contacts-kanban';
 
 type ProjectType = 'web' | 'mobile' | 'erp' | 'consulting' | 'other';
+type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
+type ViewMode = 'table' | 'kanban' | 'calendar';
 
 interface Contact {
   id: string;
@@ -42,6 +49,9 @@ interface Contact {
   country_name?: string;
   city?: string;
   region?: string;
+  status?: ContactStatus;
+  follow_up_at?: string;
+  status_changed_at?: string;
 }
 
 const EMPTY_CONTACT_FORM = {
@@ -66,12 +76,15 @@ export default function ContactsPage() {
 
   const [pageError, setPageError] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
-
-  // Detail panel edit mode
-  const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState<{ name: string; email: string; company: string; project_type: string; message: string }>({ name: '', email: '', company: '', project_type: '', message: '' });
-  const [editSaving, setEditSaving] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ContactStatus | ''>('');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [todosSummary, setTodosSummary] = useState<{ total: number; contacts: number } | null>(null);
+  const [todoContactIds, setTodoContactIds] = useState<Set<string>>(new Set());
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+  const [statusHistory, setStatusHistory] = useState<Record<number, { status: string; changed_at: string }[]>>({});
 
 
   const copyEmail = async (email: string) => {
@@ -80,30 +93,9 @@ export default function ContactsPage() {
     setTimeout(() => setCopiedEmail(null), 2000);
   };
 
-  const openEditMode = (contact: typeof selectedContact) => {
-    if (!contact) return;
-    const form = { name: contact.name, email: contact.email, company: contact.company ?? '', project_type: contact.project_type ?? '', message: contact.message };
-    setEditForm(form);
-    setEditError(null);
-    setEditMode(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!selectedContact) return;
-    setEditSaving(true);
-    setEditError(null);
-    try {
-      const res = await submissionsApi.update(selectedContact.id, editForm);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const updated = res.data as Contact;
-      setSelectedContact(updated);
-      setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
-      setEditMode(false);
-    } catch {
-      setEditError('Failed to save changes. Please try again.');
-    } finally {
-      setEditSaving(false);
-    }
+  const handleContactUpdated = (updated: Contact) => {
+    setSelectedContact(updated);
+    setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
   };
 
   // Add contact states
@@ -147,9 +139,33 @@ export default function ContactsPage() {
     }
   }, [currentPage, itemsPerPage]);
 
+  const loadTodosSummary = useCallback(async () => {
+    try {
+      const [summaryRes, idsRes] = await Promise.all([
+        submissionsApi.getTodosSummary(),
+        submissionsApi.getTodoContactIds(),
+      ]);
+      setTodosSummary(summaryRes.data);
+      setTodoContactIds(new Set((idsRes.data as number[]).map(String)));
+    } catch {
+      // silently fail
+    }
+  }, []);
+
   useEffect(() => {
     void loadContacts();
-  }, [loadContacts]);
+    void loadTodosSummary();
+  }, [loadContacts, loadTodosSummary]);
+
+  // Fetch status history for Gantt view when contacts change
+  useEffect(() => {
+    if (viewMode !== 'calendar' || contacts.length === 0) return;
+    const ids = contacts.map(c => Number(c.id)).filter(id => !isNaN(id));
+    if (ids.length === 0) return;
+    submissionsApi.getStatusHistory(ids)
+      .then(res => setStatusHistory(res.data || {}))
+      .catch(() => { /* silently fail — Gantt falls back to single-color bars */ });
+  }, [contacts, viewMode]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this contact submission?')) return;
@@ -262,9 +278,124 @@ export default function ContactsPage() {
     }
   };
 
+  // Parse filter tokens (e.g. "has:company is:this-month john") from search
+  const parseSearch = (raw: string) => {
+    const tokens = new Set<string>();
+    const negated = new Set<string>();
+    const textParts: string[] = [];
+    for (const part of raw.split(/\s+/)) {
+      if (/^(has|is):[\w-]+$/i.test(part)) {
+        tokens.add(part.toLowerCase());
+      } else if (/^-(has|is):[\w-]+$/i.test(part)) {
+        negated.add(part.slice(1).toLowerCase());
+      } else if (part) {
+        textParts.push(part);
+      }
+    }
+    return { tokens, negated, text: textParts.join(' ') };
+  };
+
+  const toggleFilter = (token: string, e?: React.MouseEvent) => {
+    const additive = e?.ctrlKey || e?.metaKey;
+    const { tokens, negated, text } = parseSearch(searchTerm);
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const negEscaped = `-${escaped}`;
+
+    if (tokens.has(token)) {
+      // Active → negated
+      const replaced = searchTerm.replace(new RegExp(`(?<=^|\\s)${escaped}(?=\\s|$)`, 'gi'), `-${token}`);
+      setSearchTerm(replaced.trim());
+    } else if (negated.has(token)) {
+      // Negated → off
+      setSearchTerm(searchTerm.replace(new RegExp(`\\s*${negEscaped}\\s*`, 'gi'), ' ').trim());
+    } else if (additive) {
+      setSearchTerm((searchTerm + ' ' + token).trim());
+    } else {
+      setSearchTerm((token + (text ? ' ' + text : '')).trim());
+    }
+  };
+
+  // Autocomplete suggestions
+  const FILTER_SUGGESTIONS = [
+    { token: 'is:this-month', label: 'Submitted this month' },
+    { token: 'is:last-7-days', label: 'Last 7 days' },
+    { token: 'has:company', label: 'Has company field' },
+    { token: 'has:todos', label: 'Has open todos' },
+    { token: '-is:this-month', label: 'Not this month' },
+    { token: '-is:last-7-days', label: 'Not last 7 days' },
+    { token: '-has:company', label: 'No company field' },
+    { token: '-has:todos', label: 'No open todos' },
+  ] as const;
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const getFilteredSuggestions = () => {
+    const words = searchTerm.split(/\s+/);
+    const lastWord = words[words.length - 1]?.toLowerCase() ?? '';
+    if (!lastWord || (!lastWord.startsWith('i') && !lastWord.startsWith('h') && !lastWord.startsWith('-'))) return [];
+    const { tokens, negated } = parseSearch(searchTerm);
+    return FILTER_SUGGESTIONS.filter(s => {
+      const bare = s.token.replace(/^-/, '');
+      const isNeg = s.token.startsWith('-');
+      if (isNeg ? negated.has(bare) : tokens.has(bare)) return false;
+      return s.token.startsWith(lastWord);
+    });
+  };
+
+  const filteredSuggestions = showSuggestions ? getFilteredSuggestions() : [];
+
+  const applySuggestion = (token: string) => {
+    const words = searchTerm.split(/\s+/);
+    words[words.length - 1] = token;
+    setSearchTerm(words.join(' ') + ' ');
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  };
+
+  const { tokens: activeFilters, negated: negatedFilters, text: searchText } = parseSearch(searchTerm);
+
+  const testFilter = (key: string) => {
+    if (activeFilters.has(key)) return true;
+    if (negatedFilters.has(key)) return false;
+    return null; // not set
+  };
+
   const filteredContacts = contacts.filter(contact => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
+    if (statusFilter && (contact.status || 'new') !== statusFilter) return false;
+
+    // Apply filter tokens (positive and negated)
+    const thisMonth = testFilter('is:this-month');
+    if (thisMonth !== null) {
+      const now = new Date();
+      const d = new Date(contact.submitted_at);
+      const isThisMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      if (thisMonth && !isThisMonth) return false;
+      if (!thisMonth && isThisMonth) return false;
+    }
+    const last7 = testFilter('is:last-7-days');
+    if (last7 !== null) {
+      const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const isRecent = new Date(contact.submitted_at) > sevenDaysAgo;
+      if (last7 && !isRecent) return false;
+      if (!last7 && isRecent) return false;
+    }
+    const hasCompany = testFilter('has:company');
+    if (hasCompany !== null) {
+      if (hasCompany && !contact.company) return false;
+      if (!hasCompany && contact.company) return false;
+    }
+    const hasTodos = testFilter('has:todos');
+    if (hasTodos !== null) {
+      const has = todoContactIds.has(String(contact.id));
+      if (hasTodos && !has) return false;
+      if (!hasTodos && has) return false;
+    }
+
+    // Text search on remaining terms
+    if (!searchText) return true;
+    const search = searchText.toLowerCase();
     return (
       contact.name?.toLowerCase().includes(search) ||
       contact.email?.toLowerCase().includes(search) ||
@@ -338,60 +469,142 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search + Status Filter + View Toggle */}
         <div className="flex gap-4">
           <div className="flex-1 relative">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search contacts..."
+              ref={inputRef}
+              placeholder="Search contacts... (try has: or is:)"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              onChange={(e) => { setSearchTerm(e.target.value); setShowSuggestions(true); setSuggestionIndex(0); }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              onKeyDown={(e) => {
+                if (!filteredSuggestions.length) return;
+                if (e.key === 'ArrowDown') { e.preventDefault(); setSuggestionIndex(i => Math.min(i + 1, filteredSuggestions.length - 1)); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); setSuggestionIndex(i => Math.max(i - 1, 0)); }
+                else if (e.key === 'Enter' && filteredSuggestions[suggestionIndex]) { e.preventDefault(); applySuggestion(filteredSuggestions[suggestionIndex].token); }
+                else if (e.key === 'Escape') setShowSuggestions(false);
+              }}
+              className="pl-10 pr-8"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            )}
+            {filteredSuggestions.length > 0 && (
+              <div ref={suggestionsRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                {filteredSuggestions.map((s, i) => (
+                  <button
+                    key={s.token}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); applySuggestion(s.token); }}
+                    className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
+                      i === suggestionIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded font-mono">{s.token}</code>
+                    <span className="text-gray-500 text-xs">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as ContactStatus | '')}
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-[160px]"
+          >
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="contacted">Contacted</option>
+            <option value="qualified">Qualified</option>
+            <option value="proposal_sent">Proposal Sent</option>
+            <option value="won">Won</option>
+            <option value="lost">Lost</option>
+            <option value="archived">Archived</option>
+          </select>
+          <div className="flex rounded-md border border-input overflow-hidden">
+            {([
+              { mode: 'table' as ViewMode, icon: TableCellsIcon, label: 'Table' },
+              { mode: 'kanban' as ViewMode, icon: ViewColumnsIcon, label: 'Kanban' },
+              { mode: 'calendar' as ViewMode, icon: CalendarDaysIcon, label: 'Timeline' },
+            ]).map(({ mode, icon: Icon, label }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                title={label}
+                className={`px-3 py-2 transition-colors ${
+                  viewMode === mode
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-background text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <EnvelopeIcon className="h-8 w-8 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Total Contacts</p>
-                  <p className="text-2xl font-bold">{contacts.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <CalendarIcon className="h-8 w-8 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold">
-                    {contacts.filter(c => 
-                      new Date(c.submitted_at).getMonth() === new Date().getMonth()
-                    ).length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <BuildingOfficeIcon className="h-8 w-8 text-purple-600" />
-                <div>
-                  <p className="text-sm text-gray-600">With Company</p>
-                  <p className="text-2xl font-bold">
-                    {contacts.filter(c => c.company).length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {([
+            {
+              icon: EnvelopeIcon, color: 'text-blue-600', label: 'Total Contacts',
+              value: contacts.length, token: '__clear__' as string | null, extra: undefined as string | undefined,
+            },
+            {
+              icon: CalendarIcon, color: 'text-green-600', label: 'This Month',
+              value: contacts.filter(c => {
+                const now = new Date(); const d = new Date(c.submitted_at);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+              }).length,
+              token: 'is:this-month', extra: undefined as string | undefined,
+            },
+            {
+              icon: BuildingOfficeIcon, color: 'text-purple-600', label: 'With Company',
+              value: contacts.filter(c => c.company).length, token: 'has:company', extra: undefined as string | undefined,
+            },
+            {
+              icon: CheckCircleIcon, color: 'text-emerald-600', label: 'Open Todos',
+              value: todosSummary?.total ?? '—', token: 'has:todos',
+              extra: todosSummary && todosSummary.total > 0
+                ? `across ${todosSummary.contacts} contact${todosSummary.contacts !== 1 ? 's' : ''}`
+                : undefined,
+            },
+          ]).map(({ icon: Icon, color, label, value, token, extra }) => {
+            const isClear = token === '__clear__';
+            const isActive = token && !isClear ? activeFilters.has(token) : false;
+            const isNegated = token && !isClear ? negatedFilters.has(token) : false;
+            return (
+              <Card
+                key={label}
+                className={`transition-all cursor-pointer hover:shadow-md ${
+                  isActive ? 'ring-2 ring-gray-900 bg-gray-50' : isNegated ? 'ring-2 ring-red-400 bg-red-50/50' : ''
+                }`}
+                onClick={isClear ? () => setSearchTerm('') : token ? (e: React.MouseEvent) => toggleFilter(token, e) : undefined}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Icon className={`h-8 w-8 ${color}`} />
+                    <div>
+                      <p className="text-sm text-gray-600">{label}</p>
+                      <p className="text-2xl font-bold">{value}</p>
+                      {extra && <p className="text-xs text-gray-400">{extra}</p>}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Email Testing */}
@@ -507,8 +720,33 @@ export default function ContactsPage() {
           )}
         </Card>
 
+        {/* Kanban View */}
+        {viewMode === 'kanban' && (
+          <ContactsKanban
+            contacts={filteredContacts}
+            selectedContactId={selectedContact?.id}
+            onSelectContact={setSelectedContact}
+            onContactUpdated={handleContactUpdated}
+            formatDate={formatDate}
+            searchTerm={searchText}
+          />
+        )}
+
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <ContactsCalendar
+            calendarMonth={calendarMonth}
+            setCalendarMonth={setCalendarMonth}
+            contacts={filteredContacts}
+            onSelectContact={setSelectedContact}
+            selectedContactId={selectedContact?.id}
+            searchTerm={searchText}
+            statusHistory={statusHistory}
+          />
+        )}
+
         {/* Contacts Table */}
-        <Card>
+        {viewMode === 'table' && <Card>
           <CardHeader>
             <CardTitle>Contact Submissions ({filteredContacts.length})</CardTitle>
           </CardHeader>
@@ -536,13 +774,22 @@ export default function ContactsPage() {
                         <th className="text-left p-3 font-medium">Email</th>
                         <th className="text-left p-3 font-medium">Company</th>
                         <th className="text-left p-3 font-medium">Project Type</th>
+                        <th className="text-left p-3 font-medium">Status</th>
                         <th className="text-left p-3 font-medium">Date</th>
                         <th className="text-left p-3 font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredContacts.map((contact) => (
-                        <tr key={contact.id} className={`border-b hover:bg-gray-50 ${selectedIds.has(contact.id) ? 'bg-blue-50' : ''} even:bg-gray-50/50 group/row`}>
+                      {filteredContacts.map((contact, idx) => {
+                        const isViewing = selectedContact?.id === contact.id;
+                        const isChecked = selectedIds.has(contact.id);
+                        const rowBg = isViewing
+                          ? 'bg-amber-50 border-l-2 border-l-amber-400 relative z-50'
+                          : isChecked
+                            ? 'bg-blue-50'
+                            : idx % 2 === 1 ? 'bg-gray-50/50' : '';
+                        return (
+                        <tr key={contact.id} className={`border-b hover:bg-gray-100 ${rowBg} group/row`}>
                           <td className="p-3">
                             <div className={`${selectedIds.has(contact.id) ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
                               <input type="checkbox" className="rounded cursor-pointer"
@@ -551,7 +798,7 @@ export default function ContactsPage() {
                             </div>
                           </td>
                           <td className="p-3">
-                            <div className="font-medium">{highlightMatch(contact.name, searchTerm)}</div>
+                            <div className="font-medium">{highlightMatch(contact.name, searchText)}</div>
                           </td>
                           <td className="p-3 max-w-[220px]">
                             <div className="group flex items-center gap-1.5">
@@ -567,7 +814,7 @@ export default function ContactsPage() {
                           </td>
                           <td className="p-3">
                             {contact.company ? (
-                              <span className="text-gray-900">{highlightMatch(contact.company, searchTerm)}</span>
+                              <span className="text-gray-900">{highlightMatch(contact.company, searchText)}</span>
                             ) : (
                               <span className="text-gray-400">-</span>
                             )}
@@ -580,6 +827,16 @@ export default function ContactsPage() {
                             ) : (
                               <span className="text-gray-400">-</span>
                             )}
+                          </td>
+                          <td className="p-3">
+                            {(() => {
+                              const badge = getStatusBadge(contact.status);
+                              return (
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
+                                  {badge.label}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="p-3 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
@@ -615,7 +872,8 @@ export default function ContactsPage() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -645,7 +903,7 @@ export default function ContactsPage() {
               </>
             )}
           </CardContent>
-        </Card>
+        </Card>}
 
         {/* Add Contact Modal */}
         {showAddContact && (
@@ -731,163 +989,13 @@ export default function ContactsPage() {
           </div>
         )}
 
-        {/* Contact Detail Modal */}
+        {/* Contact Detail Panel */}
         {selectedContact && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold">Contact Details</h2>
-                  <div className="flex items-center gap-2">
-                    {!editMode && (
-                      <Button variant="outline" size="sm" onClick={() => openEditMode(selectedContact)}>
-                        <PencilSquareIcon className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => { setSelectedContact(null); setEditMode(false); }}>
-                      <XMarkIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  {editMode ? (
-                    /* ── Edit mode ── */
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Name</label>
-                          <Input className="mt-1" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Email</label>
-                          <Input className="mt-1" type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Company</label>
-                          <Input className="mt-1" value={editForm.company} onChange={e => setEditForm(f => ({ ...f, company: e.target.value }))} placeholder="Optional" />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium text-gray-600">Project Type</label>
-                          <Input className="mt-1" value={editForm.project_type} onChange={e => setEditForm(f => ({ ...f, project_type: e.target.value }))} placeholder="web / mobile / erp…" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Message</label>
-                        <textarea
-                          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                          rows={5}
-                          value={editForm.message}
-                          onChange={e => setEditForm(f => ({ ...f, message: e.target.value }))}
-                        />
-                      </div>
-                      <div className="rounded-lg bg-gray-50 border px-3 py-2 text-xs text-gray-500">
-                        <span className="font-medium">Read-only:</span> ID, submitted date, IP address, and location cannot be changed.
-                      </div>
-                      {editError && (
-                        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{editError}</div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button onClick={() => void handleSaveEdit()} disabled={editSaving}>
-                          <CheckCircleIcon className="h-4 w-4 mr-1" />
-                          {editSaving ? 'Saving…' : 'Save changes'}
-                        </Button>
-                        <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-                      </div>
-                    </div>
-                  ) : (
-                  /* ── View mode ── */
-                  <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Name</label>
-                      <p className="mt-1 text-lg">{selectedContact.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Email</label>
-                      <div className="group mt-1 flex items-center gap-1.5">
-                        <p className="text-lg max-w-[280px] truncate" title={selectedContact.email}>
-                          {prefs.truncateEmails ? truncateEmail(selectedContact.email) : selectedContact.email}
-                        </p>
-                        <button type="button" onClick={() => void copyEmail(selectedContact.email)} title="Copy email"
-                          className={`transition-colors ${copiedEmail === selectedContact.email ? 'text-emerald-500' : 'text-gray-400 opacity-0 group-hover:opacity-100 hover:text-gray-600'}`}>
-                          {copiedEmail === selectedContact.email ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    {selectedContact.company && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Company</label>
-                        <p className="mt-1">{selectedContact.company}</p>
-                      </div>
-                    )}
-                    {selectedContact.project_type && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Project Type</label>
-                        <p className="mt-1">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProjectTypeColor(selectedContact.project_type)}`}>
-                            {selectedContact.project_type}
-                          </span>
-                        </p>
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Submitted</label>
-                      <p className="mt-1">{formatDate(selectedContact.submitted_at)}</p>
-                    </div>
-                    {prefs.showGeoInfo && (selectedContact.ip_address || selectedContact.country) && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">IP / Location</label>
-                        {(() => {
-                          const ip = selectedContact.ip_address;
-                          const priv = ip ? isPrivateIp(ip) : false;
-                          return (
-                            <>
-                              <div className="mt-1 flex items-center gap-1.5">
-                                {selectedContact.country && !priv && (
-                                  <span title={selectedContact.country_name ?? selectedContact.country} className="text-base">
-                                    {countryFlag(selectedContact.country)}
-                                  </span>
-                                )}
-                                {ip && (
-                                  <span className="font-mono text-sm">{ip}</span>
-                                )}
-                                {priv && (
-                                  <span className="text-xs text-gray-400 italic">private</span>
-                                )}
-                              </div>
-                              {!priv && selectedContact.country && (
-                                <p className="mt-0.5 text-xs text-gray-500">
-                                  {[selectedContact.city, selectedContact.region, selectedContact.country_name]
-                                    .filter(Boolean).join(', ')}
-                                </p>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Message</label>
-                    <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                      <p className="whitespace-pre-wrap">{selectedContact.message}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-4">
-                    <Button variant="outline" onClick={() => { setSelectedContact(null); setEditMode(false); }}>
-                      Close
-                    </Button>
-                  </div>
-                  </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <ContactDetailPanel
+            contact={selectedContact}
+            onClose={() => setSelectedContact(null)}
+            onContactUpdated={handleContactUpdated}
+          />
         )}
       </div>
     </ProtectedLayout>

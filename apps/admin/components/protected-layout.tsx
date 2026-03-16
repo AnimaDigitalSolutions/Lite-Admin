@@ -20,6 +20,8 @@ import {
   UserCircleIcon,
   DocumentTextIcon,
   MegaphoneIcon,
+  DocumentCurrencyDollarIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 
 interface ProtectedLayoutProps {
@@ -43,13 +45,20 @@ const navigation = [
     group: 'Leads',
     items: [
       { name: 'Contacts', href: '/contacts', icon: EnvelopeIcon, navKey: 'nav_visible_contacts' },
+      { name: 'Compose', href: '/compose', icon: PencilSquareIcon, navKey: 'nav_visible_compose' },
     ],
   },
   {
     group: 'Audience',
     items: [
       { name: 'Subscribers', href: '/subscribers', icon: UsersIcon, navKey: 'nav_visible_subscribers' },
-      { name: 'Campaigns', href: '/subscribers?tab=campaigns', icon: MegaphoneIcon, navKey: 'nav_visible_campaigns' },
+      { name: 'Campaigns', href: '/campaigns', icon: MegaphoneIcon, navKey: 'nav_visible_campaigns' },
+    ],
+  },
+  {
+    group: 'Billing',
+    items: [
+      { name: 'Invoices', href: '/invoices', icon: DocumentCurrencyDollarIcon, navKey: 'nav_visible_invoices' },
     ],
   },
   {

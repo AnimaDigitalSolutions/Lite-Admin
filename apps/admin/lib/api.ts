@@ -145,7 +145,7 @@ export const mediaApi = {
 
   upload: async (file: File, data: { project_name?: string; description?: string }) => {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file);
     if (data.project_name) formData.append('project_name', data.project_name);
     if (data.description) formData.append('description', data.description);
 
@@ -204,6 +204,80 @@ export const submissionsApi = {
     const response = await api.post('/admin/submissions/bulk-delete', { ids });
     return response.data;
   },
+
+  updateStatus: async (id: string | number, status: string, comment?: string) => {
+    const response = await api.patch(`/admin/submissions/${id}/status`, { status, comment });
+    return response.data;
+  },
+
+  getNotes: async (id: string | number) => {
+    const response = await api.get(`/admin/submissions/${id}/notes`);
+    return response.data;
+  },
+
+  addNote: async (id: string | number, content: string, color?: string, subtype?: string, due_at?: string) => {
+    const response = await api.post(`/admin/submissions/${id}/notes`, { content, color, subtype, due_at });
+    return response.data;
+  },
+
+  deleteNote: async (id: string | number, noteId: number) => {
+    const response = await api.delete(`/admin/submissions/${id}/notes/${noteId}`);
+    return response.data;
+  },
+
+  toggleNoteDone: async (id: string | number, noteId: number) => {
+    const response = await api.patch(`/admin/submissions/${id}/notes/${noteId}/toggle`);
+    return response.data;
+  },
+
+  updateTodoDue: async (id: string | number, noteId: number, due_at: string | null) => {
+    const response = await api.patch(`/admin/submissions/${id}/notes/${noteId}/due`, { due_at });
+    return response.data;
+  },
+
+  getStatusHistory: async (ids: number[]) => {
+    const response = await api.post('/admin/submissions/status-history', { ids });
+    return response.data;
+  },
+
+  getTodosSummary: async () => {
+    const response = await api.get('/admin/submissions/todos-summary');
+    return response.data;
+  },
+
+  getTodoContactIds: async () => {
+    const response = await api.get('/admin/submissions/todo-contact-ids');
+    return response.data;
+  },
+
+  getActivity: async (start: string, end: string) => {
+    const response = await api.get('/admin/submissions/activity', { params: { start, end } });
+    return response.data;
+  },
+
+  updateFollowUp: async (id: string | number, follow_up_at: string | null) => {
+    const response = await api.patch(`/admin/submissions/${id}/follow-up`, { follow_up_at });
+    return response.data;
+  },
+
+  sendEmail: async (id: string | number, subject: string, body: string) => {
+    const response = await api.post(`/admin/submissions/${id}/send-email`, { subject, body });
+    return response.data;
+  },
+};
+
+// Compose Email API (standalone multi-recipient compose)
+export const composeApi = {
+  send: async (data: {
+    to: { email: string; name?: string }[];
+    cc?: { email: string; name?: string }[];
+    bcc?: { email: string; name?: string }[];
+    subject: string;
+    body: string;
+  }) => {
+    const response = await api.post('/admin/email/compose', data);
+    return response.data;
+  },
 };
 
 // Waitlist API
@@ -232,6 +306,25 @@ export const waitlistApi = {
 
   bulkDelete: async (ids: number[]) => {
     const response = await api.post('/admin/waitlist/bulk-delete', { ids });
+    return response.data;
+  },
+
+  getTags: async () => {
+    const response = await api.get('/admin/waitlist/tags');
+    return response.data;
+  },
+
+  countByTarget: async (targetType: 'all' | 'tagged', tags?: string[]) => {
+    const params: Record<string, string> = { target_type: targetType };
+    if (tags && tags.length) params.tags = tags.join(',');
+    const response = await api.get('/admin/waitlist/count-by-target', { params });
+    return response.data;
+  },
+
+  previewRecipients: async (targetType: 'all' | 'tagged', tags?: string[]) => {
+    const params: Record<string, string> = { target_type: targetType };
+    if (tags && tags.length) params.tags = tags.join(',');
+    const response = await api.get('/admin/waitlist/preview-recipients', { params });
     return response.data;
   },
 };
@@ -390,12 +483,18 @@ export const campaignsApi = {
     return response.data;
   },
 
-  create: async (data: { name: string; subject: string; preheader?: string; html_content: string; text_content?: string }) => {
+  create: async (data: {
+    name: string; subject: string; preheader?: string; html_content: string; text_content?: string;
+    target_type?: 'all' | 'tagged'; target_tags?: string[];
+  }) => {
     const response = await api.post('/admin/campaigns', data);
     return response.data;
   },
 
-  update: async (id: number, data: { name?: string; subject?: string; preheader?: string; html_content?: string; text_content?: string }) => {
+  update: async (id: number, data: {
+    name?: string; subject?: string; preheader?: string; html_content?: string; text_content?: string;
+    target_type?: 'all' | 'tagged'; target_tags?: string[];
+  }) => {
     const response = await api.patch(`/admin/campaigns/${id}`, data);
     return response.data;
   },
@@ -407,6 +506,39 @@ export const campaignsApi = {
 
   send: async (id: number) => {
     const response = await api.post(`/admin/campaigns/${id}/send`);
+    return response.data;
+  },
+};
+
+// Invoices API
+export const invoicesApi = {
+  list: async (params?: { limit?: number; offset?: number; status?: string }) => {
+    const response = await api.get('/admin/invoices', { params });
+    return response.data;
+  },
+
+  get: async (id: number) => {
+    const response = await api.get(`/admin/invoices/${id}`);
+    return response.data;
+  },
+
+  create: async (data: Record<string, unknown>) => {
+    const response = await api.post('/admin/invoices', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: Record<string, unknown>) => {
+    const response = await api.patch(`/admin/invoices/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    const response = await api.delete(`/admin/invoices/${id}`);
+    return response.data;
+  },
+
+  nextNumber: async () => {
+    const response = await api.get('/admin/invoices-next-number');
     return response.data;
   },
 };

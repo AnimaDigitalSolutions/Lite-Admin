@@ -22,6 +22,9 @@ import {
   ChevronRightIcon,
   Bars3Icon,
   LockClosedIcon,
+  PencilSquareIcon,
+  MegaphoneIcon,
+  DocumentCurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 
 type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -54,7 +57,20 @@ const menuStructure: NavGroup[] = [
     group: 'Leads',
     items: [
       { name: 'Contacts', key: 'nav_visible_contacts', icon: EnvelopeIcon },
-      { name: 'Waitlist', key: 'nav_visible_waitlist', icon: UsersIcon },
+      { name: 'Compose', key: 'nav_visible_compose', icon: PencilSquareIcon },
+    ],
+  },
+  {
+    group: 'Audience',
+    items: [
+      { name: 'Subscribers', key: 'nav_visible_subscribers', icon: UsersIcon },
+      { name: 'Campaigns', key: 'nav_visible_campaigns', icon: MegaphoneIcon },
+    ],
+  },
+  {
+    group: 'Billing',
+    items: [
+      { name: 'Invoices', key: 'nav_visible_invoices', icon: DocumentCurrencyDollarIcon },
     ],
   },
   {
