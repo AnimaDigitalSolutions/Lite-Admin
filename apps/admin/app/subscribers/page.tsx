@@ -5,7 +5,7 @@ import { useTimezone } from '@/lib/timezone';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { isPrivateIp, truncateEmail } from '@/lib/utils';
 import ProtectedLayout from '@/components/protected-layout';
-import { waitlistApi, emailTestApi } from '@/lib/api';
+import { waitlistApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,8 +17,6 @@ import {
   UsersIcon,
   ArrowTrendingUpIcon,
   EnvelopeIcon,
-  PaperAirplaneIcon,
-  ChevronDownIcon,
   PlusIcon,
   XMarkIcon,
   PencilSquareIcon,
@@ -27,6 +25,8 @@ import {
   ClipboardDocumentIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
+import AddSubscriberModal from './components/add-subscriber-modal';
+import TestEmailPanel from './components/test-email-panel';
 
 // === Types ===
 
@@ -42,8 +42,6 @@ interface WaitlistEntry {
   city?: string;
   region?: string;
 }
-
-const EMPTY_WAITLIST_FORM = { email: '', name: '' };
 
 // === Subscribers Tab ===
 
@@ -106,20 +104,8 @@ function SubscribersTab() {
     setTimeout(() => setCopiedEmail(null), 2000);
   };
 
-  // Add to waitlist states
+  // Add subscriber modal
   const [showAddEntry, setShowAddEntry] = useState(false);
-  const [addEntryLoading, setAddEntryLoading] = useState(false);
-  const [addEntryError, setAddEntryError] = useState<string | null>(null);
-  const [addEntryForm, setAddEntryForm] = useState(EMPTY_WAITLIST_FORM);
-
-  // Test email states
-  const [showTestEmail, setShowTestEmail] = useState(false);
-  const [testEmailLoading, setTestEmailLoading] = useState(false);
-  const [testEmailResult, setTestEmailResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [testEmailData, setTestEmailData] = useState({
-    test_email: '',
-    name: 'Jane Smith'
-  });
 
   const loadEntries = useCallback(async () => {
     try {
@@ -137,26 +123,6 @@ function SubscribersTab() {
   useEffect(() => {
     void loadEntries();
   }, [loadEntries]);
-
-  const handleAddEntry = async () => {
-    if (!addEntryForm.email) {
-      setAddEntryError('Email is required.');
-      return;
-    }
-    setAddEntryLoading(true);
-    setAddEntryError(null);
-    try {
-      await waitlistApi.create({ email: addEntryForm.email, name: addEntryForm.name || undefined });
-      setShowAddEntry(false);
-      setAddEntryForm(EMPTY_WAITLIST_FORM);
-      void loadEntries();
-    } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setAddEntryError(e.response?.data?.error?.message ?? e.message ?? 'Failed to add entry');
-    } finally {
-      setAddEntryLoading(false);
-    }
-  };
 
   const handleExportCSV = async () => {
     try {
@@ -203,33 +169,6 @@ function SubscribersTab() {
     if (e.ip_address) acc[e.ip_address] = (acc[e.ip_address] ?? 0) + 1;
     return acc;
   }, {});
-
-  const handleTestEmail = async () => {
-    if (!testEmailData.test_email) {
-      setTestEmailResult({ success: false, message: 'Please enter a test email address' });
-      return;
-    }
-    setTestEmailLoading(true);
-    setTestEmailResult(null);
-    try {
-      const result = await emailTestApi.testWaitlist(testEmailData);
-      setTestEmailResult({
-        success: result.success,
-        message: result.success
-          ? `Test email sent successfully! ${result.data.email_sent ? 'Email delivered.' : 'Email queued.'} Test entry ID: ${result.data.id}`
-          : result.error?.message || 'Failed to send test email'
-      });
-      void loadEntries();
-    } catch (error) {
-      const err = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setTestEmailResult({
-        success: false,
-        message: err.response?.data?.error?.message ?? err.message ?? 'Failed to send test email'
-      });
-    } finally {
-      setTestEmailLoading(false);
-    }
-  };
 
   // Parse filter tokens from search
   const parseSearch = (raw: string) => {
@@ -384,7 +323,7 @@ function SubscribersTab() {
               Delete ({selectedEntries.size})
             </Button>
           )}
-          <Button variant="outline" onClick={() => { setShowAddEntry(true); setAddEntryError(null); }} className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowAddEntry(true)} className="flex items-center gap-2">
             <PlusIcon className="h-4 w-4" />
             Add Subscriber
           </Button>
@@ -478,43 +417,7 @@ function SubscribersTab() {
       </div>
 
       {/* Email Testing */}
-      <Card>
-        <button type="button" onClick={() => setShowTestEmail(!showTestEmail)} className="flex w-full items-center justify-between px-6 py-4 text-left">
-          <CardTitle className="flex items-center gap-2">
-            <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
-            Test Subscriber Email
-          </CardTitle>
-          <ChevronDownIcon className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${showTestEmail ? 'rotate-180' : ''}`} />
-        </button>
-        {showTestEmail && (
-          <CardContent className="space-y-4 border-t border-gray-100 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Test Email Address *</label>
-                <Input type="email" value={testEmailData.test_email} onChange={(e) => setTestEmailData(prev => ({ ...prev, test_email: e.target.value }))} placeholder="your.email@example.com" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Test Name (Optional)</label>
-                <Input value={testEmailData.name} onChange={(e) => setTestEmailData(prev => ({ ...prev, name: e.target.value }))} placeholder="Jane Smith" />
-              </div>
-            </div>
-            {testEmailResult && (
-              <div className={`p-3 rounded-md ${testEmailResult.success ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-                {testEmailResult.message}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button onClick={() => void handleTestEmail()} disabled={testEmailLoading || !testEmailData.test_email} className="flex items-center gap-2">
-                <PaperAirplaneIcon className="h-4 w-4" />
-                {testEmailLoading ? 'Sending...' : 'Send Test Email'}
-              </Button>
-              <Button variant="outline" onClick={() => { setTestEmailData({ test_email: '', name: 'Jane Smith' }); setTestEmailResult(null); }}>
-                Reset Form
-              </Button>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+      <TestEmailPanel onEmailSent={() => void loadEntries()} />
 
       {/* Subscribers Table */}
       <Card>
@@ -701,40 +604,11 @@ function SubscribersTab() {
       </Card>
 
       {/* Add Subscriber Modal */}
-      {showAddEntry && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Add Subscriber</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowAddEntry(false)}>
-                  <XMarkIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <Input type="email" value={addEntryForm.email} onChange={e => setAddEntryForm(p => ({ ...p, email: e.target.value }))} placeholder="user@example.com" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name (optional)</label>
-                  <Input value={addEntryForm.name} onChange={e => setAddEntryForm(p => ({ ...p, name: e.target.value }))} placeholder="Jane Doe" />
-                </div>
-                {addEntryError && (
-                  <div className="p-3 rounded-md bg-red-50 text-red-800 border border-red-200 text-sm">{addEntryError}</div>
-                )}
-                <div className="flex gap-2 pt-2">
-                  <Button onClick={() => void handleAddEntry()} disabled={addEntryLoading} className="flex items-center gap-2">
-                    <PlusIcon className="h-4 w-4" />
-                    {addEntryLoading ? 'Adding...' : 'Add Subscriber'}
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowAddEntry(false)}>Cancel</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <AddSubscriberModal
+        open={showAddEntry}
+        onClose={() => setShowAddEntry(false)}
+        onAdded={() => void loadEntries()}
+      />
     </div>
   );
 }

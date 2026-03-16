@@ -8,7 +8,6 @@ import { mediaApi } from '@/lib/api';
 import { useDisplayPrefs } from '@/lib/display-prefs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ArrowUpTrayIcon,
@@ -29,6 +28,7 @@ import {
   ArrowDownTrayIcon,
   EyeIcon,
 } from '@heroicons/react/24/outline';
+import MediaEditModal from './components/media-edit-modal';
 // --- Types ---
 
 interface MediaItem {
@@ -987,78 +987,14 @@ export default function MediaPage() {
         })()}
 
         {/* Edit Modal */}
-        {editingItem && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold">Edit Media</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingItem(null)}
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <form
-                onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  void handleEdit(editingItem, {
-                    filename: formData.get('filename') as string || undefined,
-                    project_name: formData.get('project_name') as string || undefined,
-                    description: formData.get('description') as string || undefined,
-                  });
-                }}
-                className="space-y-4"
-              >
-                <div>
-                  <Label htmlFor="filename">Filename</Label>
-                  <Input
-                    id="filename"
-                    name="filename"
-                    defaultValue={editingItem.filename}
-                    placeholder="image.webp"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="project_name">Project Name</Label>
-                  <Input
-                    id="project_name"
-                    name="project_name"
-                    defaultValue={editingItem.project_name || ''}
-                    placeholder="e.g. ANIMADIGITALSOLUTIONS"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    defaultValue={editingItem.description || ''}
-                    placeholder="Description..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1">Save Changes</Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditingItem(null)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <MediaEditModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSave={async (id, data) => {
+            const item = mediaItems.find(i => i.id === id);
+            if (item) await handleEdit(item, data);
+          }}
+        />
       </div>
     </ProtectedLayout>
   );
