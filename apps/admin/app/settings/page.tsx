@@ -34,6 +34,7 @@ import {
   LockClosedIcon,
   ArrowPathIcon,
   XMarkIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/page-header';
 
@@ -41,6 +42,8 @@ interface Settings {
   email_enabled: boolean;
   maintenance_mode: boolean;
   maintenance_message: string;
+  rate_limit_forms_max: number;
+  rate_limit_forms_window_minutes: number;
 }
 
 interface StorageConfig {
@@ -84,6 +87,8 @@ export default function SettingsPage() {
     email_enabled: true,
     maintenance_mode: false,
     maintenance_message: 'We are currently under maintenance. Please check back soon.',
+    rate_limit_forms_max: 10,
+    rate_limit_forms_window_minutes: 10,
   });
   const [storage, setStorage] = useState<StorageConfig>({
     active_provider: 'local',
@@ -247,6 +252,46 @@ export default function SettingsPage() {
                   Maintenance mode is <strong>active</strong>. Public forms are blocked.
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Rate Limiting */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheckIcon className="h-4 w-4" />
+                Rate Limiting
+              </CardTitle>
+              <CardDescription>Control how many form submissions a single IP can make. Protects against bot spam.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">Max submissions per IP</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    className="mt-1.5 w-full"
+                    value={settings.rate_limit_forms_max}
+                    onChange={e => setSettings(p => ({ ...p, rate_limit_forms_max: Math.max(1, parseInt(e.target.value) || 10) }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Window (minutes)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1440}
+                    className="mt-1.5 w-full"
+                    value={settings.rate_limit_forms_window_minutes}
+                    onChange={e => setSettings(p => ({ ...p, rate_limit_forms_window_minutes: Math.max(1, parseInt(e.target.value) || 10) }))}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Currently: <strong>{settings.rate_limit_forms_max}</strong> submissions per <strong>{settings.rate_limit_forms_window_minutes}</strong> minute{settings.rate_limit_forms_window_minutes !== 1 ? 's' : ''} per IP. Changes take effect immediately after saving.
+              </p>
             </CardContent>
           </Card>
 

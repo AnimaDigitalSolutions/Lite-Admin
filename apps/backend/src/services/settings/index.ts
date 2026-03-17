@@ -5,6 +5,8 @@ const DEFAULTS: Record<string, string> = {
   email_enabled: 'true',
   maintenance_mode: 'false',
   maintenance_message: 'We are currently under maintenance. Please check back soon.',
+  rate_limit_forms_max: '10',
+  rate_limit_forms_window_minutes: '10',
 };
 
 class SettingsService {
@@ -67,6 +69,14 @@ class SettingsService {
 
   getMaintenanceMessage(): string {
     return this.cache['maintenance_message'] ?? DEFAULTS['maintenance_message'] ?? 'Maintenance in progress.';
+  }
+
+  getRateLimitFormsMax(): number {
+    return parseInt(this.cache['rate_limit_forms_max'] ?? '10', 10) || 10;
+  }
+
+  getRateLimitFormsWindowMinutes(): number {
+    return parseInt(this.cache['rate_limit_forms_window_minutes'] ?? '10', 10) || 10;
   }
 }
 

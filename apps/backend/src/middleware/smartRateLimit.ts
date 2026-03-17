@@ -2,6 +2,7 @@ import rateLimit from 'express-rate-limit';
 import type { Request, Response, NextFunction } from 'express';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
+import SettingsService from '../services/settings/index.js';
 
 // Trusted origins that get higher rate limits
 const trustedOrigins = config.cors.origins;
@@ -22,8 +23,8 @@ const rateLimitConfigs = {
   },
   // Very strict limits for forms
   forms: {
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: config.env === 'development' ? 100 : 5, // Relaxed in dev
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: config.env === 'development' ? 1000 : 10, // Relaxed in dev
     message: 'Too many form submissions, please try again later.',
   },
   // Admin endpoints (after authentication)
@@ -78,32 +79,42 @@ function handleRateLimit(req: Request, res: Response, type: string) {
   });
 }
 
-// Create singleton rate limiter instances at startup
+// Shared options factory
+function createLimiter(cfg: typeof rateLimitConfigs.public, type: string) {
+  return rateLimit({
+    ...cfg,
+    keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
+    handler: (req, res) => handleRateLimit(req, res, type),
+    skip: (req) => shouldSkipRateLimit(req),
+  });
+}
+
+// Static rate limiter instances (created once at startup)
+const staticLimiters = {
+  public: createLimiter(rateLimitConfigs.public, 'public'),
+  trusted: createLimiter(rateLimitConfigs.trusted, 'trusted'),
+  admin: createLimiter(rateLimitConfigs.admin, 'admin'),
+};
+
+// Dynamic forms limiter — rebuilds when admin changes settings
+let _formsLimiter = createLimiter(rateLimitConfigs.forms, 'forms');
+let _formsMax = rateLimitConfigs.forms.max;
+let _formsWindowMs = rateLimitConfigs.forms.windowMs;
+
+function getFormsLimiter(max: number, windowMs: number) {
+  if (_formsMax === max && _formsWindowMs === windowMs) return _formsLimiter;
+  _formsMax = max;
+  _formsWindowMs = windowMs;
+  _formsLimiter = createLimiter({ max, windowMs, message: rateLimitConfigs.forms.message }, 'forms');
+  return _formsLimiter;
+}
+
+// Kept for backward compat — anything referencing rateLimiters.* still works
 const rateLimiters = {
-  public: rateLimit({
-    ...rateLimitConfigs.public,
-    keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
-    handler: (req, res) => handleRateLimit(req, res, 'public'),
-    skip: (req) => shouldSkipRateLimit(req),
-  }),
-  trusted: rateLimit({
-    ...rateLimitConfigs.trusted,
-    keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
-    handler: (req, res) => handleRateLimit(req, res, 'trusted'),
-    skip: (req) => shouldSkipRateLimit(req),
-  }),
-  forms: rateLimit({
-    ...rateLimitConfigs.forms,
-    keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
-    handler: (req, res) => handleRateLimit(req, res, 'forms'),
-    skip: (req) => shouldSkipRateLimit(req),
-  }),
-  admin: rateLimit({
-    ...rateLimitConfigs.admin,
-    keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
-    handler: (req, res) => handleRateLimit(req, res, 'admin'),
-    skip: (req) => shouldSkipRateLimit(req),
-  }),
+  get public() { return staticLimiters.public; },
+  get trusted() { return staticLimiters.trusted; },
+  get forms() { return _formsLimiter; },
+  get admin() { return staticLimiters.admin; },
 };
 
 /**
@@ -135,34 +146,49 @@ function isTrustedOrigin(req: Request): boolean {
 }
 
 /**
+ * Resolves the forms limiter using current admin settings.
+ * Rebuilds the limiter instance only when max/window actually change.
+ */
+async function resolveFormsLimiter() {
+  try {
+    const settings = await SettingsService.getInstance();
+    const max = config.env === 'development' ? 1000 : settings.getRateLimitFormsMax();
+    const windowMs = settings.getRateLimitFormsWindowMinutes() * 60 * 1000;
+    return getFormsLimiter(max, windowMs);
+  } catch {
+    return _formsLimiter; // fallback to current instance
+  }
+}
+
+/**
  * Selects the appropriate rate limiter based on request context
  */
-function selectRateLimiter(req: Request, type: 'general' | 'forms' = 'general') {
+async function selectRateLimiter(req: Request, type: 'general' | 'forms' = 'general') {
   // Admin users get the highest limits (check if user is authenticated as admin)
   if (req.user?.role === 'super_admin' || req.user?.role === 'admin') {
-    return rateLimiters.admin;
+    return staticLimiters.admin;
   }
-  
-  // Form endpoints always get strict limits
+
+  // Form endpoints — read dynamic limits from admin settings
   if (type === 'forms') {
-    return rateLimiters.forms;
+    return resolveFormsLimiter();
   }
-  
+
   // Trusted origins get relaxed limits
   if (isTrustedOrigin(req)) {
-    return rateLimiters.trusted;
+    return staticLimiters.trusted;
   }
-  
+
   // Default to public limits
-  return rateLimiters.public;
+  return staticLimiters.public;
 }
 
 /**
  * Creates a smart rate limiter that selects the appropriate limiter instance
  */
 export function createSmartRateLimiter(type: 'general' | 'forms' = 'general') {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const limiter = selectRateLimiter(req, type);
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const limiter = await selectRateLimiter(req, type);
     limiter(req, res, next);
   };
 }

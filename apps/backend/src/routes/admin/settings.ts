@@ -20,6 +20,8 @@ router.get('/settings',
           maintenance_mode: all['maintenance_mode'] === 'true',
           maintenance_message: all['maintenance_message'] ?? '',
           display_timezone: all['display_timezone'] ?? 'UTC',
+          rate_limit_forms_max: settingsService.getRateLimitFormsMax(),
+          rate_limit_forms_window_minutes: settingsService.getRateLimitFormsWindowMinutes(),
         },
       });
     } catch (error) {
@@ -35,7 +37,7 @@ router.put('/settings',
     try {
       const settingsService = await SettingsService.getInstance();
       const db = await DatabaseService.getInstance();
-      const { email_enabled, maintenance_mode, maintenance_message, display_timezone } = req.validatedBody;
+      const { email_enabled, maintenance_mode, maintenance_message, display_timezone, rate_limit_forms_max, rate_limit_forms_window_minutes } = req.validatedBody;
 
       if (typeof email_enabled === 'boolean') {
         await settingsService.set('email_enabled', String(email_enabled));
@@ -48,6 +50,12 @@ router.put('/settings',
       }
       if (typeof display_timezone === 'string' && display_timezone) {
         await settingsService.set('display_timezone', display_timezone);
+      }
+      if (typeof rate_limit_forms_max === 'number') {
+        await settingsService.set('rate_limit_forms_max', String(rate_limit_forms_max));
+      }
+      if (typeof rate_limit_forms_window_minutes === 'number') {
+        await settingsService.set('rate_limit_forms_window_minutes', String(rate_limit_forms_window_minutes));
       }
 
       await db.adminLogs.create({
@@ -65,6 +73,8 @@ router.put('/settings',
           maintenance_mode: all['maintenance_mode'] === 'true',
           maintenance_message: all['maintenance_message'] ?? '',
           display_timezone: all['display_timezone'] ?? 'UTC',
+          rate_limit_forms_max: settingsService.getRateLimitFormsMax(),
+          rate_limit_forms_window_minutes: settingsService.getRateLimitFormsWindowMinutes(),
         },
       });
     } catch (error) {
