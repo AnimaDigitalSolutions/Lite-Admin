@@ -431,6 +431,11 @@ export const sitesApi = {
     return response.data;
   },
 
+  updatePermissions: async (id: number, permissions: string[]) => {
+    const response = await api.put(`/admin/sites/${id}/permissions`, { permissions });
+    return response.data;
+  },
+
   delete: async (id: number) => {
     const response = await api.delete(`/admin/sites/${id}`);
     return response.data;

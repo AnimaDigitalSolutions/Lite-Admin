@@ -26,8 +26,19 @@ interface Site {
   domain?: string;
   description?: string;
   api_key: string;
+  permissions?: string;
   is_active: boolean;
   created_at: string;
+}
+
+const ALL_SCOPES = [
+  { value: 'contact', label: 'Contact form' },
+  { value: 'waitlist', label: 'Waitlist signup' },
+] as const;
+
+function parseSitePermissions(perms?: string): string[] {
+  if (!perms) return ALL_SCOPES.map(s => s.value);
+  return perms.split(',').map(s => s.trim()).filter(Boolean);
 }
 
 export default function SitesPage() {
@@ -83,6 +94,23 @@ export default function SitesPage() {
       setSites(prev => prev.map(s => s.id === id ? res.data : s));
     } catch {
       setError('Failed to update site.');
+    }
+  };
+
+  const handlePermissionToggle = async (site: Site, scope: string) => {
+    const current = parseSitePermissions(site.permissions);
+    const updated = current.includes(scope)
+      ? current.filter(s => s !== scope)
+      : [...current, scope];
+    // Optimistic update
+    setSites(prev => prev.map(s => s.id === site.id ? { ...s, permissions: updated.join(',') } : s));
+    try {
+      const res = await sitesApi.updatePermissions(site.id, updated);
+      setSites(prev => prev.map(s => s.id === site.id ? res.data : s));
+    } catch {
+      // Revert
+      setSites(prev => prev.map(s => s.id === site.id ? site : s));
+      setError('Failed to update permissions.');
     }
   };
 
@@ -205,6 +233,24 @@ export default function SitesPage() {
                           : <ClipboardDocumentIcon className="h-3.5 w-3.5 text-muted-foreground" />
                         }
                       </button>
+                    </div>
+                    <div className="flex items-center gap-3 pt-1">
+                      <span className="text-[11px] font-medium text-muted-foreground">Permissions:</span>
+                      {ALL_SCOPES.map(scope => {
+                        const perms = parseSitePermissions(site.permissions);
+                        const checked = perms.includes(scope.value);
+                        return (
+                          <label key={scope.value} className="flex items-center gap-1 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => void handlePermissionToggle(site, scope.value)}
+                              className="h-3.5 w-3.5 rounded border-border text-blue-600 cursor-pointer focus:ring-blue-500"
+                            />
+                            <span className={`text-[11px] ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{scope.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                     <p className="text-[11px] text-muted-foreground">
                       Created {new Date(site.created_at).toLocaleDateString()}

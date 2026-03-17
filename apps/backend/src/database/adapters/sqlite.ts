@@ -97,6 +97,7 @@ interface Site {
   name: string;
   domain?: string;
   description?: string;
+  permissions?: string;
   is_active?: boolean;
   created_at?: string;
 }
@@ -290,6 +291,9 @@ class SQLiteAdapter {
       // Add api_key to existing sites installs (UNIQUE via separate index — SQLite ADD COLUMN forbids inline UNIQUE)
       `ALTER TABLE sites ADD COLUMN api_key VARCHAR(64)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_sites_api_key ON sites(api_key)`,
+
+      // Per-key endpoint permissions (comma-separated scopes, e.g. "contact,waitlist")
+      `ALTER TABLE sites ADD COLUMN permissions TEXT DEFAULT 'contact,waitlist'`,
 
       // Add site_id to contacts and waitlist (nullable, non-breaking)
       `ALTER TABLE contacts ADD COLUMN site_id INTEGER`,
@@ -912,9 +916,16 @@ class SQLiteAdapter {
   get sites() {
     return {
       create: async (data: Omit<Site, 'id' | 'created_at'> & { api_key: string }): Promise<Site & { api_key: string }> => {
-        const sql = `INSERT INTO sites (name, domain, description, api_key, is_active) VALUES (?, ?, ?, ?, ?)`;
-        const result = await this.run(sql, [data.name, data.domain || null, data.description || null, data.api_key, data.is_active ?? 1]);
-        return { id: result.lastID, ...data };
+        const sql = `INSERT INTO sites (name, domain, description, api_key, is_active, permissions) VALUES (?, ?, ?, ?, ?, ?)`;
+        const perms = data.permissions ?? 'contact,waitlist';
+        const result = await this.run(sql, [data.name, data.domain || null, data.description || null, data.api_key, data.is_active ?? 1, perms]);
+        return { id: result.lastID, ...data, permissions: perms };
+      },
+
+      updatePermissions: async (id: number, permissions: string): Promise<boolean> => {
+        const sql = `UPDATE sites SET permissions = ? WHERE id = ?`;
+        const result = await this.run(sql, [permissions, id]);
+        return result.changes > 0;
       },
 
       findAll: async (): Promise<(Site & { api_key: string })[]> => {

@@ -110,6 +110,8 @@ export const settingsUpdateSchema = z.object({
   maintenance_mode: z.boolean().optional(),
   maintenance_message: z.string().max(2000).optional(),
   display_timezone: z.string().max(100).optional(),
+  rate_limit_forms_max: z.number().int().min(1).max(1000).optional(),
+  rate_limit_forms_window_minutes: z.number().int().min(1).max(1440).optional(),
 });
 
 export const menuUpdateSchema = z.object({
@@ -128,10 +130,17 @@ export const menuUpdateSchema = z.object({
 
 // === SITES ===
 
+const VALID_SCOPES = ['contact', 'waitlist'] as const;
+
 export const siteCreateSchema = z.object({
   name: z.string().min(1, 'name is required').max(200).trim(),
   domain: z.string().max(255).trim().optional(),
   description: z.string().max(500).trim().optional(),
+  permissions: z.array(z.enum(VALID_SCOPES)).optional(),
+});
+
+export const sitePermissionsSchema = z.object({
+  permissions: z.array(z.enum(VALID_SCOPES)).min(0),
 });
 
 export const siteToggleSchema = z.object({
