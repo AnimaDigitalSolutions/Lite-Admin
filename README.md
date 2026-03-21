@@ -16,6 +16,8 @@
 
 ## Preview
 
+<img width="1907" height="1194" alt="ContactScreenshot" src="https://github.com/user-attachments/assets/20f2a5da-82c1-479f-8179-2abbc6c76f5e" />
+
 <!-- Add screenshots here as they become available -->
 <!-- screenshot: Dashboard — 30-day trend charts and at-a-glance stats -->
 <!-- screenshot: CRM Kanban — Drag-and-drop contact pipeline -->
