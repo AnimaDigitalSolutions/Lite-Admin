@@ -79,10 +79,11 @@
 ```bash
 git clone https://github.com/AnimaDigitalSolutions/Lite-Admin.git
 cd Lite-Admin
-pnpm install
-cp apps/backend/.env.example apps/backend/.env
+just install
+cp /.env.example /.env
 # Edit apps/backend/.env with your configuration
-pnpm dev
+# Enter your AHASEND API KEY & USER ACCOUNT if available
+just dev
 ```
 
 Or with the interactive setup:

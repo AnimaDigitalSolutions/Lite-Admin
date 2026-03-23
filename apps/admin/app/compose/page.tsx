@@ -45,7 +45,6 @@ export default function ComposePage() {
         const all: Contact[] = [];
         let offset = 0;
         const limit = 100;
-        // eslint-disable-next-line no-constant-condition
         while (true) {
           const res = await submissionsApi.list({ limit, offset });
           const page = res.data || [];

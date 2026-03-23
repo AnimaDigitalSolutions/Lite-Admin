@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { ErrorBanner } from '@/components/ui/error-banner';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import ProtectedLayout from '@/components/protected-layout';
@@ -156,6 +157,7 @@ export default function MediaPage() {
   const { copy: clipboardCopy, isCopied } = useCopyToClipboard();
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [uploads, setUploads] = useState<UploadProgress[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProject, setFilterProject] = useState('');
@@ -183,8 +185,8 @@ export default function MediaPage() {
     try {
       const response = await mediaApi.list();
       setMediaItems(response.data || []);
-    } catch (error) {
-      console.error('Failed to load media:', error);
+    } catch {
+      setPageError('Failed to load media. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -252,8 +254,8 @@ export default function MediaPage() {
       await mediaApi.delete(id);
       setMediaItems(prev => prev.filter(item => item.id !== id));
       setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
-    } catch (error) {
-      console.error('Failed to delete media:', error);
+    } catch {
+      setPageError('Failed to delete media. Please try again.');
     }
   };
 
@@ -266,8 +268,8 @@ export default function MediaPage() {
       }
       setMediaItems(prev => prev.filter(item => !selectedIds.has(item.id)));
       clearSelection();
-    } catch (error) {
-      console.error('Failed to bulk delete:', error);
+    } catch {
+      setPageError('Failed to delete selected items. Please try again.');
     }
   };
 
@@ -306,8 +308,8 @@ export default function MediaPage() {
         )
       );
       setEditingItem(null);
-    } catch (error) {
-      console.error('Failed to update media:', error);
+    } catch {
+      setPageError('Failed to update media. Please try again.');
     }
   };
 
@@ -392,6 +394,7 @@ export default function MediaPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
+        <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -911,6 +914,7 @@ export default function MediaPage() {
               {/* Content */}
               <div className="max-w-[90vw] max-h-[85vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                 {mediaType === 'image' ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- user-uploaded content at arbitrary URLs, next/image remotePatterns not applicable
                   <img
                     src={previewItem.url}
                     alt={previewItem.filename}

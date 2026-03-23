@@ -69,11 +69,10 @@ function gracefulShutdown(signal: string) {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+process.on('unhandledRejection', (reason: unknown, _promise: Promise<unknown>) => {
   logger.error({
-    message: 'Unhandled Rejection at',
-    promise: promise,
-    reason: reason
+    message: 'Unhandled Rejection',
+    err: reason instanceof Error ? reason : new Error(String(reason)),
   });
 });
 

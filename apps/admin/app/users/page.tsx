@@ -43,7 +43,6 @@ export default function UsersPage() {
 
   useEffect(() => {
     void settingsApi.get().then((res) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const tz = (res.data?.display_timezone as string) || 'UTC';
       setTimezone(tz);
     });

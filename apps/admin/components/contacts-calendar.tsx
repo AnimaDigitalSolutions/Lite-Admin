@@ -152,17 +152,17 @@ export default function ContactsCalendar({
   // Timeline window: size depends on zoom level (day-based)
   const windowDays = WINDOW_DAYS[zoomIndex];
   const halfDays = Math.floor(windowDays / 2);
-  const centerDate = new Date(year, month, 15);
+  const centerDate = useMemo(() => new Date(year, month, 15), [year, month]);
   const windowStart = useMemo(() => {
     const d = new Date(centerDate);
     d.setDate(d.getDate() - halfDays);
     return toDateOnly(d);
-  }, [year, month, halfDays]);
+  }, [centerDate, halfDays]);
   const windowEnd = useMemo(() => {
     const d = new Date(centerDate);
     d.setDate(d.getDate() + (windowDays - halfDays));
     return toDateOnly(d);
-  }, [year, month, windowDays, halfDays]);
+  }, [centerDate, windowDays, halfDays]);
   const totalDays = daysBetween(windowStart, windowEnd) + 1;
 
   // Build week columns

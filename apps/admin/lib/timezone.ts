@@ -26,7 +26,6 @@ async function fetchTimezone(): Promise<string> {
     fetchPromise = settingsApi
       .get()
       .then((res) => {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const tz = (res.data?.display_timezone as string) || 'UTC';
         cachedTz = tz;
         if (typeof window !== 'undefined') localStorage.setItem(LS_KEY, tz);

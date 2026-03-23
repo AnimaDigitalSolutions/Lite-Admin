@@ -94,6 +94,13 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
       data: result,
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (message === 'Refresh token expired' || message === 'Invalid refresh token') {
+      return res.status(401).json({
+        success: false,
+        error: { message, status: 401 },
+      });
+    }
     next(error);
   }
 });
