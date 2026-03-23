@@ -2,13 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
+/**
+ * To add a theme:
+ *   1. Add an entry here — { id, label, swatch } where swatch is a representative hex colour.
+ *   2. Add a matching [data-theme="<id>"] CSS block in app/globals.css with all CSS variables.
+ * The first entry in this array is the default theme.
+ */
 export const THEMES = [
-  { id: 'default', label: 'Default', swatch: '#ffffff' },
-  { id: 'midnight-gold', label: 'Midnight Gold', swatch: '#18181a' },
-  { id: 'warm-cream', label: 'Warm Cream', swatch: '#f7f7f5' },
-  { id: 'ocean', label: 'Ocean', swatch: '#151c2c' },
-  { id: 'forest', label: 'Forest', swatch: '#141e17' },
   { id: 'cafe-sepia', label: 'Café Sepia', swatch: '#f5f0e8' },
+  { id: 'ocean', label: 'Ocean', swatch: '#151c2c' },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];
@@ -23,7 +25,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>('default');
+  const [theme, setThemeState] = useState<ThemeId>('cafe-sepia');
 
   useEffect(() => {
     try {
@@ -37,23 +39,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);
     try {
-      if (id === 'default') {
-        document.documentElement.removeAttribute('data-theme');
-        localStorage.removeItem(STORAGE_KEY);
-      } else {
-        document.documentElement.setAttribute('data-theme', id);
-        localStorage.setItem(STORAGE_KEY, id);
-      }
+      document.documentElement.setAttribute('data-theme', id);
+      localStorage.setItem(STORAGE_KEY, id);
     } catch {}
   }, []);
 
   // Sync attribute on mount (in case hydration differs from inline script)
   useEffect(() => {
-    if (theme === 'default') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   return (

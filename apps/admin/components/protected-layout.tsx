@@ -6,85 +6,14 @@ import { useAuth } from '@/lib/auth-context';
 import { menuApi, isDemoMode } from '@/lib/api';
 import Link from 'next/link';
 import { Button } from './ui/button';
-import {
-  HomeIcon,
-  PhotoIcon,
-  EnvelopeIcon,
-  UsersIcon,
-  ChartBarIcon,
-  ArrowRightOnRectangleIcon,
-  CogIcon,
-  ClipboardDocumentListIcon,
-  GlobeAltIcon,
-  AtSymbolIcon,
-  UserCircleIcon,
-  DocumentTextIcon,
-  MegaphoneIcon,
-  DocumentCurrencyDollarIcon,
-  PencilSquareIcon,
-} from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { ThemeSelector } from './theme-selector';
+import { navigation } from '@/lib/nav-config';
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
-const navigation = [
-  {
-    group: 'Overview',
-    items: [
-      { name: 'Dashboard', href: '/', icon: HomeIcon, navKey: null },
-    ],
-  },
-  {
-    group: 'Content',
-    items: [
-      { name: 'Media', href: '/media', icon: PhotoIcon, navKey: 'nav_visible_media' },
-    ],
-  },
-  {
-    group: 'Leads',
-    items: [
-      { name: 'Contacts', href: '/contacts', icon: EnvelopeIcon, navKey: 'nav_visible_contacts' },
-      { name: 'Compose', href: '/compose', icon: PencilSquareIcon, navKey: 'nav_visible_compose' },
-    ],
-  },
-  {
-    group: 'Audience',
-    items: [
-      { name: 'Subscribers', href: '/subscribers', icon: UsersIcon, navKey: 'nav_visible_subscribers' },
-      { name: 'Campaigns', href: '/campaigns', icon: MegaphoneIcon, navKey: 'nav_visible_campaigns' },
-    ],
-  },
-  {
-    group: 'Billing',
-    items: [
-      { name: 'Invoices', href: '/invoices', icon: DocumentCurrencyDollarIcon, navKey: 'nav_visible_invoices' },
-    ],
-  },
-  {
-    group: 'Sites',
-    items: [
-      { name: 'Sites & API Keys', href: '/sites', icon: GlobeAltIcon, navKey: 'nav_visible_sites' },
-    ],
-  },
-  {
-    group: 'System',
-    items: [
-      { name: 'Statistics', href: '/stats', icon: ChartBarIcon, navKey: 'nav_visible_stats' },
-      { name: 'Activity Log', href: '/logs', icon: ClipboardDocumentListIcon, navKey: 'nav_visible_logs' },
-    ],
-  },
-  {
-    group: 'Configure',
-    items: [
-      { name: 'Email', href: '/email', icon: AtSymbolIcon, navKey: 'nav_visible_email' },
-      { name: 'Email Templates', href: '/email/templates', icon: DocumentTextIcon, navKey: 'nav_visible_email_templates' },
-      { name: 'Admin User', href: '/users', icon: UserCircleIcon, navKey: 'nav_visible_users' },
-      { name: 'Settings', href: '/settings', icon: CogIcon, navKey: null },
-    ],
-  },
-];
 
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const { user, loading, logout } = useAuth();

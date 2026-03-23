@@ -6,96 +6,13 @@ import { menuApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  HomeIcon,
-  PhotoIcon,
-  EnvelopeIcon,
-  UsersIcon,
-  ChartBarIcon,
-  ClipboardDocumentListIcon,
-  GlobeAltIcon,
-  AtSymbolIcon,
-  UserCircleIcon,
-  DocumentTextIcon,
-  CogIcon,
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   LockClosedIcon,
-  PencilSquareIcon,
-  MegaphoneIcon,
-  DocumentCurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import { PageHeader } from '@/components/page-header';
-
-type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-
-interface NavItem {
-  name: string;
-  key: string | null; // null = locked
-  icon: IconComponent;
-}
-
-interface NavGroup {
-  group: string;
-  items: NavItem[];
-}
-
-const menuStructure: NavGroup[] = [
-  {
-    group: 'Overview',
-    items: [
-      { name: 'Dashboard', key: null, icon: HomeIcon },
-    ],
-  },
-  {
-    group: 'Content',
-    items: [
-      { name: 'Media', key: 'nav_visible_media', icon: PhotoIcon },
-    ],
-  },
-  {
-    group: 'Leads',
-    items: [
-      { name: 'Contacts', key: 'nav_visible_contacts', icon: EnvelopeIcon },
-      { name: 'Compose', key: 'nav_visible_compose', icon: PencilSquareIcon },
-    ],
-  },
-  {
-    group: 'Audience',
-    items: [
-      { name: 'Subscribers', key: 'nav_visible_subscribers', icon: UsersIcon },
-      { name: 'Campaigns', key: 'nav_visible_campaigns', icon: MegaphoneIcon },
-    ],
-  },
-  {
-    group: 'Billing',
-    items: [
-      { name: 'Invoices', key: 'nav_visible_invoices', icon: DocumentCurrencyDollarIcon },
-    ],
-  },
-  {
-    group: 'Sites',
-    items: [
-      { name: 'Sites & API Keys', key: 'nav_visible_sites', icon: GlobeAltIcon },
-    ],
-  },
-  {
-    group: 'System',
-    items: [
-      { name: 'Statistics', key: 'nav_visible_stats', icon: ChartBarIcon },
-      { name: 'Activity Log', key: 'nav_visible_logs', icon: ClipboardDocumentListIcon },
-    ],
-  },
-  {
-    group: 'Configure',
-    items: [
-      { name: 'Email', key: 'nav_visible_email', icon: AtSymbolIcon },
-      { name: 'Email Templates', key: 'nav_visible_email_templates', icon: DocumentTextIcon },
-      { name: 'Admin User', key: 'nav_visible_users', icon: UserCircleIcon },
-      { name: 'Settings', key: null, icon: CogIcon },
-    ],
-  },
-];
+import { navigation, type NavGroup } from '@/lib/nav-config';
 
 export default function MenuConfigPage() {
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
@@ -132,15 +49,15 @@ export default function MenuConfigPage() {
   };
 
   const toggleGroup = async (group: NavGroup) => {
-    const toggleable = group.items.filter(i => i.key !== null);
+    const toggleable = group.items.filter(i => i.navKey !== null);
     if (toggleable.length === 0) return;
 
-    const allVisible = toggleable.every(i => prefs[i.key!] !== false);
+    const allVisible = toggleable.every(i => prefs[i.navKey!] !== false);
     const newVal = !allVisible;
 
     const updates: Record<string, boolean> = {};
     for (const item of toggleable) {
-      updates[item.key!] = newVal;
+      updates[item.navKey!] = newVal;
     }
 
     setPrefs(prev => ({ ...prev, ...updates }));
@@ -151,7 +68,7 @@ export default function MenuConfigPage() {
       // revert
       const reverted: Record<string, boolean> = {};
       for (const item of toggleable) {
-        reverted[item.key!] = !newVal;
+        reverted[item.navKey!] = !newVal;
       }
       setPrefs(prev => ({ ...prev, ...reverted }));
     }
@@ -159,9 +76,9 @@ export default function MenuConfigPage() {
 
   const resetAll = async () => {
     const updates: Record<string, boolean> = {};
-    for (const group of menuStructure) {
+    for (const group of navigation) {
       for (const item of group.items) {
-        if (item.key) updates[item.key] = true;
+        if (item.navKey) updates[item.navKey] = true;
       }
     }
     setPrefs(prev => ({ ...prev, ...updates }));
@@ -178,15 +95,15 @@ export default function MenuConfigPage() {
   };
 
   const getGroupStats = (group: NavGroup) => {
-    const toggleable = group.items.filter(i => i.key !== null);
-    const visible = toggleable.filter(i => prefs[i.key!] !== false).length;
-    const locked = group.items.filter(i => i.key === null).length;
+    const toggleable = group.items.filter(i => i.navKey !== null);
+    const visible = toggleable.filter(i => prefs[i.navKey!] !== false).length;
+    const locked = group.items.filter(i => i.navKey === null).length;
     return { visible: visible + locked, total: group.items.length };
   };
 
   const isGroupAllVisible = (group: NavGroup) => {
-    const toggleable = group.items.filter(i => i.key !== null);
-    return toggleable.length === 0 || toggleable.every(i => prefs[i.key!] !== false);
+    const toggleable = group.items.filter(i => i.navKey !== null);
+    return toggleable.length === 0 || toggleable.every(i => prefs[i.navKey!] !== false);
   };
 
   return (
@@ -210,11 +127,11 @@ export default function MenuConfigPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {menuStructure.map((group) => {
+            {navigation.map((group) => {
               const stats = getGroupStats(group);
               const isCollapsed = collapsed[group.group];
               const allVisible = isGroupAllVisible(group);
-              const hasToggleable = group.items.some(i => i.key !== null);
+              const hasToggleable = group.items.some(i => i.navKey !== null);
 
               return (
                 <Card key={group.group}>
@@ -260,8 +177,8 @@ export default function MenuConfigPage() {
                     <CardContent className="pt-0 pb-3 px-4">
                       <ul className="space-y-1">
                         {group.items.map((item) => {
-                          const locked = item.key === null;
-                          const visible = locked || prefs[item.key!] !== false;
+                          const locked = item.navKey === null;
+                          const visible = locked || prefs[item.navKey!] !== false;
 
                           return (
                             <li
@@ -288,7 +205,7 @@ export default function MenuConfigPage() {
                                 <input
                                   type="checkbox"
                                   checked={visible}
-                                  onChange={() => toggleItem(item.key!)}
+                                  onChange={() => toggleItem(item.navKey!)}
                                   className="h-4 w-4 rounded border-border text-blue-600 cursor-pointer focus:ring-blue-500"
                                 />
                               )}

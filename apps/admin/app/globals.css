@@ -31,83 +31,11 @@
     --sidebar-muted: 220 9% 46%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
-
-  /* Midnight Gold — warm dark, AntiGravity-inspired */
-  [data-theme="midnight-gold"] {
-    --background: 240 5% 10%;
-    --foreground: 40 20% 90%;
-    --card: 240 5% 13%;
-    --card-foreground: 40 20% 90%;
-    --popover: 240 5% 13%;
-    --popover-foreground: 40 20% 90%;
-    --primary: 38 38% 58%;
-    --primary-foreground: 240 5% 10%;
-    --secondary: 240 5% 17%;
-    --secondary-foreground: 40 20% 90%;
-    --muted: 240 5% 17%;
-    --muted-foreground: 40 10% 60%;
-    --accent: 240 5% 20%;
-    --accent-foreground: 40 20% 90%;
-    --destructive: 0 62.8% 40%;
-    --destructive-foreground: 40 20% 90%;
-    --border: 240 5% 20%;
-    --input: 240 5% 20%;
-    --ring: 38 38% 58%;
-    --sidebar-bg: 240 5% 12%;
-    --sidebar-border: 240 5% 18%;
-    --sidebar-active: 38 38% 58%;
-    --sidebar-active-foreground: 240 5% 10%;
-    --sidebar-muted: 40 10% 50%;
-  }
-
-  /* Warm Cream — warm light, AntiGravity-inspired */
-  [data-theme="warm-cream"] {
-    --background: 40 14% 96%;
-    --foreground: 30 20% 15%;
-    --card: 40 14% 99%;
-    --card-foreground: 30 20% 15%;
-    --popover: 40 14% 99%;
-    --popover-foreground: 30 20% 15%;
-    --primary: 30 30% 30%;
-    --primary-foreground: 40 14% 96%;
-    --secondary: 35 15% 91%;
-    --secondary-foreground: 30 20% 15%;
-    --muted: 35 15% 91%;
-    --muted-foreground: 30 10% 45%;
-    --accent: 35 15% 88%;
-    --accent-foreground: 30 20% 15%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 40 14% 96%;
-    --border: 35 15% 86%;
-    --input: 35 15% 86%;
-    --ring: 30 30% 30%;
-    --sidebar-bg: 35 15% 94%;
-    --sidebar-border: 35 15% 86%;
-    --sidebar-active: 30 20% 15%;
-    --sidebar-active-foreground: 40 14% 96%;
-    --sidebar-muted: 30 10% 50%;
-  }
+  /*
+   * Themes — each block must have a matching entry in lib/theme-context.tsx.
+   * The [data-theme="<id>"] selector must match the id in the THEMES array.
+   * Copy any block below as a starting point for a new theme.
+   */
 
   /* Ocean — cool dark */
   [data-theme="ocean"] {
@@ -135,34 +63,6 @@
     --sidebar-active: 185 60% 50%;
     --sidebar-active-foreground: 220 35% 10%;
     --sidebar-muted: 200 15% 50%;
-  }
-
-  /* Forest — green dark */
-  [data-theme="forest"] {
-    --background: 150 25% 10%;
-    --foreground: 140 15% 90%;
-    --card: 150 25% 13%;
-    --card-foreground: 140 15% 90%;
-    --popover: 150 25% 13%;
-    --popover-foreground: 140 15% 90%;
-    --primary: 155 60% 45%;
-    --primary-foreground: 150 25% 8%;
-    --secondary: 150 20% 17%;
-    --secondary-foreground: 140 15% 90%;
-    --muted: 150 20% 17%;
-    --muted-foreground: 140 10% 55%;
-    --accent: 150 20% 20%;
-    --accent-foreground: 140 15% 90%;
-    --destructive: 0 62.8% 40%;
-    --destructive-foreground: 140 15% 90%;
-    --border: 150 20% 20%;
-    --input: 150 20% 20%;
-    --ring: 155 60% 45%;
-    --sidebar-bg: 150 25% 11%;
-    --sidebar-border: 150 20% 18%;
-    --sidebar-active: 155 60% 45%;
-    --sidebar-active-foreground: 150 25% 8%;
-    --sidebar-muted: 140 10% 50%;
   }
 
   /* Café Sepia — warm tinted light */

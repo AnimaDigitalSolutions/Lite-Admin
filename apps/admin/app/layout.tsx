@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('lite-admin-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch{}` }} />
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('lite-admin-theme')||'cafe-sepia';document.documentElement.setAttribute('data-theme',t)}catch{}` }} />
       </head>
       <body className={inter.className}>
         <ClientProviders>

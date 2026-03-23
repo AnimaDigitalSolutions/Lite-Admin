@@ -21,8 +21,7 @@ src/public/uploads/
 uploads/
 temp/
 
-# Logs
-logs/
+# Logs (*.log files only — not the logs/ directory which is a Next.js route)
 *.log
 npm-debug.log*
 yarn-debug.log*

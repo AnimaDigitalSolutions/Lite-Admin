@@ -80,6 +80,12 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // If the refresh request itself failed, give up immediately — retrying would loop
+      if (originalRequest.url?.includes('/auth/refresh')) {
+        clearAuthAndRedirect();
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       // Circuit breaker: Stop trying after max attempts
@@ -106,7 +112,9 @@ api.interceptors.response.use(
         // Retry the original request
         return api(originalRequest);
       } catch (refreshError) {
-        logger.error('Token refresh failed:', refreshError);
+        // 401 from refresh is expected when not logged in — no need to log it
+        const is401 = (refreshError as { response?: { status?: number } }).response?.status === 401;
+        if (!is401) logger.warn('Token refresh failed:', refreshError);
         
         // If refresh fails, clear auth and redirect
         if (refreshAttempts >= maxRefreshAttempts) {
@@ -128,7 +136,11 @@ function clearAuthAndRedirect() {
   refreshPromise = null;
 
   if (typeof window !== 'undefined') {
-    window.location.href = isDemoMode ? '/' : '/login';
+    // Don't redirect if already on the login page — avoids an infinite reload loop
+    // when checkAuth() fires on mount and finds no valid session.
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = isDemoMode ? '/' : '/login';
+    }
   }
 }
 
