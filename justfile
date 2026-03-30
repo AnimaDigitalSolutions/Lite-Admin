@@ -294,12 +294,13 @@ docker-prod:
     export ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" && \
     docker compose -f docker/docker-compose.prod.yml up -d
 
-# Run demo stack locally
+# Run demo (frontend-only, mocked data)
 docker-demo:
-  @echo -e "${GREEN}🚀 Starting demo stack...${NC}"
-  @sudo mkdir -p /opt/lite-admin-demo/{uploads/portfolio,uploads/thumbnails,database,logs}
-  @export BACKEND_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_backend" && \
-    export ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" && \
+  @echo -e "${GREEN}🚀 Starting demo (frontend-only)...${NC}"
+  @echo -e "${BLUE}Building admin with DEMO_MODE...${NC}"
+  @NEXT_PUBLIC_DEMO_MODE=true pnpm build
+  @docker build -t lite-admin-demo-admin:latest -f docker/Dockerfiles/Dockerfile.admin .
+  @export ADMIN_IMAGE="lite-admin-demo-admin" && \
     docker compose -f docker/docker-compose.demo.yml up -d
 
 # Stop all Docker stacks (dev + prod + demo)

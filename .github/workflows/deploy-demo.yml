@@ -42,31 +42,27 @@ jobs:
       - name: Set environment variable
         run: echo "CI=false" >> $GITHUB_ENV
 
-      - name: Build all applications
-        run: pnpm build
+      - name: Build admin in demo mode
+        run: |
+          # Demo mode is frontend-only — axios interceptor mocks all API calls
+          export NEXT_PUBLIC_DEMO_MODE=true
+          pnpm build
 
-      - name: Set Docker image names
+      - name: Set Docker image name
         run: |
           FOLDER_NAME=$(basename $(pwd) | tr '[:upper:]' '[:lower:]' | tr '.' '-')
           BRANCH_NAME="_demo"
 
           export COMPOSE_PROJECT_NAME="${FOLDER_NAME}${BRANCH_NAME}"
           echo "COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME" >> $GITHUB_ENV
-
-          echo "BACKEND_IMAGE=${COMPOSE_PROJECT_NAME}_backend" >> $GITHUB_ENV
           echo "ADMIN_IMAGE=${COMPOSE_PROJECT_NAME}_admin" >> $GITHUB_ENV
 
-      - name: Build Docker images
+      - name: Build Docker image
         run: |
-          docker compose -p ${{ env.COMPOSE_PROJECT_NAME }} -f docker/docker-compose.build.yml build --parallel
+          docker build -t ${{ env.ADMIN_IMAGE }}:latest -f docker/Dockerfiles/Dockerfile.admin .
 
-      - name: Display image IDs
+      - name: Save Docker image as tar
         run: |
-          docker images --filter "label=com.docker.compose.project=${{ env.COMPOSE_PROJECT_NAME }}" --format "table {{.Repository}}:{{.Tag}}\t{{.ID}}\t{{.Size}}"
-
-      - name: Save Docker images as tar files
-        run: |
-          docker save ${{ env.BACKEND_IMAGE }}:latest | gzip > ${{ env.BACKEND_IMAGE }}.tar.gz
           docker save ${{ env.ADMIN_IMAGE }}:latest | gzip > ${{ env.ADMIN_IMAGE }}.tar.gz
           ls -lah *.tar.gz
 
@@ -77,7 +73,7 @@ jobs:
           username: ${{ vars.REMOTE_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ vars.REMOTE_PORT }}
-          source: "*.tar.gz,docker/,justfile"
+          source: "*.tar.gz,docker/docker-compose.demo.yml"
           target: ./${{ env.COMPOSE_PROJECT_NAME }}/
 
       - name: Deploy on server
@@ -90,54 +86,34 @@ jobs:
           script: |
             cd ${{ env.COMPOSE_PROJECT_NAME }}
 
-            # Ensure host directories exist for bind mounts (isolated from prod)
-            sudo mkdir -p /opt/lite-admin-demo/{uploads/portfolio,uploads/thumbnails,database,logs}
-
-            # Stop existing containers
-            echo "Stopping existing demo containers..."
+            # Stop existing container
+            echo "Stopping existing demo container..."
             docker compose -p ${{ env.COMPOSE_PROJECT_NAME }} -f docker/docker-compose.demo.yml down || true
 
-            # Clean up old images
-            echo "Cleaning up old images..."
-            docker images --filter "label=com.docker.compose.project=${{ env.COMPOSE_PROJECT_NAME }}" -q | xargs -r docker rmi -f || true
+            # Clean up old image
+            echo "Cleaning up old image..."
+            docker images --filter "reference=*demo*admin*" -q | xargs -r docker rmi -f || true
 
-            # Load new images
-            echo "Loading new images..."
+            # Load new image
+            echo "Loading new image..."
             gunzip -f *.tar.gz
-            docker load -i ${{ env.BACKEND_IMAGE }}.tar
             docker load -i ${{ env.ADMIN_IMAGE }}.tar
 
             # Set environment variables for compose
-            export BACKEND_IMAGE=${{ env.BACKEND_IMAGE }}
             export ADMIN_IMAGE=${{ env.ADMIN_IMAGE }}
             export VERSION=latest
-            export ENV_FILE=./.env
+            export REMOTE_DEMO_PORT=${{ vars.REMOTE_DEMO_PORT }}
 
-            # Set port mappings from GitHub variables
-            export REMOTE_DEMO_BACKEND_PORT=${{ vars.REMOTE_DEMO_BACKEND_PORT }}
-            export REMOTE_DEMO_ADMIN_PORT=${{ vars.REMOTE_DEMO_ADMIN_PORT }}
-
-            # Verify environment file exists
-            ls -la docker/.env || ls -la .env || echo "Warning: No .env file found"
-
-            # Start all services
-            echo "Starting demo services..."
+            # Start service
+            echo "Starting demo..."
             docker compose -p ${{ env.COMPOSE_PROJECT_NAME }} -f docker/docker-compose.demo.yml up -d
 
-            # Wait for services to start
-            echo "Waiting for services to start..."
-            sleep 15
-
-            # Check service status
+            # Wait and check
+            sleep 10
             docker compose -p ${{ env.COMPOSE_PROJECT_NAME }} -f docker/docker-compose.demo.yml ps
 
-            # Check logs for errors
-            docker compose -p ${{ env.COMPOSE_PROJECT_NAME }} -f docker/docker-compose.demo.yml logs --tail=20
-
             # Cleanup
-            echo "Cleaning up..."
             rm -f *.tar
-
             echo "Demo deployment complete!"
 
       - name: Print deployment summary
@@ -145,7 +121,7 @@ jobs:
           echo "Demo Deployment Summary"
           echo "========================"
           echo "Project: ${{ env.COMPOSE_PROJECT_NAME }}"
-          echo "Branch: ${GITHUB_REF#refs/heads/}"
+          echo "Branch: demo"
           echo "Commit: ${GITHUB_SHA}"
+          echo "Mode: Frontend-only (mocked API data)"
           echo "Deployed by: ${GITHUB_ACTOR}"
-          echo "Demo deployment completed successfully!"
