@@ -1,9 +1,15 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { nanoid } from 'nanoid';
-import path from 'path';
-import type { Express } from 'express';
-import logger from '../../../utils/logger.js';
-import ImageOptimizer from '../utils/optimizer.js';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
+import { nanoid } from "nanoid";
+import path from "path";
+import type { Express } from "express";
+import logger from "../../../utils/logger.js";
+import ImageOptimizer from "../utils/optimizer.js";
 
 interface S3Config {
   bucket: string;
@@ -56,16 +62,19 @@ class S3StorageProvider {
   }
 
   async initialize(): Promise<void> {
-    logger.info('S3 storage provider initialized');
+    logger.info("S3 storage provider initialized");
   }
 
-  async upload(file: Express.Multer.File, destinationPath?: string): Promise<UploadResult> {
+  async upload(
+    file: Express.Multer.File,
+    destinationPath?: string,
+  ): Promise<UploadResult> {
     try {
       const fileId = nanoid();
       const fileExt = path.extname(file.originalname);
       const fileName = `${fileId}${fileExt}`;
       const key = destinationPath ? `${destinationPath}/${fileName}` : fileName;
-      
+
       // Upload original file
       const uploadParams = {
         Bucket: this.bucket,
@@ -73,47 +82,54 @@ class S3StorageProvider {
         Body: file.buffer,
         ContentType: file.mimetype,
       };
-      
+
       await this.client.send(new PutObjectCommand(uploadParams));
-      
+
       // Handle image optimization
       let metadata = null;
       if (this.isImage(file.mimetype)) {
         // Optimize and upload WebP version
         const optimizedData = await this.optimizer.optimize(file.buffer, {
-          format: 'webp',
+          format: "webp",
           quality: 85,
         });
-        
-        const optimizedKey = key.replace(fileExt, '.webp');
-        await this.client.send(new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: optimizedKey,
-          Body: optimizedData.buffer,
-          ContentType: 'image/webp',
-        }));
-        
+
+        const optimizedKey = key.replace(fileExt, ".webp");
+        await this.client.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: optimizedKey,
+            Body: optimizedData.buffer,
+            ContentType: "image/webp",
+          }),
+        );
+
         // Create and upload thumbnail
-        const thumbnailData = await this.optimizer.createThumbnail(file.buffer, {
-          width: 300,
-          height: 300,
-        });
-        
+        const thumbnailData = await this.optimizer.createThumbnail(
+          file.buffer,
+          {
+            width: 300,
+            height: 300,
+          },
+        );
+
         const thumbnailKey = `thumbnails/${fileId}_thumb.webp`;
-        await this.client.send(new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: thumbnailKey,
-          Body: thumbnailData.buffer,
-          ContentType: 'image/webp',
-        }));
-        
+        await this.client.send(
+          new PutObjectCommand({
+            Bucket: this.bucket,
+            Key: thumbnailKey,
+            Body: thumbnailData.buffer,
+            ContentType: "image/webp",
+          }),
+        );
+
         metadata = optimizedData.metadata;
       }
-      
+
       logger.info(`File uploaded to S3: ${key}`);
-      
+
       return {
-        provider: 's3',
+        provider: "s3",
         path: key,
         url: `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`,
         size: file.size,
@@ -122,8 +138,8 @@ class S3StorageProvider {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to upload file to S3',
-        error: error
+        message: "Failed to upload file to S3",
+        error: error,
       });
       throw error;
     }
@@ -135,22 +151,22 @@ class S3StorageProvider {
         Bucket: this.bucket,
         Key: key,
       });
-      
+
       const response = await this.client.send(command);
       const chunks: Uint8Array[] = [];
-      
+
       if (response.Body) {
         const stream = response.Body as AsyncIterable<Uint8Array>;
         for await (const chunk of stream) {
           chunks.push(chunk);
         }
       }
-      
+
       return Buffer.concat(chunks);
     } catch (error) {
       logger.error({
-        message: 'Failed to download file from S3',
-        error: error
+        message: "Failed to download file from S3",
+        error: error,
       });
       throw error;
     }
@@ -159,35 +175,39 @@ class S3StorageProvider {
   async delete(key: string): Promise<boolean> {
     try {
       // Delete main file
-      await this.client.send(new DeleteObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-      }));
-      
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+
       // Try to delete associated files
       const fileId = path.basename(key, path.extname(key));
       const associatedKeys = [
-        key.replace(path.extname(key), '.webp'),
+        key.replace(path.extname(key), ".webp"),
         `thumbnails/${fileId}_thumb.webp`,
       ];
-      
+
       for (const associatedKey of associatedKeys) {
         try {
-          await this.client.send(new DeleteObjectCommand({
-            Bucket: this.bucket,
-            Key: associatedKey,
-          }));
+          await this.client.send(
+            new DeleteObjectCommand({
+              Bucket: this.bucket,
+              Key: associatedKey,
+            }),
+          );
         } catch {
           // Ignore errors for associated files
         }
       }
-      
+
       logger.info(`File deleted from S3: ${key}`);
       return true;
     } catch (error) {
       logger.error({
-        message: 'Failed to delete file from S3',
-        error: error
+        message: "Failed to delete file from S3",
+        error: error,
       });
       throw error;
     }
@@ -199,7 +219,7 @@ class S3StorageProvider {
         Bucket: this.bucket,
         Key: key,
       });
-      
+
       await this.client.send(command);
       return true;
     } catch {
@@ -213,24 +233,24 @@ class S3StorageProvider {
       return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
     } catch (error) {
       logger.error({
-        message: 'Failed to generate signed URL',
-        error: error
+        message: "Failed to generate signed URL",
+        error: error,
       });
       throw error;
     }
   }
 
-  async listFiles(prefix: string = ''): Promise<S3FileItem[]> {
+  async listFiles(prefix: string = ""): Promise<S3FileItem[]> {
     try {
       const command = new ListObjectsV2Command({
         Bucket: this.bucket,
         Prefix: prefix,
         MaxKeys: 1000,
       });
-      
+
       const response = await this.client.send(command);
-      
-      return (response.Contents || []).map(item => ({
+
+      return (response.Contents || []).map((item) => ({
         key: item.Key!,
         size: item.Size!,
         lastModified: item.LastModified!,
@@ -238,23 +258,23 @@ class S3StorageProvider {
       }));
     } catch (error) {
       logger.error({
-        message: 'Failed to list S3 files',
-        error: error
+        message: "Failed to list S3 files",
+        error: error,
       });
       throw error;
     }
   }
 
   isImage(mimetype: string): boolean {
-    return Boolean(mimetype && mimetype.startsWith('image/'));
+    return Boolean(mimetype && mimetype.startsWith("image/"));
   }
 
   get provider(): string {
-    return 's3';
+    return "s3";
   }
 
   getThumbnailUrl(originalUrl: string): string {
-    const key = originalUrl.split('.com/')[1];
+    const key = originalUrl.split(".com/")[1];
     const fileId = path.basename(key, path.extname(key));
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/thumbnails/${fileId}_thumb.webp`;
   }

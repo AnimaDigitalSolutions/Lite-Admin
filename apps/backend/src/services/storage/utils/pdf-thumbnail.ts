@@ -1,5 +1,5 @@
-import sharp from 'sharp';
-import logger from '../../../utils/logger.js';
+import sharp from "sharp";
+import logger from "../../../utils/logger.js";
 
 interface PdfThumbnailResult {
   buffer: Buffer;
@@ -7,10 +7,12 @@ interface PdfThumbnailResult {
   height: number;
 }
 
-export async function generatePdfThumbnail(pdfBuffer: Buffer): Promise<PdfThumbnailResult> {
-  const mupdf = await import('mupdf');
+export async function generatePdfThumbnail(
+  pdfBuffer: Buffer,
+): Promise<PdfThumbnailResult> {
+  const mupdf = await import("mupdf");
 
-  const doc = mupdf.Document.openDocument(pdfBuffer, 'application/pdf');
+  const doc = mupdf.Document.openDocument(pdfBuffer, "application/pdf");
   const page = doc.loadPage(0);
   const [, , w, h] = page.getBounds();
 
@@ -20,7 +22,7 @@ export async function generatePdfThumbnail(pdfBuffer: Buffer): Promise<PdfThumbn
     mupdf.Matrix.scale(scale, scale),
     mupdf.ColorSpace.DeviceRGB,
     false, // no alpha
-    true,  // annots
+    true, // annots
   );
 
   const rawPixels = pixmap.getPixels();
@@ -30,11 +32,13 @@ export async function generatePdfThumbnail(pdfBuffer: Buffer): Promise<PdfThumbn
   const thumbnail = await sharp(Buffer.from(rawPixels), {
     raw: { width: pxWidth, height: pxHeight, channels: 3 },
   })
-    .resize(300, 300, { fit: 'cover', position: 'top' })
+    .resize(300, 300, { fit: "cover", position: "top" })
     .webp({ quality: 80 })
     .toBuffer();
 
-  logger.info(`PDF thumbnail generated: ${pxWidth}x${pxHeight} -> 300x300 WebP`);
+  logger.info(
+    `PDF thumbnail generated: ${pxWidth}x${pxHeight} -> 300x300 WebP`,
+  );
 
   return { buffer: thumbnail, width: 300, height: 300 };
 }

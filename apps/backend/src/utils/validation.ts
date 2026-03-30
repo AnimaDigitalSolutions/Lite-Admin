@@ -47,13 +47,13 @@ export const isValidLength = (str: string, min = 0, max = Infinity) => {
  */
 export const sanitizePhoneNumber = (phone: string) => {
   // Remove all non-digits
-  const cleaned = phone.replace(/\D/g, '');
-  
+  const cleaned = phone.replace(/\D/g, "");
+
   // Check if it's a valid length (10-15 digits internationally)
   if (cleaned.length < 10 || cleaned.length > 15) {
     return null;
   }
-  
+
   return cleaned;
 };
 
@@ -62,8 +62,8 @@ export const sanitizePhoneNumber = (phone: string) => {
  */
 export const isEmpty = (value: unknown) => {
   if (value === null || value === undefined) return true;
-  if (typeof value === 'string' && value.trim() === '') return true;
+  if (typeof value === "string" && value.trim() === "") return true;
   if (Array.isArray(value) && value.length === 0) return true;
-  if (typeof value === 'object' && Object.keys(value).length === 0) return true;
+  if (typeof value === "object" && Object.keys(value).length === 0) return true;
   return false;
 };

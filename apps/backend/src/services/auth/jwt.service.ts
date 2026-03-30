@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
-import type { JWTPayload, AdminUser, AuthTokens } from '@lite/shared';
-import config from '../../config/index.js';
+import jwt from "jsonwebtoken";
+import type { JWTPayload, AdminUser, AuthTokens } from "@lite/shared";
+import config from "../../config/index.js";
 
 export class JWTService {
   private readonly secret: string;
@@ -10,7 +10,7 @@ export class JWTService {
   constructor(
     secret = config.jwtSecret,
     expiresIn = config.jwtExpiresIn,
-    refreshExpiresIn = config.refreshTokenExpiresIn
+    refreshExpiresIn = config.refreshTokenExpiresIn,
   ) {
     this.secret = secret;
     this.expiresIn = expiresIn;
@@ -20,7 +20,7 @@ export class JWTService {
   /**
    * Generate access and refresh tokens for a user
    */
-  generateTokens(user: Pick<AdminUser, 'id' | 'email' | 'role'>): AuthTokens {
+  generateTokens(user: Pick<AdminUser, "id" | "email" | "role">): AuthTokens {
     const payload: JWTPayload = {
       id: user.id,
       email: user.email,
@@ -32,9 +32,9 @@ export class JWTService {
     } as jwt.SignOptions);
 
     const refreshToken = jwt.sign(
-      { id: user.id, type: 'refresh' },
+      { id: user.id, type: "refresh" },
       this.secret,
-      { expiresIn: this.refreshExpiresIn } as jwt.SignOptions
+      { expiresIn: this.refreshExpiresIn } as jwt.SignOptions,
     );
 
     return { accessToken, refreshToken };
@@ -49,10 +49,10 @@ export class JWTService {
       return decoded;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token expired');
+        throw new Error("Token expired");
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid token');
+        throw new Error("Invalid token");
       }
       throw error;
     }
@@ -63,17 +63,20 @@ export class JWTService {
    */
   verifyRefreshToken(token: string): { id: number } {
     try {
-      const decoded = jwt.verify(token, this.secret) as { type: string; id: number };
-      if (decoded.type !== 'refresh') {
-        throw new Error('Invalid token type');
+      const decoded = jwt.verify(token, this.secret) as {
+        type: string;
+        id: number;
+      };
+      if (decoded.type !== "refresh") {
+        throw new Error("Invalid token type");
       }
       return { id: decoded.id };
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Refresh token expired');
+        throw new Error("Refresh token expired");
       }
       if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Invalid refresh token');
+        throw new Error("Invalid refresh token");
       }
       throw error;
     }

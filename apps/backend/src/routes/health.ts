@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import DatabaseService from '../services/database.service.js';
-import config from '../config/index.js';
+import { Router } from "express";
+import DatabaseService from "../services/database.service.js";
+import config from "../config/index.js";
 
 const router = Router();
 
@@ -17,16 +17,16 @@ interface HealthResponse {
   error?: string;
 }
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   const health: HealthResponse = {
-    status: 'healthy',
+    status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.env,
-    version: process.env.npm_package_version || '0.1.0',
+    version: process.env.npm_package_version || "0.1.0",
     database: {
       type: config.database.type,
-      status: 'unknown',
+      status: "unknown",
     },
   };
 
@@ -34,20 +34,20 @@ router.get('/', async (req, res) => {
     // Check database connection
     if (DatabaseService.isInitialized()) {
       const db = await DatabaseService.getInstance();
-      
+
       // Try a simple query
-      await db.get('SELECT 1 as test');
-      
-      health.database.status = 'connected';
+      await db.get("SELECT 1 as test");
+
+      health.database.status = "connected";
     } else {
-      health.database.status = 'not_initialized';
+      health.database.status = "not_initialized";
     }
-    
+
     res.status(200).json(health);
   } catch (error: unknown) {
-    health.status = 'unhealthy';
-    health.database.status = 'disconnected';
-    health.error = (error as Error)?.message || 'Unknown error';
+    health.status = "unhealthy";
+    health.database.status = "disconnected";
+    health.error = (error as Error)?.message || "Unknown error";
     res.status(503).json(health);
   }
 });

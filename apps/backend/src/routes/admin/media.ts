@@ -1,23 +1,23 @@
 /// <reference path="../../types/express.d.ts" />
-import path from 'path';
-import { Router } from 'express';
-import { uploadSingle, requireFile } from '../../middleware/upload.js';
-import { validateBody, validateParams } from '../../middleware/validation.js';
+import path from "path";
+import { Router } from "express";
+import { uploadSingle, requireFile } from "../../middleware/upload.js";
+import { validateBody, validateParams } from "../../middleware/validation.js";
 import {
   mediaUploadSchema,
   mediaUpdateSchema,
-  mediaIdSchema
-} from '../../schemas/media.js';
+  mediaIdSchema,
+} from "../../schemas/media.js";
 import {
   mediaRenameSchema,
-  mediaBulkDownloadSchema
-} from '../../schemas/admin.js';
-import DatabaseService from '../../services/database.service.js';
-import StorageFactory from '../../services/storage/index.js';
-import type LocalStorageProvider from '../../services/storage/providers/local.js';
-import type S3StorageProvider from '../../services/storage/providers/s3.js';
-import logger from '../../utils/logger.js';
-import config from '../../config/index.js';
+  mediaBulkDownloadSchema,
+} from "../../schemas/admin.js";
+import DatabaseService from "../../services/database.service.js";
+import StorageFactory from "../../services/storage/index.js";
+import type LocalStorageProvider from "../../services/storage/providers/local.js";
+import type S3StorageProvider from "../../services/storage/providers/s3.js";
+import logger from "../../utils/logger.js";
+import config from "../../config/index.js";
 
 const router = Router();
 
@@ -25,7 +25,7 @@ const router = Router();
 let storage: LocalStorageProvider | S3StorageProvider | undefined;
 
 const initServices = async (): Promise<{
-  storage: LocalStorageProvider | S3StorageProvider
+  storage: LocalStorageProvider | S3StorageProvider;
 }> => {
   if (!storage) {
     storage = await StorageFactory.create(config.storage.provider);
@@ -35,8 +35,9 @@ const initServices = async (): Promise<{
 };
 
 // Upload portfolio media (images, videos, PDFs)
-router.post('/media/upload',
-  uploadSingle('file'),
+router.post(
+  "/media/upload",
+  uploadSingle("file"),
   requireFile,
   validateBody(mediaUploadSchema),
   async (req, res, next) => {
@@ -48,7 +49,7 @@ router.post('/media/upload',
       if (!file) {
         return res.status(400).json({
           error: {
-            message: 'No file provided',
+            message: "No file provided",
             status: 400,
           },
         });
@@ -57,7 +58,7 @@ router.post('/media/upload',
       const { project_name, description } = req.validatedBody;
 
       // Upload file to storage
-      const uploadResult = await storage.upload(file, 'portfolio');
+      const uploadResult = await storage.upload(file, "portfolio");
 
       // Get image metadata if available
       const mediaData = {
@@ -79,17 +80,20 @@ router.post('/media/upload',
 
       // Log activity
       await db.adminLogs.create({
-        action: 'media_upload',
-        resource: 'portfolio_media',
+        action: "media_upload",
+        resource: "portfolio_media",
         resource_id: savedMedia.id,
         details: `Uploaded ${file.originalname}`,
         ip_address: req.ip,
       });
 
-      logger.info({
-        id: savedMedia.id,
-        filename: savedMedia.filename,
-      }, 'Admin uploaded media');
+      logger.info(
+        {
+          id: savedMedia.id,
+          filename: savedMedia.filename,
+        },
+        "Admin uploaded media",
+      );
 
       res.status(201).json({
         success: true,
@@ -102,11 +106,12 @@ router.post('/media/upload',
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Update media metadata
-router.put('/media/:id',
+router.put(
+  "/media/:id",
   validateParams(mediaIdSchema),
   validateBody(mediaUpdateSchema),
   async (req, res, next) => {
@@ -115,13 +120,13 @@ router.put('/media/:id',
 
       const updated = await db.media.updateById(
         req.validatedParams.id,
-        req.validatedBody
+        req.validatedBody,
       );
 
       if (!updated) {
         return res.status(404).json({
           error: {
-            message: 'Media not found',
+            message: "Media not found",
             status: 404,
           },
         });
@@ -129,25 +134,26 @@ router.put('/media/:id',
 
       // Log activity
       await db.adminLogs.create({
-        action: 'media_update',
-        resource: 'portfolio_media',
+        action: "media_update",
+        resource: "portfolio_media",
         resource_id: req.validatedParams.id,
-        details: 'Updated media metadata',
+        details: "Updated media metadata",
         ip_address: req.ip,
       });
 
       res.json({
         success: true,
-        message: 'Media updated successfully',
+        message: "Media updated successfully",
       });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Delete media
-router.delete('/media/:id',
+router.delete(
+  "/media/:id",
   validateParams(mediaIdSchema),
   async (req, res, next) => {
     try {
@@ -159,7 +165,7 @@ router.delete('/media/:id',
       if (!media) {
         return res.status(404).json({
           error: {
-            message: 'Media not found',
+            message: "Media not found",
             status: 404,
           },
         });
@@ -173,30 +179,34 @@ router.delete('/media/:id',
 
       // Log activity
       await db.adminLogs.create({
-        action: 'media_delete',
-        resource: 'portfolio_media',
+        action: "media_delete",
+        resource: "portfolio_media",
         resource_id: req.validatedParams.id,
         details: `Deleted ${media.filename}`,
         ip_address: req.ip,
       });
 
-      logger.info({
-        id: req.validatedParams.id,
-        filename: media.filename,
-      }, 'Admin deleted media');
+      logger.info(
+        {
+          id: req.validatedParams.id,
+          filename: media.filename,
+        },
+        "Admin deleted media",
+      );
 
       res.json({
         success: true,
-        message: 'Media deleted successfully',
+        message: "Media deleted successfully",
       });
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Rename media file
-router.patch('/media/:id/rename',
+router.patch(
+  "/media/:id/rename",
   validateParams(mediaIdSchema),
   validateBody(mediaRenameSchema),
   async (req, res, next) => {
@@ -208,12 +218,19 @@ router.patch('/media/:id/rename',
 
       const media = await db.media.findById(req.validatedParams.id);
       if (!media) {
-        return res.status(404).json({ error: { message: 'Media not found', status: 404 } });
+        return res
+          .status(404)
+          .json({ error: { message: "Media not found", status: 404 } });
       }
 
       // Only local storage supports rename right now
-      if (storage.provider !== 'local') {
-        return res.status(400).json({ error: { message: 'Rename only supported for local storage', status: 400 } });
+      if (storage.provider !== "local") {
+        return res.status(400).json({
+          error: {
+            message: "Rename only supported for local storage",
+            status: 400,
+          },
+        });
       }
 
       const localStorage = storage as LocalStorageProvider;
@@ -226,8 +243,8 @@ router.patch('/media/:id/rename',
       });
 
       await db.adminLogs.create({
-        action: 'media_rename',
-        resource: 'portfolio_media',
+        action: "media_rename",
+        resource: "portfolio_media",
         resource_id: req.validatedParams.id,
         details: `Renamed ${media.original_name} → ${name.trim()}`,
         ip_address: req.ip,
@@ -240,11 +257,12 @@ router.patch('/media/:id/rename',
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Bulk download as ZIP
-router.post('/media/bulk-download',
+router.post(
+  "/media/bulk-download",
   validateBody(mediaBulkDownloadSchema),
   async (req, res, next) => {
     try {
@@ -252,34 +270,40 @@ router.post('/media/bulk-download',
       const { ids } = req.validatedBody;
 
       const items = await Promise.all(
-        (ids as string[]).map(id => db.media.findById(Number(id)))
+        (ids as string[]).map((id) => db.media.findById(Number(id))),
       );
-      const found = items.filter(Boolean) as NonNullable<(typeof items)[number]>[];
+      const found = items.filter(Boolean) as NonNullable<
+        (typeof items)[number]
+      >[];
 
       if (found.length === 0) {
-        return res.status(404).json({ error: { message: 'No media found for given IDs', status: 404 } });
+        return res.status(404).json({
+          error: { message: "No media found for given IDs", status: 404 },
+        });
       }
 
-      const archiver = (await import('archiver')).default;
-      const archive = archiver('zip', { zlib: { level: 6 } });
+      const archiver = (await import("archiver")).default;
+      const archive = archiver("zip", { zlib: { level: 6 } });
 
       res.set({
-        'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="media-${Date.now()}.zip"`,
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="media-${Date.now()}.zip"`,
       });
 
       archive.pipe(res);
-      archive.on('error', (err) => next(err));
+      archive.on("error", (err) => next(err));
 
       for (const item of found) {
-        archive.file(item.storage_path, { name: item.original_name || item.filename });
+        archive.file(item.storage_path, {
+          name: item.original_name || item.filename,
+        });
       }
 
       await archive.finalize();
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export default router;

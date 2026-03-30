@@ -1,5 +1,5 @@
-import pino from 'pino';
-import config from '../config/index.js';
+import pino from "pino";
+import config from "../config/index.js";
 
 const pinoConfig: pino.LoggerOptions = {
   level: config.logging.level,
@@ -11,13 +11,17 @@ const pinoConfig: pino.LoggerOptions = {
   },
 };
 
-if (config.env !== 'production') {
-  (pinoConfig as pino.LoggerOptions & { transport?: pino.TransportTargetOptions }).transport = {
-    target: 'pino-pretty',
+if (config.env !== "production") {
+  (
+    pinoConfig as pino.LoggerOptions & {
+      transport?: pino.TransportTargetOptions;
+    }
+  ).transport = {
+    target: "pino-pretty",
     options: {
       colorize: true,
       levelFirst: true,
-      translateTime: 'SYS:standard',
+      translateTime: "SYS:standard",
     },
   };
 }

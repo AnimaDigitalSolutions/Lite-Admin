@@ -1,6 +1,12 @@
-'use client';
+"use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 /**
  * To add a theme:
@@ -9,13 +15,13 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
  * The first entry in this array is the default theme.
  */
 export const THEMES = [
-  { id: 'cafe-sepia', label: 'Café Sepia', swatch: '#f5f0e8' },
-  { id: 'ocean', label: 'Ocean', swatch: '#151c2c' },
+  { id: "cafe-sepia", label: "Café Sepia", swatch: "#f5f0e8" },
+  { id: "ocean", label: "Ocean", swatch: "#151c2c" },
 ] as const;
 
-export type ThemeId = (typeof THEMES)[number]['id'];
+export type ThemeId = (typeof THEMES)[number]["id"];
 
-const STORAGE_KEY = 'lite-admin-theme';
+const STORAGE_KEY = "lite-admin-theme";
 
 interface ThemeContextValue {
   theme: ThemeId;
@@ -25,7 +31,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeId>('cafe-sepia');
+  const [theme, setThemeState] = useState<ThemeId>("cafe-sepia");
 
   useEffect(() => {
     try {
@@ -39,14 +45,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);
     try {
-      document.documentElement.setAttribute('data-theme', id);
+      document.documentElement.setAttribute("data-theme", id);
       localStorage.setItem(STORAGE_KEY, id);
     } catch {}
   }, []);
 
   // Sync attribute on mount (in case hydration differs from inline script)
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   return (
@@ -58,6 +64,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }

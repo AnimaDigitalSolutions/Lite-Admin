@@ -1,7 +1,7 @@
-import DatabaseFactory from '../database/index.js';
-import config from '../config/index.js';
-import logger from '../utils/logger.js';
-import type SQLiteAdapter from '../database/adapters/sqlite.js';
+import DatabaseFactory from "../database/index.js";
+import config from "../config/index.js";
+import logger from "../utils/logger.js";
+import type SQLiteAdapter from "../database/adapters/sqlite.js";
 
 class DatabaseService {
   private static instance: SQLiteAdapter | null = null;
@@ -13,7 +13,7 @@ class DatabaseService {
 
     if (!this.initPromise) {
       this.initPromise = (async () => {
-        logger.info('Creating database singleton instance');
+        logger.info("Creating database singleton instance");
         const instance = await DatabaseFactory.create(config.database.type);
         await instance.initialize();
         this.instance = instance;
@@ -37,7 +37,7 @@ class DatabaseService {
       this.instance = null;
       this.initialized = false;
       this.initPromise = null;
-      logger.info('Database singleton closed');
+      logger.info("Database singleton closed");
     }
   }
 

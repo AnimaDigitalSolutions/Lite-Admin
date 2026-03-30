@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export interface DisplayPrefs {
   showGeoInfo: boolean;
@@ -14,17 +14,18 @@ const DEFAULTS: DisplayPrefs = {
   showGeoInfo: true,
   truncateEmails: true,
   defaultDashboardDays: 30,
-  mediaBasePath: '/uploads/portfolio',
+  mediaBasePath: "/uploads/portfolio",
   maxUploadSizeMB: 10,
 };
 
-const LS_KEY = 'display_prefs';
+const LS_KEY = "display_prefs";
 
 function loadPrefs(): DisplayPrefs {
-  if (typeof window === 'undefined') return { ...DEFAULTS };
+  if (typeof window === "undefined") return { ...DEFAULTS };
   try {
     const stored = localStorage.getItem(LS_KEY);
-    if (stored) return { ...DEFAULTS, ...(JSON.parse(stored) as Partial<DisplayPrefs>) };
+    if (stored)
+      return { ...DEFAULTS, ...(JSON.parse(stored) as Partial<DisplayPrefs>) };
   } catch {
     // ignore parse errors
   }
@@ -32,7 +33,7 @@ function loadPrefs(): DisplayPrefs {
 }
 
 function savePrefs(prefs: DisplayPrefs) {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     localStorage.setItem(LS_KEY, JSON.stringify(prefs));
   }
 }

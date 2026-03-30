@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { usePaginatedData } from '@/lib/hooks/use-paginated-data';
-import { useTimezone } from '@/lib/timezone';
-import { useDisplayPrefs } from '@/lib/display-prefs';
-import { isPrivateIp, truncateEmail, highlightMatch } from '@/lib/utils';
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
-import { useFacetedSearch } from '@/lib/hooks/use-faceted-search';
-import { countryFlag, getProjectTypeColor } from '@/components/contact-detail/contact-utils';
-import { Pagination } from '@/components/ui/pagination';
-import ProtectedLayout from '@/components/protected-layout';
-import { submissionsApi } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from "react";
+import { usePaginatedData } from "@/lib/hooks/use-paginated-data";
+import { useTimezone } from "@/lib/timezone";
+import { useDisplayPrefs } from "@/lib/display-prefs";
+import { isPrivateIp, truncateEmail, highlightMatch } from "@/lib/utils";
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { useFacetedSearch } from "@/lib/hooks/use-faceted-search";
+import {
+  countryFlag,
+  getProjectTypeColor,
+} from "@/components/contact-detail/contact-utils";
+import { Pagination } from "@/components/ui/pagination";
+import ProtectedLayout from "@/components/protected-layout";
+import { submissionsApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   MagnifyingGlassIcon,
   TrashIcon,
@@ -30,18 +33,28 @@ import {
   CheckCircleIcon,
   ClipboardDocumentIcon,
   CheckIcon,
-} from '@heroicons/react/24/outline';
-import { ErrorBanner } from '@/components/ui/error-banner';
-import { useSelection } from '@/lib/hooks/use-selection';
-import ContactDetailPanel, { getStatusBadge } from '@/components/contact-detail-panel';
-import ContactsCalendar from '@/components/contacts-calendar';
-import ContactsKanban from '@/components/contacts-kanban';
-import { PageHeader } from '@/components/page-header';
-import AddContactModal from './components/add-contact-modal';
-import TestEmailPanel from './components/test-email-panel';
+} from "@heroicons/react/24/outline";
+import { ErrorBanner } from "@/components/ui/error-banner";
+import { useSelection } from "@/lib/hooks/use-selection";
+import ContactDetailPanel, {
+  getStatusBadge,
+} from "@/components/contact-detail-panel";
+import ContactsCalendar from "@/components/contacts-calendar";
+import ContactsKanban from "@/components/contacts-kanban";
+import { PageHeader } from "@/components/page-header";
+import AddContactModal from "./components/add-contact-modal";
+import TestEmailPanel from "./components/test-email-panel";
 
-type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
-type ViewMode = 'table' | 'kanban' | 'calendar';
+type ContactStatus =
+  | "new"
+  | "reviewed"
+  | "contacted"
+  | "qualified"
+  | "proposal_sent"
+  | "won"
+  | "lost"
+  | "archived";
+type ViewMode = "table" | "kanban" | "calendar";
 
 interface Contact {
   id: string;
@@ -66,50 +79,71 @@ export default function ContactsPage() {
   const { formatDate } = useTimezone();
   const { prefs } = useDisplayPrefs();
   const {
-    data: contacts, loading, currentPage, totalPages, setCurrentPage,
-    refetch: loadContacts, setData: setContacts,
+    data: contacts,
+    loading,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    refetch: loadContacts,
+    setData: setContacts,
   } = usePaginatedData<Contact>(
     (limit, offset) => submissionsApi.list({ limit, offset }),
     [],
     { pageSize: 20 },
   );
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const { selectedIds, setSelectedIds, selectAll, clearSelection } = useSelection<string>();
+  const { selectedIds, setSelectedIds, selectAll, clearSelection } =
+    useSelection<string>();
 
   const [pageError, setPageError] = useState<string | null>(null);
   const { copy: copyEmail, isCopied: isEmailCopied } = useCopyToClipboard();
-  const [statusFilter, setStatusFilter] = useState<ContactStatus | ''>('');
-  const [viewMode, setViewMode] = useState<ViewMode>('table');
-  const [todosSummary, setTodosSummary] = useState<{ total: number; contacts: number } | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ContactStatus | "">("");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [todosSummary, setTodosSummary] = useState<{
+    total: number;
+    contacts: number;
+  } | null>(null);
   const [todoContactIds, setTodoContactIds] = useState<Set<string>>(new Set());
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
-  const [statusHistory, setStatusHistory] = useState<Record<number, { status: string; changed_at: string }[]>>({});
+  const [statusHistory, setStatusHistory] = useState<
+    Record<number, { status: string; changed_at: string }[]>
+  >({});
 
   const FILTER_SUGGESTIONS = [
-    { token: 'is:this-month', label: 'Submitted this month' },
-    { token: 'is:last-7-days', label: 'Last 7 days' },
-    { token: 'has:company', label: 'Has company field' },
-    { token: 'has:todos', label: 'Has open todos' },
-    { token: '-is:this-month', label: 'Not this month' },
-    { token: '-is:last-7-days', label: 'Not last 7 days' },
-    { token: '-has:company', label: 'No company field' },
-    { token: '-has:todos', label: 'No open todos' },
+    { token: "is:this-month", label: "Submitted this month" },
+    { token: "is:last-7-days", label: "Last 7 days" },
+    { token: "has:company", label: "Has company field" },
+    { token: "has:todos", label: "Has open todos" },
+    { token: "-is:this-month", label: "Not this month" },
+    { token: "-is:last-7-days", label: "Not last 7 days" },
+    { token: "-has:company", label: "No company field" },
+    { token: "-has:todos", label: "No open todos" },
   ] as const;
 
   const {
-    searchTerm, setSearchTerm, searchText,
-    activeFilters, negatedFilters, testFilter, toggleFilter,
-    setShowSuggestions, suggestionIndex,
-    suggestionsRef, inputRef, filteredSuggestions, applySuggestion,
-    onInputChange, onInputKeyDown,
+    searchTerm,
+    setSearchTerm,
+    searchText,
+    activeFilters,
+    negatedFilters,
+    testFilter,
+    toggleFilter,
+    setShowSuggestions,
+    suggestionIndex,
+    suggestionsRef,
+    inputRef,
+    filteredSuggestions,
+    applySuggestion,
+    onInputChange,
+    onInputKeyDown,
   } = useFacetedSearch({ suggestions: FILTER_SUGGESTIONS });
 
   const handleContactUpdated = (updated: Contact) => {
     setSelectedContact(updated);
-    setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
+    setContacts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   };
 
   // Add contact modal
@@ -134,31 +168,43 @@ export default function ContactsPage() {
 
   // Fetch status history for Gantt view when contacts change
   useEffect(() => {
-    if (viewMode !== 'calendar' || contacts.length === 0) return;
-    const ids = contacts.map(c => Number(c.id)).filter(id => !isNaN(id));
+    if (viewMode !== "calendar" || contacts.length === 0) return;
+    const ids = contacts.map((c) => Number(c.id)).filter((id) => !isNaN(id));
     if (ids.length === 0) return;
-    submissionsApi.getStatusHistory(ids)
-      .then(res => setStatusHistory(res.data || {}))
-      .catch(() => { /* silently fail — Gantt falls back to single-color bars */ });
+    submissionsApi
+      .getStatusHistory(ids)
+      .then((res) => setStatusHistory(res.data || {}))
+      .catch(() => {
+        /* silently fail — Gantt falls back to single-color bars */
+      });
   }, [contacts, viewMode]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this contact submission?')) return;
+    if (!confirm("Are you sure you want to delete this contact submission?"))
+      return;
     try {
       await submissionsApi.delete(id);
-      setContacts(prev => prev.filter(contact => contact.id !== id));
-      setSelectedIds(prev => { const n = new Set(prev); n.delete(id); return n; });
+      setContacts((prev) => prev.filter((contact) => contact.id !== id));
+      setSelectedIds((prev) => {
+        const n = new Set(prev);
+        n.delete(id);
+        return n;
+      });
     } catch {
-      setPageError('Failed to delete contact. Please try again.');
+      setPageError("Failed to delete contact. Please try again.");
     }
   };
 
   const handleSelectAll = (checked: boolean) => {
-    checked ? selectAll(filteredContacts.map(c => c.id)) : clearSelection();
+    checked ? selectAll(filteredContacts.map((c) => c.id)) : clearSelection();
   };
 
   const handleSelectOne = (id: string, checked: boolean) => {
-    setSelectedIds(prev => { const n = new Set(prev); checked ? n.add(id) : n.delete(id); return n; });
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      checked ? n.add(id) : n.delete(id);
+      return n;
+    });
   };
 
   const handleBulkDelete = async () => {
@@ -166,66 +212,80 @@ export default function ContactsPage() {
     if (!confirm(`Delete ${selectedIds.size} selected contact(s)?`)) return;
     try {
       await submissionsApi.bulkDelete(Array.from(selectedIds).map(Number));
-      setContacts(prev => prev.filter(c => !selectedIds.has(c.id)));
+      setContacts((prev) => prev.filter((c) => !selectedIds.has(c.id)));
       clearSelection();
     } catch {
-      setPageError('Failed to delete selected contacts. Please try again.');
+      setPageError("Failed to delete selected contacts. Please try again.");
     }
   };
 
   const handleExportCSV = async () => {
     try {
       // Create CSV content
-      const headers = ['Name', 'Email', 'Company', 'Project Type', 'Message', 'Date', 'IP Address'];
+      const headers = [
+        "Name",
+        "Email",
+        "Company",
+        "Project Type",
+        "Message",
+        "Date",
+        "IP Address",
+      ];
       const csvContent = [
-        headers.join(','),
-        ...filteredContacts.map(contact => [
-          `"${contact.name || ''}"`,
-          `"${contact.email || ''}"`,
-          `"${contact.company || ''}"`,
-          `"${contact.project_type || ''}"`,
-          `"${contact.message?.replace(/"/g, '""') || ''}"`,
-          `"${formatDate(contact.submitted_at, { hour: undefined, minute: undefined })}"`,
-          `"${contact.ip_address || ''}"`
-        ].join(','))
-      ].join('\n');
+        headers.join(","),
+        ...filteredContacts.map((contact) =>
+          [
+            `"${contact.name || ""}"`,
+            `"${contact.email || ""}"`,
+            `"${contact.company || ""}"`,
+            `"${contact.project_type || ""}"`,
+            `"${contact.message?.replace(/"/g, '""') || ""}"`,
+            `"${formatDate(contact.submitted_at, { hour: undefined, minute: undefined })}"`,
+            `"${contact.ip_address || ""}"`,
+          ].join(","),
+        ),
+      ].join("\n");
 
       // Download CSV
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `contacts-${new Date().toISOString().split("T")[0]}.csv`;
       link.click();
     } catch {
-      setPageError('Failed to export CSV. Please try again.');
+      setPageError("Failed to export CSV. Please try again.");
     }
   };
 
-  const filteredContacts = contacts.filter(contact => {
-    if (statusFilter && (contact.status || 'new') !== statusFilter) return false;
+  const filteredContacts = contacts.filter((contact) => {
+    if (statusFilter && (contact.status || "new") !== statusFilter)
+      return false;
 
     // Apply filter tokens (positive and negated)
-    const thisMonth = testFilter('is:this-month');
+    const thisMonth = testFilter("is:this-month");
     if (thisMonth !== null) {
       const now = new Date();
       const d = new Date(contact.submitted_at);
-      const isThisMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const isThisMonth =
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear();
       if (thisMonth && !isThisMonth) return false;
       if (!thisMonth && isThisMonth) return false;
     }
-    const last7 = testFilter('is:last-7-days');
+    const last7 = testFilter("is:last-7-days");
     if (last7 !== null) {
-      const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const isRecent = new Date(contact.submitted_at) > sevenDaysAgo;
       if (last7 && !isRecent) return false;
       if (!last7 && isRecent) return false;
     }
-    const hasCompany = testFilter('has:company');
+    const hasCompany = testFilter("has:company");
     if (hasCompany !== null) {
       if (hasCompany && !contact.company) return false;
       if (!hasCompany && contact.company) return false;
     }
-    const hasTodos = testFilter('has:todos');
+    const hasTodos = testFilter("has:todos");
     if (hasTodos !== null) {
       const has = todoContactIds.has(String(contact.id));
       if (hasTodos && !has) return false;
@@ -248,19 +308,33 @@ export default function ContactsPage() {
     <ProtectedLayout>
       <div className="space-y-6">
         <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
-        <PageHeader title="Contact Submissions" description="Manage customer inquiries and contact form submissions">
+        <PageHeader
+          title="Contact Submissions"
+          description="Manage customer inquiries and contact form submissions"
+        >
           <div className="flex gap-2">
             {selectedIds.size > 0 && (
-              <Button variant="destructive" onClick={() => void handleBulkDelete()} className="flex items-center gap-2">
+              <Button
+                variant="destructive"
+                onClick={() => void handleBulkDelete()}
+                className="flex items-center gap-2"
+              >
                 <TrashIcon className="h-4 w-4" />
                 Delete ({selectedIds.size})
               </Button>
             )}
-            <Button variant="outline" onClick={() => setShowAddContact(true)} className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowAddContact(true)}
+              className="flex items-center gap-2"
+            >
               <PlusIcon className="h-4 w-4" />
               Add Contact
             </Button>
-            <Button onClick={() => void handleExportCSV()} className="flex items-center gap-2">
+            <Button
+              onClick={() => void handleExportCSV()}
+              className="flex items-center gap-2"
+            >
               <ArrowDownTrayIcon className="h-4 w-4" />
               Export CSV
             </Button>
@@ -284,25 +358,35 @@ export default function ContactsPage() {
             {searchTerm && (
               <button
                 type="button"
-                onClick={() => setSearchTerm('')}
+                onClick={() => setSearchTerm("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
             )}
             {filteredSuggestions.length > 0 && (
-              <div ref={suggestionsRef} className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden">
+              <div
+                ref={suggestionsRef}
+                className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg overflow-hidden"
+              >
                 {filteredSuggestions.map((s, i) => (
                   <button
                     key={s.token}
                     type="button"
-                    onMouseDown={(e) => { e.preventDefault(); applySuggestion(s.token); }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      applySuggestion(s.token);
+                    }}
                     className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between ${
-                      i === suggestionIndex ? 'bg-accent' : 'hover:bg-accent'
+                      i === suggestionIndex ? "bg-accent" : "hover:bg-accent"
                     }`}
                   >
-                    <code className="text-xs bg-accent px-1.5 py-0.5 rounded font-mono">{s.token}</code>
-                    <span className="text-muted-foreground text-xs">{s.label}</span>
+                    <code className="text-xs bg-accent px-1.5 py-0.5 rounded font-mono">
+                      {s.token}
+                    </code>
+                    <span className="text-muted-foreground text-xs">
+                      {s.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -310,7 +394,9 @@ export default function ContactsPage() {
           </div>
           <select
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value as ContactStatus | '')}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as ContactStatus | "")
+            }
             className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-[160px]"
           >
             <option value="">All statuses</option>
@@ -324,11 +410,23 @@ export default function ContactsPage() {
             <option value="archived">Archived</option>
           </select>
           <div className="flex rounded-md border border-input overflow-hidden">
-            {([
-              { mode: 'table' as ViewMode, icon: TableCellsIcon, label: 'Table' },
-              { mode: 'kanban' as ViewMode, icon: ViewColumnsIcon, label: 'Kanban' },
-              { mode: 'calendar' as ViewMode, icon: CalendarDaysIcon, label: 'Timeline' },
-            ]).map(({ mode, icon: Icon, label }) => (
+            {[
+              {
+                mode: "table" as ViewMode,
+                icon: TableCellsIcon,
+                label: "Table",
+              },
+              {
+                mode: "kanban" as ViewMode,
+                icon: ViewColumnsIcon,
+                label: "Kanban",
+              },
+              {
+                mode: "calendar" as ViewMode,
+                icon: CalendarDaysIcon,
+                label: "Timeline",
+              },
+            ].map(({ mode, icon: Icon, label }) => (
               <button
                 key={mode}
                 type="button"
@@ -336,8 +434,8 @@ export default function ContactsPage() {
                 title={label}
                 className={`px-3 py-2 transition-colors ${
                   viewMode === mode
-                    ? 'bg-foreground text-background'
-                    : 'bg-background text-muted-foreground hover:text-foreground hover:bg-accent'
+                    ? "bg-foreground text-background"
+                    : "bg-background text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -348,41 +446,72 @@ export default function ContactsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {([
+          {[
             {
-              icon: EnvelopeIcon, color: 'text-blue-600', label: 'Total Contacts',
-              value: contacts.length, token: '__clear__' as string | null, extra: undefined as string | undefined,
+              icon: EnvelopeIcon,
+              color: "text-blue-600",
+              label: "Total Contacts",
+              value: contacts.length,
+              token: "__clear__" as string | null,
+              extra: undefined as string | undefined,
             },
             {
-              icon: CalendarIcon, color: 'text-green-600', label: 'This Month',
-              value: contacts.filter(c => {
-                const now = new Date(); const d = new Date(c.submitted_at);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+              icon: CalendarIcon,
+              color: "text-green-600",
+              label: "This Month",
+              value: contacts.filter((c) => {
+                const now = new Date();
+                const d = new Date(c.submitted_at);
+                return (
+                  d.getMonth() === now.getMonth() &&
+                  d.getFullYear() === now.getFullYear()
+                );
               }).length,
-              token: 'is:this-month', extra: undefined as string | undefined,
+              token: "is:this-month",
+              extra: undefined as string | undefined,
             },
             {
-              icon: BuildingOfficeIcon, color: 'text-purple-600', label: 'With Company',
-              value: contacts.filter(c => c.company).length, token: 'has:company', extra: undefined as string | undefined,
+              icon: BuildingOfficeIcon,
+              color: "text-purple-600",
+              label: "With Company",
+              value: contacts.filter((c) => c.company).length,
+              token: "has:company",
+              extra: undefined as string | undefined,
             },
             {
-              icon: CheckCircleIcon, color: 'text-emerald-600', label: 'Open Todos',
-              value: todosSummary?.total ?? '—', token: 'has:todos',
-              extra: todosSummary && todosSummary.total > 0
-                ? `across ${todosSummary.contacts} contact${todosSummary.contacts !== 1 ? 's' : ''}`
-                : undefined,
+              icon: CheckCircleIcon,
+              color: "text-emerald-600",
+              label: "Open Todos",
+              value: todosSummary?.total ?? "—",
+              token: "has:todos",
+              extra:
+                todosSummary && todosSummary.total > 0
+                  ? `across ${todosSummary.contacts} contact${todosSummary.contacts !== 1 ? "s" : ""}`
+                  : undefined,
             },
-          ]).map(({ icon: Icon, color, label, value, token, extra }) => {
-            const isClear = token === '__clear__';
-            const isActive = token && !isClear ? activeFilters.has(token) : false;
-            const isNegated = token && !isClear ? negatedFilters.has(token) : false;
+          ].map(({ icon: Icon, color, label, value, token, extra }) => {
+            const isClear = token === "__clear__";
+            const isActive =
+              token && !isClear ? activeFilters.has(token) : false;
+            const isNegated =
+              token && !isClear ? negatedFilters.has(token) : false;
             return (
               <Card
                 key={label}
                 className={`transition-all cursor-pointer hover:shadow-md ${
-                  isActive ? 'ring-2 ring-foreground bg-muted' : isNegated ? 'ring-2 ring-red-400 bg-red-50/50' : ''
+                  isActive
+                    ? "ring-2 ring-foreground bg-muted"
+                    : isNegated
+                      ? "ring-2 ring-red-400 bg-red-50/50"
+                      : ""
                 }`}
-                onClick={isClear ? () => setSearchTerm('') : token ? (e: React.MouseEvent) => toggleFilter(token, e) : undefined}
+                onClick={
+                  isClear
+                    ? () => setSearchTerm("")
+                    : token
+                      ? (e: React.MouseEvent) => toggleFilter(token, e)
+                      : undefined
+                }
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -390,7 +519,9 @@ export default function ContactsPage() {
                     <div>
                       <p className="text-sm text-muted-foreground">{label}</p>
                       <p className="text-2xl font-bold">{value}</p>
-                      {extra && <p className="text-xs text-muted-foreground">{extra}</p>}
+                      {extra && (
+                        <p className="text-xs text-muted-foreground">{extra}</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -403,7 +534,7 @@ export default function ContactsPage() {
         <TestEmailPanel onEmailSent={() => void loadContacts()} />
 
         {/* Kanban View */}
-        {viewMode === 'kanban' && (
+        {viewMode === "kanban" && (
           <ContactsKanban
             contacts={filteredContacts}
             selectedContactId={selectedContact?.id}
@@ -415,7 +546,7 @@ export default function ContactsPage() {
         )}
 
         {/* Calendar View */}
-        {viewMode === 'calendar' && (
+        {viewMode === "calendar" && (
           <ContactsCalendar
             calendarMonth={calendarMonth}
             setCalendarMonth={setCalendarMonth}
@@ -428,144 +559,232 @@ export default function ContactsPage() {
         )}
 
         {/* Contacts Table */}
-        {viewMode === 'table' && <Card>
-          <CardHeader>
-            <CardTitle>Contact Submissions ({filteredContacts.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">Loading contacts...</div>
-            ) : filteredContacts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchTerm ? 'No contacts match your search' : 'No contact submissions yet'}
-              </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="sticky top-0 z-10">
-                      <tr className="border-b bg-muted">
-                        <th className="p-3 w-8">
-                          <div className={`${selectedIds.size > 0 ? 'opacity-100' : 'opacity-0 hover:opacity-100'} transition-opacity`}>
-                            <input type="checkbox" className="rounded cursor-pointer"
-                              checked={selectedIds.size === filteredContacts.length && filteredContacts.length > 0}
-                              onChange={e => handleSelectAll(e.target.checked)} />
-                          </div>
-                        </th>
-                        <th className="text-left p-3 font-medium">Name</th>
-                        <th className="text-left p-3 font-medium">Email</th>
-                        <th className="text-left p-3 font-medium">Company</th>
-                        <th className="text-left p-3 font-medium">Project Type</th>
-                        <th className="text-left p-3 font-medium">Status</th>
-                        <th className="text-left p-3 font-medium">Date</th>
-                        <th className="text-left p-3 font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredContacts.map((contact, idx) => {
-                        const isViewing = selectedContact?.id === contact.id;
-                        const isChecked = selectedIds.has(contact.id);
-                        const rowBg = isViewing
-                          ? 'bg-amber-50 border-l-2 border-l-amber-400 relative z-50'
-                          : isChecked
-                            ? 'bg-blue-50'
-                            : idx % 2 === 1 ? 'bg-muted/50' : '';
-                        return (
-                        <tr key={contact.id} className={`border-b hover:bg-accent ${rowBg} group/row`}>
-                          <td className="p-3">
-                            <div className={`${selectedIds.has(contact.id) ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'} transition-opacity`}>
-                              <input type="checkbox" className="rounded cursor-pointer"
-                                checked={selectedIds.has(contact.id)}
-                                onChange={e => handleSelectOne(contact.id, e.target.checked)} />
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <div className="font-medium">{highlightMatch(contact.name, searchText)}</div>
-                          </td>
-                          <td className="p-3 max-w-[220px]">
-                            <div className="group flex items-center gap-1.5">
-                              <span className={`text-sm ${prefs.truncateEmails ? '' : 'truncate'}`}
-                                title={prefs.truncateEmails && truncateEmail(contact.email) !== contact.email ? contact.email : !prefs.truncateEmails ? contact.email : undefined}>
-                                {prefs.truncateEmails ? truncateEmail(contact.email) : contact.email}
-                              </span>
-                              <button type="button" onClick={() => void copyEmail(contact.email, contact.email)} title="Copy email"
-                                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}>
-                                {isEmailCopied(contact.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
-                              </button>
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            {contact.company ? (
-                              <span className="text-foreground">{highlightMatch(contact.company, searchText)}</span>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            {contact.project_type ? (
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getProjectTypeColor(contact.project_type)}`}>
-                                {contact.project_type}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            {(() => {
-                              const badge = getStatusBadge(contact.status);
-                              return (
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}>
-                                  {badge.label}
-                                </span>
-                              );
-                            })()}
-                          </td>
-                          <td className="p-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              {prefs.showGeoInfo && contact.country && !isPrivateIp(contact.ip_address ?? '') && (
-                                <span title={contact.country_name ?? contact.country}>
-                                  {countryFlag(contact.country)}
-                                </span>
-                              )}
-                              {formatDate(contact.submitted_at)}
-                            </div>
-                            {prefs.showGeoInfo && contact.city && (
-                              <div className="text-xs text-muted-foreground mt-0.5">
-                                {contact.city}{contact.country_name ? `, ${contact.country_name}` : ''}
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedContact(contact)}
-                              >
-                                <EyeIcon className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleDelete(contact.id)}
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+        {viewMode === "table" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Contact Submissions ({filteredContacts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">Loading contacts...</div>
+              ) : filteredContacts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchTerm
+                    ? "No contacts match your search"
+                    : "No contact submissions yet"}
                 </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="sticky top-0 z-10">
+                        <tr className="border-b bg-muted">
+                          <th className="p-3 w-8">
+                            <div
+                              className={`${selectedIds.size > 0 ? "opacity-100" : "opacity-0 hover:opacity-100"} transition-opacity`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="rounded cursor-pointer"
+                                checked={
+                                  selectedIds.size ===
+                                    filteredContacts.length &&
+                                  filteredContacts.length > 0
+                                }
+                                onChange={(e) =>
+                                  handleSelectAll(e.target.checked)
+                                }
+                              />
+                            </div>
+                          </th>
+                          <th className="text-left p-3 font-medium">Name</th>
+                          <th className="text-left p-3 font-medium">Email</th>
+                          <th className="text-left p-3 font-medium">Company</th>
+                          <th className="text-left p-3 font-medium">
+                            Project Type
+                          </th>
+                          <th className="text-left p-3 font-medium">Status</th>
+                          <th className="text-left p-3 font-medium">Date</th>
+                          <th className="text-left p-3 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredContacts.map((contact, idx) => {
+                          const isViewing = selectedContact?.id === contact.id;
+                          const isChecked = selectedIds.has(contact.id);
+                          const rowBg = isViewing
+                            ? "bg-amber-50 border-l-2 border-l-amber-400 relative z-50"
+                            : isChecked
+                              ? "bg-blue-50"
+                              : idx % 2 === 1
+                                ? "bg-muted/50"
+                                : "";
+                          return (
+                            <tr
+                              key={contact.id}
+                              className={`border-b hover:bg-accent ${rowBg} group/row`}
+                            >
+                              <td className="p-3">
+                                <div
+                                  className={`${selectedIds.has(contact.id) ? "opacity-100" : "opacity-0 group-hover/row:opacity-100"} transition-opacity`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="rounded cursor-pointer"
+                                    checked={selectedIds.has(contact.id)}
+                                    onChange={(e) =>
+                                      handleSelectOne(
+                                        contact.id,
+                                        e.target.checked,
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </td>
+                              <td className="p-3">
+                                <div className="font-medium">
+                                  {highlightMatch(contact.name, searchText)}
+                                </div>
+                              </td>
+                              <td className="p-3 max-w-[220px]">
+                                <div className="group flex items-center gap-1.5">
+                                  <span
+                                    className={`text-sm ${prefs.truncateEmails ? "" : "truncate"}`}
+                                    title={
+                                      prefs.truncateEmails &&
+                                      truncateEmail(contact.email) !==
+                                        contact.email
+                                        ? contact.email
+                                        : !prefs.truncateEmails
+                                          ? contact.email
+                                          : undefined
+                                    }
+                                  >
+                                    {prefs.truncateEmails
+                                      ? truncateEmail(contact.email)
+                                      : contact.email}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void copyEmail(
+                                        contact.email,
+                                        contact.email,
+                                      )
+                                    }
+                                    title="Copy email"
+                                    className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? "text-emerald-500" : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground"}`}
+                                  >
+                                    {isEmailCopied(contact.email) ? (
+                                      <CheckIcon className="h-3.5 w-3.5" />
+                                    ) : (
+                                      <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="p-3">
+                                {contact.company ? (
+                                  <span className="text-foreground">
+                                    {highlightMatch(
+                                      contact.company,
+                                      searchText,
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    -
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                {contact.project_type ? (
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${getProjectTypeColor(contact.project_type)}`}
+                                  >
+                                    {contact.project_type}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    -
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                {(() => {
+                                  const badge = getStatusBadge(contact.status);
+                                  return (
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium ${badge.color}`}
+                                    >
+                                      {badge.label}
+                                    </span>
+                                  );
+                                })()}
+                              </td>
+                              <td className="p-3 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  {prefs.showGeoInfo &&
+                                    contact.country &&
+                                    !isPrivateIp(contact.ip_address ?? "") && (
+                                      <span
+                                        title={
+                                          contact.country_name ??
+                                          contact.country
+                                        }
+                                      >
+                                        {countryFlag(contact.country)}
+                                      </span>
+                                    )}
+                                  {formatDate(contact.submitted_at)}
+                                </div>
+                                {prefs.showGeoInfo && contact.city && (
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {contact.city}
+                                    {contact.country_name
+                                      ? `, ${contact.country_name}`
+                                      : ""}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-3">
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setSelectedContact(contact)}
+                                  >
+                                    <EyeIcon className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDelete(contact.id)}
+                                  >
+                                    <TrashIcon className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
 
-                {/* Pagination */}
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-              </>
-            )}
-          </CardContent>
-        </Card>}
+                  {/* Pagination */}
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Add Contact Modal */}
         <AddContactModal

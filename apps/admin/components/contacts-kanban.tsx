@@ -1,12 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback, useMemo } from 'react';
-import { ClockIcon, XMarkIcon, FunnelIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { Button } from '@/components/ui/button';
-import { submissionsApi } from '@/lib/api';
-import { highlightMatch } from '@/lib/utils';
+import { useState, useRef, useCallback, useMemo } from "react";
+import {
+  ClockIcon,
+  XMarkIcon,
+  FunnelIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/outline";
+import { Button } from "@/components/ui/button";
+import { submissionsApi } from "@/lib/api";
+import { highlightMatch } from "@/lib/utils";
 
-type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
+type ContactStatus =
+  | "new"
+  | "reviewed"
+  | "contacted"
+  | "qualified"
+  | "proposal_sent"
+  | "won"
+  | "lost"
+  | "archived";
 
 interface Contact {
   id: string;
@@ -27,15 +41,60 @@ interface Contact {
   status_changed_at?: string;
 }
 
-const PIPELINE_STAGES: { value: ContactStatus; label: string; color: string; headerBg: string }[] = [
-  { value: 'new', label: 'New', color: 'bg-blue-100 text-blue-800', headerBg: 'bg-blue-500' },
-  { value: 'reviewed', label: 'Reviewed', color: 'bg-indigo-100 text-indigo-800', headerBg: 'bg-indigo-500' },
-  { value: 'contacted', label: 'Contacted', color: 'bg-cyan-100 text-cyan-800', headerBg: 'bg-cyan-500' },
-  { value: 'qualified', label: 'Qualified', color: 'bg-emerald-100 text-emerald-800', headerBg: 'bg-emerald-500' },
-  { value: 'proposal_sent', label: 'Proposal Sent', color: 'bg-amber-100 text-amber-800', headerBg: 'bg-amber-500' },
-  { value: 'won', label: 'Won', color: 'bg-green-100 text-green-800', headerBg: 'bg-green-500' },
-  { value: 'lost', label: 'Lost', color: 'bg-red-100 text-red-800', headerBg: 'bg-red-500' },
-  { value: 'archived', label: 'Archived', color: 'bg-gray-100 text-gray-600', headerBg: 'bg-gray-500' },
+const PIPELINE_STAGES: {
+  value: ContactStatus;
+  label: string;
+  color: string;
+  headerBg: string;
+}[] = [
+  {
+    value: "new",
+    label: "New",
+    color: "bg-blue-100 text-blue-800",
+    headerBg: "bg-blue-500",
+  },
+  {
+    value: "reviewed",
+    label: "Reviewed",
+    color: "bg-indigo-100 text-indigo-800",
+    headerBg: "bg-indigo-500",
+  },
+  {
+    value: "contacted",
+    label: "Contacted",
+    color: "bg-cyan-100 text-cyan-800",
+    headerBg: "bg-cyan-500",
+  },
+  {
+    value: "qualified",
+    label: "Qualified",
+    color: "bg-emerald-100 text-emerald-800",
+    headerBg: "bg-emerald-500",
+  },
+  {
+    value: "proposal_sent",
+    label: "Proposal Sent",
+    color: "bg-amber-100 text-amber-800",
+    headerBg: "bg-amber-500",
+  },
+  {
+    value: "won",
+    label: "Won",
+    color: "bg-green-100 text-green-800",
+    headerBg: "bg-green-500",
+  },
+  {
+    value: "lost",
+    label: "Lost",
+    color: "bg-red-100 text-red-800",
+    headerBg: "bg-red-500",
+  },
+  {
+    value: "archived",
+    label: "Archived",
+    color: "bg-gray-100 text-gray-600",
+    headerBg: "bg-gray-500",
+  },
 ];
 
 interface ContactsKanbanProps {
@@ -58,7 +117,7 @@ interface ConfirmDialogState {
   targetLabel: string;
 }
 
-type ColumnFilter = 'all' | 'populated' | 'custom';
+type ColumnFilter = "all" | "populated" | "custom";
 
 export default function ContactsKanban({
   contacts,
@@ -70,36 +129,39 @@ export default function ContactsKanban({
 }: ContactsKanbanProps) {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dropTarget, setDropTarget] = useState<ContactStatus | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
-  const [comment, setComment] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(
+    null,
+  );
+  const [comment, setComment] = useState("");
   const [updating, setUpdating] = useState(false);
   const commentRef = useRef<HTMLTextAreaElement>(null);
 
   // Column filtering
-  const [columnFilter, setColumnFilter] = useState<ColumnFilter>('populated');
+  const [columnFilter, setColumnFilter] = useState<ColumnFilter>("populated");
   const [selectedColumns, setSelectedColumns] = useState<Set<ContactStatus>>(
-    new Set(PIPELINE_STAGES.map(s => s.value))
+    new Set(PIPELINE_STAGES.map((s) => s.value)),
   );
   const [showColumnPicker, setShowColumnPicker] = useState(false);
 
   const populatedStatuses = useMemo(() => {
     const populated = new Set<ContactStatus>();
     for (const c of contacts) {
-      populated.add((c.status || 'new') as ContactStatus);
+      populated.add((c.status || "new") as ContactStatus);
     }
     return populated;
   }, [contacts]);
 
   const visibleStages = useMemo(() => {
-    return PIPELINE_STAGES.filter(stage => {
-      if (columnFilter === 'populated') return populatedStatuses.has(stage.value);
-      if (columnFilter === 'custom') return selectedColumns.has(stage.value);
+    return PIPELINE_STAGES.filter((stage) => {
+      if (columnFilter === "populated")
+        return populatedStatuses.has(stage.value);
+      if (columnFilter === "custom") return selectedColumns.has(stage.value);
       return true;
     });
   }, [columnFilter, populatedStatuses, selectedColumns]);
 
   const toggleColumn = (status: ContactStatus) => {
-    setSelectedColumns(prev => {
+    setSelectedColumns((prev) => {
       const next = new Set(prev);
       if (next.has(status)) {
         if (next.size > 1) next.delete(status);
@@ -110,60 +172,69 @@ export default function ContactsKanban({
     });
   };
 
-  const handleDragStart = useCallback((e: React.DragEvent, contact: Contact) => {
-    const status = (contact.status || 'new') as ContactStatus;
-    setDragState({ contactId: contact.id, sourceStatus: status });
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', contact.id);
-    // Capture element before rAF — React recycles the event so currentTarget becomes null
-    const el = e.currentTarget as HTMLElement;
-    requestAnimationFrame(() => {
-      el.style.opacity = '0.5';
-    });
-  }, []);
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, contact: Contact) => {
+      const status = (contact.status || "new") as ContactStatus;
+      setDragState({ contactId: contact.id, sourceStatus: status });
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", contact.id);
+      // Capture element before rAF — React recycles the event so currentTarget becomes null
+      const el = e.currentTarget as HTMLElement;
+      requestAnimationFrame(() => {
+        el.style.opacity = "0.5";
+      });
+    },
+    [],
+  );
 
   const handleDragEnd = useCallback((e: React.DragEvent) => {
-    (e.currentTarget as HTMLElement).style.opacity = '1';
+    (e.currentTarget as HTMLElement).style.opacity = "1";
     setDragState(null);
     setDropTarget(null);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent, stageValue: ContactStatus) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    if (dragState && dragState.sourceStatus !== stageValue) {
-      setDropTarget(stageValue);
-    }
-  }, [dragState]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, stageValue: ContactStatus) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dragState && dragState.sourceStatus !== stageValue) {
+        setDropTarget(stageValue);
+      }
+    },
+    [dragState],
+  );
 
   const handleDragLeave = useCallback(() => {
     setDropTarget(null);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent, stageValue: ContactStatus) => {
-    e.preventDefault();
-    setDropTarget(null);
+  const handleDrop = useCallback(
+    (e: React.DragEvent, stageValue: ContactStatus) => {
+      e.preventDefault();
+      setDropTarget(null);
 
-    if (!dragState || dragState.sourceStatus === stageValue) return;
+      if (!dragState || dragState.sourceStatus === stageValue) return;
 
-    const contact = contacts.find(c => c.id === dragState.contactId);
-    if (!contact) return;
+      const contact = contacts.find((c) => c.id === dragState.contactId);
+      if (!contact) return;
 
-    const stage = PIPELINE_STAGES.find(s => s.value === stageValue);
-    if (!stage) return;
+      const stage = PIPELINE_STAGES.find((s) => s.value === stageValue);
+      if (!stage) return;
 
-    // Show confirmation dialog
-    setConfirmDialog({
-      contact,
-      targetStatus: stageValue,
-      targetLabel: stage.label,
-    });
-    setComment('');
-    setDragState(null);
+      // Show confirmation dialog
+      setConfirmDialog({
+        contact,
+        targetStatus: stageValue,
+        targetLabel: stage.label,
+      });
+      setComment("");
+      setDragState(null);
 
-    // Focus the comment field after dialog renders
-    setTimeout(() => commentRef.current?.focus(), 100);
-  }, [dragState, contacts]);
+      // Focus the comment field after dialog renders
+      setTimeout(() => commentRef.current?.focus(), 100);
+    },
+    [dragState, contacts],
+  );
 
   const handleConfirmMove = async () => {
     if (!confirmDialog) return;
@@ -176,7 +247,7 @@ export default function ContactsKanban({
       );
       onContactUpdated(result.data);
       setConfirmDialog(null);
-      setComment('');
+      setComment("");
     } catch {
       // Error handled by API interceptors
     } finally {
@@ -186,15 +257,15 @@ export default function ContactsKanban({
 
   const handleCancelMove = () => {
     setConfirmDialog(null);
-    setComment('');
+    setComment("");
   };
 
   const handleConfirmKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void handleConfirmMove();
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       handleCancelMove();
     }
   };
@@ -209,40 +280,42 @@ export default function ContactsKanban({
       {/* Column Filter Toolbar */}
       <div className="flex items-center gap-2 mb-3">
         <FunnelIcon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground font-medium">Columns:</span>
+        <span className="text-xs text-muted-foreground font-medium">
+          Columns:
+        </span>
         <div className="flex rounded-md border border-border overflow-hidden">
-          {([
-            { value: 'populated' as ColumnFilter, label: 'Populated' },
-            { value: 'all' as ColumnFilter, label: 'All' },
-            { value: 'custom' as ColumnFilter, label: 'Custom' },
-          ]).map(({ value, label }) => (
+          {[
+            { value: "populated" as ColumnFilter, label: "Populated" },
+            { value: "all" as ColumnFilter, label: "All" },
+            { value: "custom" as ColumnFilter, label: "Custom" },
+          ].map(({ value, label }) => (
             <button
               key={value}
               type="button"
               onClick={() => {
                 setColumnFilter(value);
-                if (value === 'custom') setShowColumnPicker(true);
+                if (value === "custom") setShowColumnPicker(true);
               }}
               className={`px-3 py-1 text-xs font-medium transition-colors ${
                 columnFilter === value
-                  ? 'bg-foreground text-background'
-                  : 'bg-background text-muted-foreground hover:bg-accent'
+                  ? "bg-foreground text-background"
+                  : "bg-background text-muted-foreground hover:bg-accent"
               }`}
             >
               {label}
             </button>
           ))}
         </div>
-        {columnFilter === 'custom' && (
+        {columnFilter === "custom" && (
           <button
             type="button"
             onClick={() => setShowColumnPicker(!showColumnPicker)}
             className="text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
-            {showColumnPicker ? 'Hide picker' : 'Edit columns'}
+            {showColumnPicker ? "Hide picker" : "Edit columns"}
           </button>
         )}
-        {columnFilter !== 'all' && (
+        {columnFilter !== "all" && (
           <span className="text-xs text-muted-foreground">
             {visibleStages.length} of {PIPELINE_STAGES.length} columns
           </span>
@@ -250,11 +323,13 @@ export default function ContactsKanban({
       </div>
 
       {/* Custom Column Picker */}
-      {columnFilter === 'custom' && showColumnPicker && (
+      {columnFilter === "custom" && showColumnPicker && (
         <div className="flex flex-wrap gap-2 mb-3">
-          {PIPELINE_STAGES.map(stage => {
+          {PIPELINE_STAGES.map((stage) => {
             const isSelected = selectedColumns.has(stage.value);
-            const count = contacts.filter(c => (c.status || 'new') === stage.value).length;
+            const count = contacts.filter(
+              (c) => (c.status || "new") === stage.value,
+            ).length;
             return (
               <button
                 key={stage.value}
@@ -263,7 +338,7 @@ export default function ContactsKanban({
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
                   isSelected
                     ? `${stage.color} border-transparent`
-                    : 'bg-muted text-muted-foreground border-border hover:border-border'
+                    : "bg-muted text-muted-foreground border-border hover:border-border"
                 }`}
               >
                 {isSelected ? (
@@ -281,17 +356,26 @@ export default function ContactsKanban({
 
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-3 min-w-max">
-          {visibleStages.map(stage => {
-            const stageContacts = contacts.filter(c => (c.status || 'new') === stage.value);
+          {visibleStages.map((stage) => {
+            const stageContacts = contacts.filter(
+              (c) => (c.status || "new") === stage.value,
+            );
             const isDropZone = dropTarget === stage.value;
             const isDragSource = dragState?.sourceStatus === stage.value;
 
             return (
-              <div key={stage.value} className="w-[240px] flex-shrink-0 flex flex-col">
+              <div
+                key={stage.value}
+                className="w-[240px] flex-shrink-0 flex flex-col"
+              >
                 {/* Column header */}
-                <div className={`${stage.headerBg} text-white px-3 py-2 rounded-t-lg flex items-center justify-between`}>
+                <div
+                  className={`${stage.headerBg} text-white px-3 py-2 rounded-t-lg flex items-center justify-between`}
+                >
                   <span className="text-sm font-medium">{stage.label}</span>
-                  <span className="text-xs bg-white/20 rounded-full px-2 py-0.5">{stageContacts.length}</span>
+                  <span className="text-xs bg-white/20 rounded-full px-2 py-0.5">
+                    {stageContacts.length}
+                  </span>
                 </div>
                 {/* Column body — drop zone */}
                 <div
@@ -300,18 +384,20 @@ export default function ContactsKanban({
                   onDrop={(e) => handleDrop(e, stage.value)}
                   className={`rounded-b-lg p-2 space-y-2 min-h-[200px] flex-1 border border-t-0 transition-colors duration-150 ${
                     isDropZone
-                      ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200'
+                      ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200"
                       : isDragSource
-                        ? 'bg-accent border-border'
-                        : 'bg-muted border-border'
+                        ? "bg-accent border-border"
+                        : "bg-muted border-border"
                   }`}
                 >
                   {stageContacts.length === 0 ? (
-                    <p className={`text-xs text-center py-4 ${isDropZone ? 'text-blue-400 font-medium' : 'text-muted-foreground'}`}>
-                      {isDropZone ? 'Drop here' : 'No contacts'}
+                    <p
+                      className={`text-xs text-center py-4 ${isDropZone ? "text-blue-400 font-medium" : "text-muted-foreground"}`}
+                    >
+                      {isDropZone ? "Drop here" : "No contacts"}
                     </p>
                   ) : (
-                    stageContacts.map(contact => {
+                    stageContacts.map((contact) => {
                       const isViewing = selectedContactId === contact.id;
                       const isDragging = dragState?.contactId === contact.id;
                       return (
@@ -323,30 +409,51 @@ export default function ContactsKanban({
                           onClick={() => onSelectContact(contact)}
                           className={`bg-white rounded-lg p-3 border cursor-grab active:cursor-grabbing transition-all hover:shadow-sm select-none ${
                             isDragging
-                              ? 'opacity-50 ring-2 ring-blue-300'
+                              ? "opacity-50 ring-2 ring-blue-300"
                               : isViewing
-                                ? 'border-amber-400 ring-1 ring-amber-200 relative z-50'
-                                : 'border-border hover:border-border'
+                                ? "border-amber-400 ring-1 ring-amber-200 relative z-50"
+                                : "border-border hover:border-border"
                           }`}
                         >
-                          <p className="font-medium text-sm truncate">{highlightMatch(contact.name, searchTerm)}</p>
+                          <p className="font-medium text-sm truncate">
+                            {highlightMatch(contact.name, searchTerm)}
+                          </p>
                           {contact.company && (
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">{highlightMatch(contact.company, searchTerm)}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {highlightMatch(contact.company, searchTerm)}
+                            </p>
                           )}
-                          <p className="text-xs text-muted-foreground mt-1">{getColumnDate(contact)}</p>
-                          {contact.follow_up_at && (() => {
-                            const diff = Math.ceil((new Date(contact.follow_up_at).getTime() - Date.now()) / 86400000);
-                            return (
-                              <div className={`flex items-center gap-1 mt-1.5 text-xs ${
-                                diff < 0 ? 'text-red-500' : diff === 0 ? 'text-amber-600' : 'text-muted-foreground'
-                              }`}>
-                                <ClockIcon className="h-3 w-3" />
-                                <span>
-                                  {diff < 0 ? `Overdue ${Math.abs(diff)}d` : diff === 0 ? 'Due today' : `In ${diff}d`}
-                                </span>
-                              </div>
-                            );
-                          })()}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {getColumnDate(contact)}
+                          </p>
+                          {contact.follow_up_at &&
+                            (() => {
+                              const diff = Math.ceil(
+                                (new Date(contact.follow_up_at).getTime() -
+                                  Date.now()) /
+                                  86400000,
+                              );
+                              return (
+                                <div
+                                  className={`flex items-center gap-1 mt-1.5 text-xs ${
+                                    diff < 0
+                                      ? "text-red-500"
+                                      : diff === 0
+                                        ? "text-amber-600"
+                                        : "text-muted-foreground"
+                                  }`}
+                                >
+                                  <ClockIcon className="h-3 w-3" />
+                                  <span>
+                                    {diff < 0
+                                      ? `Overdue ${Math.abs(diff)}d`
+                                      : diff === 0
+                                        ? "Due today"
+                                        : `In ${diff}d`}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                         </div>
                       );
                     })
@@ -367,7 +474,9 @@ export default function ContactsKanban({
           >
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-foreground">Move Contact</h3>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Move Contact
+                </h3>
                 <button
                   type="button"
                   onClick={handleCancelMove}
@@ -378,13 +487,23 @@ export default function ContactsKanban({
               </div>
 
               <p className="text-sm text-muted-foreground mb-4">
-                Move <span className="font-medium text-foreground">{confirmDialog.contact.name}</span> to{' '}
-                <span className="font-medium text-foreground">{confirmDialog.targetLabel}</span>?
+                Move{" "}
+                <span className="font-medium text-foreground">
+                  {confirmDialog.contact.name}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium text-foreground">
+                  {confirmDialog.targetLabel}
+                </span>
+                ?
               </p>
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-foreground mb-1">
-                  Comment <span className="text-muted-foreground font-normal">(optional)</span>
+                  Comment{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (optional)
+                  </span>
                 </label>
                 <textarea
                   ref={commentRef}
@@ -394,15 +513,24 @@ export default function ContactsKanban({
                   rows={3}
                   className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Press Enter to confirm, Shift+Enter for new line</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Press Enter to confirm, Shift+Enter for new line
+                </p>
               </div>
 
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={handleCancelMove} disabled={updating}>
+                <Button
+                  variant="outline"
+                  onClick={handleCancelMove}
+                  disabled={updating}
+                >
                   Cancel
                 </Button>
-                <Button onClick={() => void handleConfirmMove()} disabled={updating}>
-                  {updating ? 'Moving...' : 'Confirm'}
+                <Button
+                  onClick={() => void handleConfirmMove()}
+                  disabled={updating}
+                >
+                  {updating ? "Moving..." : "Confirm"}
                 </Button>
               </div>
             </div>

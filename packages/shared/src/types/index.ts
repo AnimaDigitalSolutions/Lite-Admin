@@ -3,7 +3,7 @@ export interface AdminUser {
   id: number;
   email: string;
   name?: string;
-  role: 'admin' | 'super_admin';
+  role: "admin" | "super_admin";
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt?: Date;
@@ -28,7 +28,7 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse extends AuthTokens {
-  user: Omit<AdminUser, 'passwordHash'>;
+  user: Omit<AdminUser, "passwordHash">;
 }
 
 // Form Submission Types
@@ -37,7 +37,7 @@ export interface Contact {
   name: string;
   email: string;
   company?: string;
-  projectType?: 'web' | 'mobile' | 'erp' | 'consulting' | 'other';
+  projectType?: "web" | "mobile" | "erp" | "consulting" | "other";
   message: string;
   submittedAt: Date;
   ipAddress?: string;
@@ -60,7 +60,7 @@ export interface Campaign {
   preheader?: string;
   htmlContent: string;
   textContent?: string;
-  status: 'draft' | 'sent';
+  status: "draft" | "sent";
   recipientCount?: number;
   sentAt?: Date;
   createdAt: Date;
@@ -78,7 +78,7 @@ export interface MediaItem {
   width?: number;
   height?: number;
   mimeType: string;
-  storageProvider: 'local' | 's3';
+  storageProvider: "local" | "s3";
   storagePath: string;
   url?: string;
   thumbnailUrl?: string;
@@ -124,13 +124,13 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 // Configuration Types
 export interface DatabaseConfig {
-  type: 'sqlite' | 'postgres' | 'mysql';
+  type: "sqlite" | "postgres" | "mysql";
   path?: string;
   url?: string;
 }
 
 export interface EmailConfig {
-  provider: 'ahasend' | 'resend';
+  provider: "ahasend" | "resend";
   from: string;
   ahasend?: {
     apiKey: string;
@@ -142,7 +142,7 @@ export interface EmailConfig {
 }
 
 export interface StorageConfig {
-  provider: 'local' | 's3';
+  provider: "local" | "s3";
   local?: {
     uploadDir: string;
   };
@@ -155,13 +155,13 @@ export interface StorageConfig {
 }
 
 // Contact Note Types
-export type NoteSubtype = 'note' | 'todo' | 'message' | 'reply';
+export type NoteSubtype = "note" | "todo" | "message" | "reply";
 
 export interface ContactNote {
   id: number;
   contactId: number;
   content: string;
-  type: 'manual' | 'system';
+  type: "manual" | "system";
   subtype?: NoteSubtype;
   color?: string;
   dueAt?: string | null;
@@ -173,7 +173,7 @@ export interface ContactNote {
 export interface Invoice {
   id: number;
   invoiceNumber: string;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  status: "draft" | "sent" | "paid" | "overdue" | "cancelled";
   currency: string;
   subtotal: number;
   taxRate: number;
@@ -219,11 +219,17 @@ export interface Site {
 
 // Contact Status Types
 export const CONTACT_STATUSES = [
-  'new', 'reviewed', 'contacted', 'qualified',
-  'proposal_sent', 'won', 'lost', 'archived',
+  "new",
+  "reviewed",
+  "contacted",
+  "qualified",
+  "proposal_sent",
+  "won",
+  "lost",
+  "archived",
 ] as const;
 
-export type ContactStatus = typeof CONTACT_STATUSES[number];
+export type ContactStatus = (typeof CONTACT_STATUSES)[number];
 
 // Statistics Types
 export interface SystemStats {

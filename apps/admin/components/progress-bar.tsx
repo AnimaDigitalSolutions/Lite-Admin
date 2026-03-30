@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useLoading } from '@/lib/loading-context';
+import { useLoading } from "@/lib/loading-context";
 
 export function ProgressBar() {
   const { isLoading, progress } = useLoading();

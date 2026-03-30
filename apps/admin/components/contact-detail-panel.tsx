@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useTimezone } from '@/lib/timezone';
-import { useDisplayPrefs } from '@/lib/display-prefs';
-import { isPrivateIp, truncateEmail } from '@/lib/utils';
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
-import { submissionsApi } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect, useRef } from "react";
+import { useTimezone } from "@/lib/timezone";
+import { useDisplayPrefs } from "@/lib/display-prefs";
+import { isPrivateIp, truncateEmail } from "@/lib/utils";
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { submissionsApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   XMarkIcon,
   PencilSquareIcon,
@@ -17,17 +17,22 @@ import {
   PaperAirplaneIcon,
   ClipboardDocumentIcon,
   CheckIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
-import type { Contact, ContactStatus } from './contact-detail/contact-utils';
-import { PIPELINE_STAGES, countryFlag, getProjectTypeColor, openDatePicker } from './contact-detail/contact-utils';
-import ContactNotesSection from './contact-detail/contact-notes-section';
-import ContactEmailComposer from './contact-detail/contact-email-composer';
-import ContactStatusDialog from './contact-detail/contact-status-dialog';
+import type { Contact, ContactStatus } from "./contact-detail/contact-utils";
+import {
+  PIPELINE_STAGES,
+  countryFlag,
+  getProjectTypeColor,
+  openDatePicker,
+} from "./contact-detail/contact-utils";
+import ContactNotesSection from "./contact-detail/contact-notes-section";
+import ContactEmailComposer from "./contact-detail/contact-email-composer";
+import ContactStatusDialog from "./contact-detail/contact-status-dialog";
 
 // Re-export for consumers (contacts/page.tsx imports this)
-export { getStatusBadge } from './contact-detail/contact-utils';
-export type { Contact, ContactStatus } from './contact-detail/contact-utils';
+export { getStatusBadge } from "./contact-detail/contact-utils";
+export type { Contact, ContactStatus } from "./contact-detail/contact-utils";
 
 interface ContactDetailPanelProps {
   contact: Contact;
@@ -35,7 +40,11 @@ interface ContactDetailPanelProps {
   onContactUpdated: (contact: Contact) => void;
 }
 
-export default function ContactDetailPanel({ contact, onClose, onContactUpdated }: ContactDetailPanelProps) {
+export default function ContactDetailPanel({
+  contact,
+  onClose,
+  onContactUpdated,
+}: ContactDetailPanelProps) {
   const { formatDate } = useTimezone();
   const { prefs } = useDisplayPrefs();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -45,13 +54,22 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
 
   // Edit mode
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', email: '', company: '', project_type: '', message: '' });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    company: "",
+    project_type: "",
+    message: "",
+  });
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
   // Status & follow-up
   const [followUpUpdating, setFollowUpUpdating] = useState(false);
-  const [statusChangeDialog, setStatusChangeDialog] = useState<{ targetStatus: ContactStatus; targetLabel: string } | null>(null);
+  const [statusChangeDialog, setStatusChangeDialog] = useState<{
+    targetStatus: ContactStatus;
+    targetLabel: string;
+  } | null>(null);
 
   // Email compose
   const [showCompose, setShowCompose] = useState(false);
@@ -62,10 +80,10 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
   useEffect(() => {
     if (hasModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose, hasModalOpen]);
 
   // Close on click outside (unless modal open)
@@ -77,11 +95,11 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
       }
     };
     const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClick);
+      document.addEventListener("mousedown", handleClick);
     }, 100);
     return () => {
       clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener("mousedown", handleClick);
     };
   }, [onClose, hasModalOpen]);
 
@@ -89,8 +107,8 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
     setEditForm({
       name: contact.name,
       email: contact.email,
-      company: contact.company ?? '',
-      project_type: contact.project_type ?? '',
+      company: contact.company ?? "",
+      project_type: contact.project_type ?? "",
       message: contact.message,
     });
     setEditError(null);
@@ -105,16 +123,19 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
       onContactUpdated(res.data as Contact);
       setEditMode(false);
     } catch {
-      setEditError('Failed to save changes.');
+      setEditError("Failed to save changes.");
     } finally {
       setEditSaving(false);
     }
   };
 
   const handleStatusChange = (newStatus: ContactStatus) => {
-    if (newStatus === (contact.status || 'new')) return;
-    const stage = PIPELINE_STAGES.find(s => s.value === newStatus);
-    setStatusChangeDialog({ targetStatus: newStatus, targetLabel: stage?.label || newStatus });
+    if (newStatus === (contact.status || "new")) return;
+    const stage = PIPELINE_STAGES.find((s) => s.value === newStatus);
+    setStatusChangeDialog({
+      targetStatus: newStatus,
+      targetLabel: stage?.label || newStatus,
+    });
   };
 
   const handleFollowUpChange = async (dateStr: string) => {
@@ -130,8 +151,8 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
     }
   };
 
-  const currentStatus = contact.status || 'new';
-  const panelWidth = expanded ? 'w-[720px]' : 'w-[420px]';
+  const currentStatus = contact.status || "new";
+  const panelWidth = expanded ? "w-[720px]" : "w-[420px]";
 
   return (
     <>
@@ -149,32 +170,61 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
             <h2 className="text-lg font-semibold truncate">{contact.name}</h2>
             <div className="group flex items-center gap-1.5 mt-0.5">
               <span className="text-sm text-muted-foreground truncate">
-                {prefs.truncateEmails ? truncateEmail(contact.email) : contact.email}
+                {prefs.truncateEmails
+                  ? truncateEmail(contact.email)
+                  : contact.email}
               </span>
               <button
                 type="button"
                 onClick={() => void copyEmail(contact.email, contact.email)}
                 title="Copy email"
-                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}
+                className={`transition-colors shrink-0 ${isEmailCopied(contact.email) ? "text-emerald-500" : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground"}`}
               >
-                {isEmailCopied(contact.email) ? <CheckIcon className="h-3.5 w-3.5" /> : <ClipboardDocumentIcon className="h-3.5 w-3.5" />}
+                {isEmailCopied(contact.email) ? (
+                  <CheckIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+                )}
               </button>
             </div>
-            {contact.company && <p className="text-sm text-muted-foreground mt-0.5">{contact.company}</p>}
+            {contact.company && (
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {contact.company}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-1 ml-2">
             {!editMode && (
               <>
-                <Button variant="ghost" size="sm" onClick={() => setShowCompose(true)} title="Send email to contact">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCompose(true)}
+                  title="Send email to contact"
+                >
                   <PaperAirplaneIcon className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={openEditMode} title="Edit contact">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={openEditMode}
+                  title="Edit contact"
+                >
                   <PencilSquareIcon className="h-4 w-4" />
                 </Button>
               </>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setExpanded(e => !e)} title={expanded ? 'Collapse panel' : 'Expand panel'}>
-              {expanded ? <ArrowsPointingInIcon className="h-4 w-4" /> : <ArrowsPointingOutIcon className="h-4 w-4" />}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded((e) => !e)}
+              title={expanded ? "Collapse panel" : "Expand panel"}
+            >
+              {expanded ? (
+                <ArrowsPointingInIcon className="h-4 w-4" />
+              ) : (
+                <ArrowsPointingOutIcon className="h-4 w-4" />
+              )}
             </Button>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <XMarkIcon className="h-4 w-4" />
@@ -189,40 +239,94 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
             <div className="space-y-4">
               <div className="grid gap-3 grid-cols-2">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Name</label>
-                  <Input className="mt-1" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Name
+                  </label>
+                  <Input
+                    className="mt-1"
+                    value={editForm.name}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                  />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Email</label>
-                  <Input className="mt-1" type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Email
+                  </label>
+                  <Input
+                    className="mt-1"
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, email: e.target.value }))
+                    }
+                  />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Company</label>
-                  <Input className="mt-1" value={editForm.company} onChange={e => setEditForm(f => ({ ...f, company: e.target.value }))} placeholder="Optional" />
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Company
+                  </label>
+                  <Input
+                    className="mt-1"
+                    value={editForm.company}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, company: e.target.value }))
+                    }
+                    placeholder="Optional"
+                  />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Project Type</label>
-                  <Input className="mt-1" value={editForm.project_type} onChange={e => setEditForm(f => ({ ...f, project_type: e.target.value }))} placeholder="web / mobile…" />
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Project Type
+                  </label>
+                  <Input
+                    className="mt-1"
+                    value={editForm.project_type}
+                    onChange={(e) =>
+                      setEditForm((f) => ({
+                        ...f,
+                        project_type: e.target.value,
+                      }))
+                    }
+                    placeholder="web / mobile…"
+                  />
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Message</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Message
+                </label>
                 <textarea
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   rows={expanded ? 6 : 4}
                   value={editForm.message}
-                  onChange={e => setEditForm(f => ({ ...f, message: e.target.value }))}
+                  onChange={(e) =>
+                    setEditForm((f) => ({ ...f, message: e.target.value }))
+                  }
                 />
               </div>
               {editError && (
-                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{editError}</div>
+                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {editError}
+                </div>
               )}
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => void handleSaveEdit()} disabled={editSaving}>
+                <Button
+                  size="sm"
+                  onClick={() => void handleSaveEdit()}
+                  disabled={editSaving}
+                >
                   <CheckCircleIcon className="h-4 w-4 mr-1" />
-                  {editSaving ? 'Saving…' : 'Save'}
+                  {editSaving ? "Saving…" : "Save"}
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditMode(false)}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           ) : (
@@ -231,7 +335,9 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
               <div className="text-sm text-muted-foreground">
                 <span>Submitted: {formatDate(contact.submitted_at)}</span>
                 {contact.project_type && (
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${getProjectTypeColor(contact.project_type)}`}>
+                  <span
+                    className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${getProjectTypeColor(contact.project_type)}`}
+                  >
                     {contact.project_type}
                   </span>
                 )}
@@ -245,13 +351,23 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
                     return (
                       <div className="flex items-center gap-1.5">
                         {contact.country && !priv && (
-                          <span title={contact.country_name ?? contact.country}>{countryFlag(contact.country)}</span>
+                          <span title={contact.country_name ?? contact.country}>
+                            {countryFlag(contact.country)}
+                          </span>
                         )}
                         {ip && <span className="font-mono text-xs">{ip}</span>}
-                        {priv && <span className="text-xs italic">private</span>}
+                        {priv && (
+                          <span className="text-xs italic">private</span>
+                        )}
                         {!priv && contact.city && (
                           <span className="text-xs">
-                            {[contact.city, contact.region, contact.country_name].filter(Boolean).join(', ')}
+                            {[
+                              contact.city,
+                              contact.region,
+                              contact.country_name,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
                           </span>
                         )}
                       </div>
@@ -263,67 +379,124 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
               {/* Status + Follow-up row */}
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Status</label>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">
+                    Status
+                  </label>
                   <select
                     value={currentStatus}
-                    onChange={e => void handleStatusChange(e.target.value as ContactStatus)}
+                    onChange={(e) =>
+                      void handleStatusChange(e.target.value as ContactStatus)
+                    }
                     className="h-9 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
-                    {PIPELINE_STAGES.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
+                    {PIPELINE_STAGES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Follow-up reminder */}
                 <div className="shrink-0">
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Reminder</label>
-                  {contact.follow_up_at ? (() => {
-                    const diff = Math.ceil((new Date(contact.follow_up_at).getTime() - Date.now()) / 86400000);
-                    const dateLabel = new Date(contact.follow_up_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    const isOverdue = diff < 0;
-                    const isToday = diff === 0;
-                    const relLabel = isOverdue ? `${Math.abs(diff)}d overdue` : isToday ? 'today' : `in ${diff}d`;
-                    return (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={(e) => openDatePicker(contact.follow_up_at!.split('T')[0], v => void handleFollowUpChange(v), e)}
-                          disabled={followUpUpdating}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
-                            isOverdue ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-                            : isToday ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                            : 'bg-accent text-muted-foreground border border-border hover:bg-accent'
-                          } disabled:opacity-50`}
-                        >
-                          <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span>{dateLabel}</span>
-                          <span className="opacity-60">{relLabel}</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleFollowUpChange('')}
-                          disabled={followUpUpdating}
-                          className="text-muted-foreground/50 hover:text-red-500 transition-colors disabled:opacity-50"
-                          title="Clear reminder"
-                        >
-                          <XMarkIcon className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })() : (
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">
+                    Reminder
+                  </label>
+                  {contact.follow_up_at ? (
+                    (() => {
+                      const diff = Math.ceil(
+                        (new Date(contact.follow_up_at).getTime() -
+                          Date.now()) /
+                          86400000,
+                      );
+                      const dateLabel = new Date(
+                        contact.follow_up_at,
+                      ).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                      const isOverdue = diff < 0;
+                      const isToday = diff === 0;
+                      const relLabel = isOverdue
+                        ? `${Math.abs(diff)}d overdue`
+                        : isToday
+                          ? "today"
+                          : `in ${diff}d`;
+                      return (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) =>
+                              openDatePicker(
+                                contact.follow_up_at!.split("T")[0],
+                                (v) => void handleFollowUpChange(v),
+                                e,
+                              )
+                            }
+                            disabled={followUpUpdating}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer transition-colors ${
+                              isOverdue
+                                ? "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                                : isToday
+                                  ? "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                                  : "bg-accent text-muted-foreground border border-border hover:bg-accent"
+                            } disabled:opacity-50`}
+                          >
+                            <svg
+                              className="h-3 w-3 shrink-0"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span>{dateLabel}</span>
+                            <span className="opacity-60">{relLabel}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleFollowUpChange("")}
+                            disabled={followUpUpdating}
+                            className="text-muted-foreground/50 hover:text-red-500 transition-colors disabled:opacity-50"
+                            title="Clear reminder"
+                          >
+                            <XMarkIcon className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })()
+                  ) : (
                     <button
                       type="button"
-                      onClick={(e) => openDatePicker('', v => void handleFollowUpChange(v), e)}
+                      onClick={(e) =>
+                        openDatePicker(
+                          "",
+                          (v) => void handleFollowUpChange(v),
+                          e,
+                        )
+                      }
                       disabled={followUpUpdating}
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer
                         text-muted-foreground border border-dashed border-border hover:border-border hover:text-foreground transition-colors
-                        ${followUpUpdating ? 'opacity-50 pointer-events-none' : ''}`}
+                        ${followUpUpdating ? "opacity-50 pointer-events-none" : ""}`}
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                       <span>+ Reminder</span>
                     </button>
@@ -333,17 +506,34 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
 
               {/* Initial message */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground block mb-1">Initial Message</label>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">
+                  Initial Message
+                </label>
                 <div className="p-3 bg-blue-50 rounded-lg text-sm border border-blue-200 border-l-4 border-l-blue-400">
                   <div className="flex items-start gap-2">
-                    <span className="mt-0.5 text-blue-500 shrink-0" title="Message from contact">
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <span
+                      className="mt-0.5 text-blue-500 shrink-0"
+                      title="Message from contact"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
                       </svg>
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="whitespace-pre-wrap">{contact.message}</p>
-                      <p className="text-xs text-blue-400 mt-1.5">{formatDate(contact.submitted_at)} — from {contact.name}</p>
+                      <p className="text-xs text-blue-400 mt-1.5">
+                        {formatDate(contact.submitted_at)} — from {contact.name}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -379,7 +569,9 @@ export default function ContactDetailPanel({ contact, onClose, onContactUpdated 
         contactEmail={contact.email}
         open={showCompose}
         onClose={() => setShowCompose(false)}
-        onSent={() => { /* notes section auto-refreshes */ }}
+        onSent={() => {
+          /* notes section auto-refreshes */
+        }}
       />
     </>
   );

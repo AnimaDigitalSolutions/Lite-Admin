@@ -1,10 +1,10 @@
-import { Resend } from 'resend';
-import logger from '../../../utils/logger.js';
-import config from '../../../config/index.js';
-import { readFile } from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import SettingsService from '../../settings/index.js';
+import { Resend } from "resend";
+import logger from "../../../utils/logger.js";
+import config from "../../../config/index.js";
+import { readFile } from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
+import SettingsService from "../../settings/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,8 +47,11 @@ class ResendProvider {
     this.apiKey = providerConfig.apiKey;
     this.resend = this.apiKey ? new Resend(this.apiKey) : null;
     this.fromAddress = providerConfig.fromAddress || config.email.from;
-    this.fromName = providerConfig.fromName || 'Lite Admin';
-    this.notificationEmail = providerConfig.notificationEmail || providerConfig.fromAddress || config.email.from;
+    this.fromName = providerConfig.fromName || "Lite Admin";
+    this.notificationEmail =
+      providerConfig.notificationEmail ||
+      providerConfig.fromAddress ||
+      config.email.from;
     this.templates = {};
   }
 
@@ -63,8 +66,12 @@ class ResendProvider {
     }
 
     if (!this.templates[templateName]) {
-      const templatePath = path.join(__dirname, '../templates', `${templateName}.html`);
-      this.templates[templateName] = await readFile(templatePath, 'utf-8');
+      const templatePath = path.join(
+        __dirname,
+        "../templates",
+        `${templateName}.html`,
+      );
+      this.templates[templateName] = await readFile(templatePath, "utf-8");
     }
     return this.templates[templateName];
   }
@@ -72,7 +79,7 @@ class ResendProvider {
   async send(templateName: string, data: EmailData): Promise<void> {
     try {
       if (!this.resend) {
-        throw new Error('RESEND_API_KEY is not configured');
+        throw new Error("RESEND_API_KEY is not configured");
       }
 
       const template = await this.loadTemplate(templateName);
@@ -80,7 +87,11 @@ class ResendProvider {
 
       const payload = {
         to: [data.to],
-        from: (data['from'] as string | undefined) ?? (this.fromName ? `${this.fromName} <${this.fromAddress}>` : this.fromAddress),
+        from:
+          (data["from"] as string | undefined) ??
+          (this.fromName
+            ? `${this.fromName} <${this.fromAddress}>`
+            : this.fromAddress),
         subject: data.subject,
         html: html,
         text: this.htmlToText(html),
@@ -90,13 +101,12 @@ class ResendProvider {
 
       logger.info({
         message: `Email sent via Resend: ${templateName}`,
-        data: { to: data.to, id: response.data?.id }
+        data: { to: data.to, id: response.data?.id },
       });
-
     } catch (error) {
       logger.error({
-        message: 'Failed to send email via Resend',
-        error: error
+        message: "Failed to send email via Resend",
+        error: error,
       });
       throw new Error(`Email sending failed: ${(error as Error).message}`);
     }
@@ -110,34 +120,34 @@ class ResendProvider {
 
   htmlToText(html: string): string {
     return html
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .trim();
   }
 
   async sendContactNotification(contactData: ContactData): Promise<void> {
-    return this.send('contact', {
+    return this.send("contact", {
       to: this.notificationEmail,
       subject: `New Contact Form Submission from ${contactData.name}`,
       name: contactData.name,
       email: contactData.email,
-      company: contactData.company || 'Not provided',
-      project_type: contactData.project_type || 'Not specified',
+      company: contactData.company || "Not provided",
+      project_type: contactData.project_type || "Not specified",
       message: contactData.message,
       date: new Date().toISOString(),
     });
   }
 
   async sendWaitlistConfirmation(waitlistData: WaitlistData): Promise<void> {
-    return this.send('waitlist', {
+    return this.send("waitlist", {
       to: waitlistData.email,
-      subject: 'Welcome to AnimaDigitalSolutions Waitlist',
-      name: waitlistData.name || 'Valued Customer',
+      subject: "Welcome to AnimaDigitalSolutions Waitlist",
+      name: waitlistData.name || "Valued Customer",
       email: waitlistData.email,
       date: new Date().toISOString(),
     });
@@ -147,41 +157,74 @@ class ResendProvider {
     to: { email: string; name?: string },
     subject: string,
     content: string,
-    options?: { plainText?: boolean; cc?: { email: string; name?: string }[]; bcc?: { email: string; name?: string }[] },
+    options?: {
+      plainText?: boolean;
+      cc?: { email: string; name?: string }[];
+      bcc?: { email: string; name?: string }[];
+    },
   ): Promise<void> {
     try {
-      if (!this.resend) throw new Error('RESEND_API_KEY is not configured');
+      if (!this.resend) throw new Error("RESEND_API_KEY is not configured");
 
-      const from = this.fromName ? `${this.fromName} <${this.fromAddress}>` : this.fromAddress;
+      const from = this.fromName
+        ? `${this.fromName} <${this.fromAddress}>`
+        : this.fromAddress;
 
       const base = { to: [to.email], from, subject };
-      const ccList = options?.cc?.length ? options.cc.map(r => r.email) : undefined;
-      const bccList = options?.bcc?.length ? options.bcc.map(r => r.email) : undefined;
+      const ccList = options?.cc?.length
+        ? options.cc.map((r) => r.email)
+        : undefined;
+      const bccList = options?.bcc?.length
+        ? options.bcc.map((r) => r.email)
+        : undefined;
 
       const payload = options?.plainText
-        ? { ...base, text: content, ...(ccList && { cc: ccList }), ...(bccList && { bcc: bccList }) }
-        : { ...base, html: content, text: this.htmlToText(content), ...(ccList && { cc: ccList }), ...(bccList && { bcc: bccList }) };
+        ? {
+            ...base,
+            text: content,
+            ...(ccList && { cc: ccList }),
+            ...(bccList && { bcc: bccList }),
+          }
+        : {
+            ...base,
+            html: content,
+            text: this.htmlToText(content),
+            ...(ccList && { cc: ccList }),
+            ...(bccList && { bcc: bccList }),
+          };
 
       await this.resend.emails.send(payload);
 
-      logger.info({ message: `Direct email sent via Resend to ${to.email}`, data: { subject } });
+      logger.info({
+        message: `Direct email sent via Resend to ${to.email}`,
+        data: { subject },
+      });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      logger.error({ message: `Failed to send direct email via Resend: ${msg}` });
+      logger.error({
+        message: `Failed to send direct email via Resend: ${msg}`,
+      });
       throw new Error(`Email sending failed: ${msg}`);
     }
   }
 
   async sendCampaign(
     subscriber: { email: string; name?: string },
-    campaign: { subject: string; preheader?: string; html: string; text?: string },
+    campaign: {
+      subject: string;
+      preheader?: string;
+      html: string;
+      text?: string;
+    },
   ): Promise<void> {
     try {
-      if (!this.resend) throw new Error('RESEND_API_KEY is not configured');
+      if (!this.resend) throw new Error("RESEND_API_KEY is not configured");
 
       const payload = {
         to: [subscriber.email],
-        from: this.fromName ? `${this.fromName} <${this.fromAddress}>` : this.fromAddress,
+        from: this.fromName
+          ? `${this.fromName} <${this.fromAddress}>`
+          : this.fromAddress,
         subject: campaign.subject,
         html: campaign.html,
         text: campaign.text || this.htmlToText(campaign.html),
@@ -189,10 +232,17 @@ class ResendProvider {
 
       await this.resend.emails.send(payload);
 
-      logger.info({ message: `Campaign email sent via Resend to ${subscriber.email}` });
+      logger.info({
+        message: `Campaign email sent via Resend to ${subscriber.email}`,
+      });
     } catch (error) {
-      logger.error({ message: 'Failed to send campaign email via Resend', error });
-      throw new Error(`Campaign email sending failed: ${(error as Error).message}`);
+      logger.error({
+        message: "Failed to send campaign email via Resend",
+        error,
+      });
+      throw new Error(
+        `Campaign email sending failed: ${(error as Error).message}`,
+      );
     }
   }
 }

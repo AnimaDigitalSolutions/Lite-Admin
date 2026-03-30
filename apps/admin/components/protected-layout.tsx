@@ -1,29 +1,30 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { menuApi, isDemoMode } from '@/lib/api';
-import Link from 'next/link';
-import { Button } from './ui/button';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
-import { ThemeSelector } from './theme-selector';
-import { navigation } from '@/lib/nav-config';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { menuApi, isDemoMode } from "@/lib/api";
+import Link from "next/link";
+import { Button } from "./ui/button";
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline";
+import { ThemeSelector } from "./theme-selector";
+import { navigation } from "@/lib/nav-config";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
-
 export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [menuPrefs, setMenuPrefs] = useState<Record<string, boolean> | null>(null);
+  const [menuPrefs, setMenuPrefs] = useState<Record<string, boolean> | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [user, loading, router]);
 
@@ -44,20 +45,20 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   // Listen for menu preference changes (from the settings/menu page)
   useEffect(() => {
     const handler = () => fetchMenuPrefs();
-    window.addEventListener('menu-prefs-updated', handler);
-    return () => window.removeEventListener('menu-prefs-updated', handler);
+    window.addEventListener("menu-prefs-updated", handler);
+    return () => window.removeEventListener("menu-prefs-updated", handler);
   }, [fetchMenuPrefs]);
 
   const filteredNavigation = useMemo(() => {
     if (!menuPrefs) return navigation; // show all while loading
     return navigation
-      .map(section => ({
+      .map((section) => ({
         ...section,
-        items: section.items.filter(item =>
-          item.navKey === null || menuPrefs[item.navKey] !== false
+        items: section.items.filter(
+          (item) => item.navKey === null || menuPrefs[item.navKey] !== false,
         ),
       }))
-      .filter(section => section.items.length > 0);
+      .filter((section) => section.items.length > 0);
   }, [menuPrefs]);
 
   if (loading) {
@@ -74,9 +75,13 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
   if (!user) return null;
 
   const isActive = (href: string) => {
-    if (href.includes('?')) {
-      const [path, query] = href.split('?');
-      return pathname === path && typeof window !== 'undefined' && window.location.search.includes(query);
+    if (href.includes("?")) {
+      const [path, query] = href.split("?");
+      return (
+        pathname === path &&
+        typeof window !== "undefined" &&
+        window.location.search.includes(query)
+      );
     }
     return pathname === href;
   };
@@ -90,12 +95,22 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
         </div>
       )}
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-sidebar border-r border-sidebar-border shadow-sm ${isDemoMode ? 'top-8' : ''}`}>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-sidebar border-r border-sidebar-border shadow-sm ${isDemoMode ? "top-8" : ""}`}
+      >
         {/* Logo */}
         <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/crown-logo.png" alt="Lite Admin" width={36} height={36} className="shrink-0" />
-          <span className="text-base font-semibold text-foreground tracking-tight">Lite Admin</span>
+          <img
+            src="/crown-logo.png"
+            alt="Lite Admin"
+            width={36}
+            height={36}
+            className="shrink-0"
+          />
+          <span className="text-base font-semibold text-foreground tracking-tight">
+            Lite Admin
+          </span>
         </div>
 
         {/* Nav */}
@@ -114,11 +129,13 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
                         href={item.href}
                         className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors ${
                           active
-                            ? 'bg-sidebar-active text-sidebar-active-foreground'
-                            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                            ? "bg-sidebar-active text-sidebar-active-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         }`}
                       >
-                        <item.icon className={`h-4 w-4 shrink-0 ${active ? 'text-sidebar-active-foreground' : 'text-sidebar-muted'}`} />
+                        <item.icon
+                          className={`h-4 w-4 shrink-0 ${active ? "text-sidebar-active-foreground" : "text-sidebar-muted"}`}
+                        />
                         {item.name}
                       </Link>
                     </li>
@@ -135,7 +152,9 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sidebar-active text-xs font-semibold text-sidebar-active-foreground shrink-0">
               {user.email.charAt(0).toUpperCase()}
             </div>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {user.email}
+            </p>
           </div>
           <ThemeSelector />
           <Button
@@ -151,10 +170,8 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div className={`pl-60 ${isDemoMode ? 'pt-8' : ''}`}>
-        <main className="min-h-screen p-8">
-          {children}
-        </main>
+      <div className={`pl-60 ${isDemoMode ? "pt-8" : ""}`}>
+        <main className="min-h-screen p-8">{children}</main>
       </div>
     </div>
   );

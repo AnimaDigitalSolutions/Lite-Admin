@@ -1,8 +1,8 @@
-import DatabaseService from '../database.service.js';
-import EmailFactory from '../email/index.js';
-import GeoService from '../geo/index.js';
-import config from '../../config/index.js';
-import logger from '../../utils/logger.js';
+import DatabaseService from "../database.service.js";
+import EmailFactory from "../email/index.js";
+import GeoService from "../geo/index.js";
+import config from "../../config/index.js";
+import logger from "../../utils/logger.js";
 // Using local interfaces to avoid circular dependencies
 interface WaitlistEntry {
   id?: number;
@@ -20,7 +20,6 @@ interface AdminLogData {
   details?: string;
   ip_address?: string;
 }
-
 
 interface RequestInfo {
   ip: string;
@@ -66,7 +65,13 @@ class WaitlistService {
     this.emailService = await EmailFactory.create(config.email.provider);
   }
 
-  async addToWaitlist(data: WaitlistFormData, requestInfo: RequestInfo): Promise<{ success: boolean; data: { id?: string; message: string; alreadyExists?: boolean } }> {
+  async addToWaitlist(
+    data: WaitlistFormData,
+    requestInfo: RequestInfo,
+  ): Promise<{
+    success: boolean;
+    data: { id?: string; message: string; alreadyExists?: boolean };
+  }> {
     try {
       // Ensure services are initialized
       if (!this.db || !this.emailService) {
@@ -79,8 +84,8 @@ class WaitlistService {
         return {
           success: true,
           data: {
-            id: existing.id?.toString() || 'unknown',
-            message: 'You are already on our waitlist!',
+            id: existing.id?.toString() || "unknown",
+            message: "You are already on our waitlist!",
             alreadyExists: true,
           },
         };
@@ -99,36 +104,36 @@ class WaitlistService {
 
       // Save to database
       const savedEntry = await this.db!.waitlist.create(waitlistEntry);
-      
+
       logger.info({
-        message: 'Waitlist signup successful',
+        message: "Waitlist signup successful",
         data: {
           id: savedEntry.id,
-          email: savedEntry.email
-        }
+          email: savedEntry.email,
+        },
       });
 
       // Send confirmation email
       try {
         await this.emailService!.sendWaitlistConfirmation(savedEntry);
         logger.info({
-          message: 'Waitlist confirmation email sent',
+          message: "Waitlist confirmation email sent",
           data: {
-            email: savedEntry.email
-          }
+            email: savedEntry.email,
+          },
         });
       } catch (emailError) {
         logger.error({
-          message: 'Failed to send waitlist confirmation email',
-          error: emailError
+          message: "Failed to send waitlist confirmation email",
+          error: emailError,
         });
         // Don't throw - we still saved the signup
       }
 
       // Log admin activity
       await this.db!.adminLogs.create({
-        action: 'waitlist_signup',
-        resource: 'waitlist',
+        action: "waitlist_signup",
+        resource: "waitlist",
         resource_id: savedEntry.id,
         details: `New waitlist signup: ${savedEntry.email}`,
         ip_address: requestInfo.ip,
@@ -137,14 +142,15 @@ class WaitlistService {
       return {
         success: true,
         data: {
-          id: savedEntry.id?.toString() || 'unknown',
-          message: 'Successfully added to waitlist! Check your email for confirmation.',
+          id: savedEntry.id?.toString() || "unknown",
+          message:
+            "Successfully added to waitlist! Check your email for confirmation.",
         },
       };
     } catch (error) {
       logger.error({
-        message: 'Waitlist signup failed',
-        error: error
+        message: "Waitlist signup failed",
+        error: error,
       });
       throw error;
     }
@@ -152,14 +158,14 @@ class WaitlistService {
 
   async getWaitlistEntries(options: QueryOptions = {}) {
     const { limit = 100, offset = 0 } = options;
-    
+
     try {
       const entries = await this.db!.waitlist.findAll(limit, offset);
       return entries;
     } catch (error) {
       logger.error({
-        message: 'Failed to fetch waitlist entries',
-        error: error
+        message: "Failed to fetch waitlist entries",
+        error: error,
       });
       throw error;
     }
@@ -174,8 +180,8 @@ class WaitlistService {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to check email status',
-        error: error
+        message: "Failed to check email status",
+        error: error,
       });
       throw error;
     }
@@ -185,17 +191,17 @@ class WaitlistService {
     try {
       // Get all entries
       const entries = await this.db!.waitlist.findAll(10000, 0); // Large limit for export
-      
+
       // Format for CSV
-      const csvHeaders = ['ID', 'Email', 'Name', 'Signed Up At', 'IP Address'];
-      const csvRows = entries.map(entry => [
+      const csvHeaders = ["ID", "Email", "Name", "Signed Up At", "IP Address"];
+      const csvRows = entries.map((entry) => [
         entry.id,
         entry.email,
-        entry.name || '',
+        entry.name || "",
         entry.signed_up_at,
-        entry.ip_address || '',
+        entry.ip_address || "",
       ]);
-      
+
       return {
         headers: csvHeaders,
         rows: csvRows,
@@ -203,14 +209,21 @@ class WaitlistService {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to export waitlist',
-        error: error
+        message: "Failed to export waitlist",
+        error: error,
       });
       throw error;
     }
   }
 
-  async addTestToWaitlist(customEmail: string, formData: WaitlistFormData, requestInfo: RequestInfo): Promise<{ success: boolean; data: { id?: string; message: string; email_sent: boolean } }> {
+  async addTestToWaitlist(
+    customEmail: string,
+    formData: WaitlistFormData,
+    requestInfo: RequestInfo,
+  ): Promise<{
+    success: boolean;
+    data: { id?: string; message: string; email_sent: boolean };
+  }> {
     try {
       // Ensure services are initialized
       if (!this.db || !this.emailService) {
@@ -229,18 +242,21 @@ class WaitlistService {
         await this.emailService!.sendWaitlistConfirmation(testEntry);
         emailSent = true;
         logger.info({
-          message: 'Test waitlist confirmation email sent',
-          data: { email: customEmail }
+          message: "Test waitlist confirmation email sent",
+          data: { email: customEmail },
         });
       } catch (emailError) {
-        const msg = emailError instanceof Error ? emailError.message : String(emailError);
-        logger.error({ message: `Failed to send test waitlist confirmation email: ${msg}` });
+        const msg =
+          emailError instanceof Error ? emailError.message : String(emailError);
+        logger.error({
+          message: `Failed to send test waitlist confirmation email: ${msg}`,
+        });
       }
 
       // Log admin activity (no resource_id — nothing was saved)
       await this.db!.adminLogs.create({
-        action: 'waitlist_test',
-        resource: 'waitlist',
+        action: "waitlist_test",
+        resource: "waitlist",
         details: `Test waitlist email sent to ${customEmail}`,
         ip_address: requestInfo.ip,
       });
@@ -248,14 +264,14 @@ class WaitlistService {
       return {
         success: true,
         data: {
-          message: 'Test waitlist email sent successfully',
+          message: "Test waitlist email sent successfully",
           email_sent: emailSent,
         },
       };
     } catch (error) {
       logger.error({
-        message: 'Test waitlist signup failed',
-        error: error
+        message: "Test waitlist signup failed",
+        error: error,
       });
       throw error;
     }

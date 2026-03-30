@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useTimezone } from '@/lib/timezone';
-import { waitlistApi, campaignsApi } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from "react";
+import { useTimezone } from "@/lib/timezone";
+import { waitlistApi, campaignsApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrashIcon,
   PaperAirplaneIcon,
@@ -15,7 +15,7 @@ import {
   MegaphoneIcon,
   DocumentTextIcon,
   EyeIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 interface Campaign {
   id: number;
@@ -24,8 +24,8 @@ interface Campaign {
   preheader?: string;
   html_content: string;
   text_content?: string;
-  status: 'draft' | 'sent';
-  target_type: 'all' | 'tagged';
+  status: "draft" | "sent";
+  target_type: "all" | "tagged";
   target_tags?: string;
   recipient_count?: number;
   sent_count?: number;
@@ -35,8 +35,13 @@ interface Campaign {
 }
 
 const EMPTY_CAMPAIGN_FORM = {
-  name: '', subject: '', preheader: '', html_content: '', text_content: '',
-  target_type: 'all' as 'all' | 'tagged', target_tags: [] as string[],
+  name: "",
+  subject: "",
+  preheader: "",
+  html_content: "",
+  text_content: "",
+  target_type: "all" as "all" | "tagged",
+  target_tags: [] as string[],
 };
 
 export default function CampaignsTab() {
@@ -55,11 +60,13 @@ export default function CampaignsTab() {
 
   // Tags
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [newTagInput, setNewTagInput] = useState('');
+  const [newTagInput, setNewTagInput] = useState("");
   const [targetCount, setTargetCount] = useState<number | null>(null);
 
   // Recipient preview
-  const [recipientPreview, setRecipientPreview] = useState<{ id: number; email: string; name?: string; tags?: string }[]>([]);
+  const [recipientPreview, setRecipientPreview] = useState<
+    { id: number; email: string; name?: string; tags?: string }[]
+  >([]);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [recipientPreviewLoading, setRecipientPreviewLoading] = useState(false);
 
@@ -67,7 +74,9 @@ export default function CampaignsTab() {
   const [sendingId, setSendingId] = useState<number | null>(null);
   const [sendLoading, setSendLoading] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
-  const [sendRecipients, setSendRecipients] = useState<{ id: number; email: string; name?: string; tags?: string }[]>([]);
+  const [sendRecipients, setSendRecipients] = useState<
+    { id: number; email: string; name?: string; tags?: string }[]
+  >([]);
   const [showSendRecipients, setShowSendRecipients] = useState(false);
 
   // Load available tags
@@ -75,25 +84,38 @@ export default function CampaignsTab() {
     try {
       const res = await waitlistApi.getTags();
       setAvailableTags(res.data || []);
-    } catch { /* silently fail */ }
+    } catch {
+      /* silently fail */
+    }
   }, []);
 
   // Update recipient count when target changes
-  const updateTargetCount = useCallback(async (targetType: 'all' | 'tagged', tags: string[]) => {
-    try {
-      const res = await waitlistApi.countByTarget(targetType, tags);
-      setTargetCount(res.data?.count ?? null);
-    } catch { setTargetCount(null); }
-  }, []);
+  const updateTargetCount = useCallback(
+    async (targetType: "all" | "tagged", tags: string[]) => {
+      try {
+        const res = await waitlistApi.countByTarget(targetType, tags);
+        setTargetCount(res.data?.count ?? null);
+      } catch {
+        setTargetCount(null);
+      }
+    },
+    [],
+  );
 
-  const loadRecipientPreview = useCallback(async (targetType: 'all' | 'tagged', tags: string[]) => {
-    setRecipientPreviewLoading(true);
-    try {
-      const res = await waitlistApi.previewRecipients(targetType, tags);
-      setRecipientPreview(res.data || []);
-    } catch { setRecipientPreview([]); }
-    finally { setRecipientPreviewLoading(false); }
-  }, []);
+  const loadRecipientPreview = useCallback(
+    async (targetType: "all" | "tagged", tags: string[]) => {
+      setRecipientPreviewLoading(true);
+      try {
+        const res = await waitlistApi.previewRecipients(targetType, tags);
+        setRecipientPreview(res.data || []);
+      } catch {
+        setRecipientPreview([]);
+      } finally {
+        setRecipientPreviewLoading(false);
+      }
+    },
+    [],
+  );
 
   const openSendDialog = async (campaign: Campaign) => {
     setSendingId(campaign.id);
@@ -101,8 +123,10 @@ export default function CampaignsTab() {
     setSendRecipients([]);
     setShowSendRecipients(false);
     try {
-      const tags = campaign.target_tags ? JSON.parse(campaign.target_tags) as string[] : [];
-      const targetType = campaign.target_type || 'all';
+      const tags = campaign.target_tags
+        ? (JSON.parse(campaign.target_tags) as string[])
+        : [];
+      const targetType = campaign.target_type || "all";
       const [countRes, previewRes] = await Promise.all([
         waitlistApi.countByTarget(targetType, tags),
         waitlistApi.previewRecipients(targetType, tags),
@@ -119,7 +143,7 @@ export default function CampaignsTab() {
       const response = await campaignsApi.list();
       setCampaigns(response.data || []);
     } catch {
-      setError('Failed to load campaigns.');
+      setError("Failed to load campaigns.");
     } finally {
       setLoading(false);
     }
@@ -130,18 +154,20 @@ export default function CampaignsTab() {
     void loadTags();
   }, [loadCampaigns, loadTags]);
 
-  const [campaignFilter, setCampaignFilter] = useState<'draft' | 'sent' | null>(null);
+  const [campaignFilter, setCampaignFilter] = useState<"draft" | "sent" | null>(
+    null,
+  );
 
   const filteredCampaigns = campaignFilter
-    ? campaigns.filter(c => c.status === campaignFilter)
+    ? campaigns.filter((c) => c.status === campaignFilter)
     : campaigns;
 
   const totalCount = campaigns.length;
-  const draftCount = campaigns.filter(c => c.status === 'draft').length;
-  const sentCount = campaigns.filter(c => c.status === 'sent').length;
+  const draftCount = campaigns.filter((c) => c.status === "draft").length;
+  const sentCount = campaigns.filter((c) => c.status === "sent").length;
 
-  const toggleCampaignFilter = (filter: 'draft' | 'sent' | null) => {
-    setCampaignFilter(prev => prev === filter ? null : filter);
+  const toggleCampaignFilter = (filter: "draft" | "sent" | null) => {
+    setCampaignFilter((prev) => (prev === filter ? null : filter));
   };
 
   const openCreate = () => {
@@ -150,43 +176,47 @@ export default function CampaignsTab() {
     setFormData(EMPTY_CAMPAIGN_FORM);
     setFormError(null);
     setTargetCount(null);
-    setNewTagInput('');
+    setNewTagInput("");
     setShowForm(true);
-    void updateTargetCount('all', []);
+    void updateTargetCount("all", []);
     void loadTags();
   };
 
   const openEdit = (c: Campaign) => {
-    const parsedTags = c.target_tags ? (JSON.parse(c.target_tags) as string[]) : [];
+    const parsedTags = c.target_tags
+      ? (JSON.parse(c.target_tags) as string[])
+      : [];
     setEditingId(c.id);
     setViewOnly(false);
     setFormData({
       name: c.name,
       subject: c.subject,
-      preheader: c.preheader || '',
+      preheader: c.preheader || "",
       html_content: c.html_content,
-      text_content: c.text_content || '',
-      target_type: c.target_type || 'all',
+      text_content: c.text_content || "",
+      target_type: c.target_type || "all",
       target_tags: parsedTags,
     });
     setFormError(null);
-    setNewTagInput('');
+    setNewTagInput("");
     setShowForm(true);
-    void updateTargetCount(c.target_type || 'all', parsedTags);
+    void updateTargetCount(c.target_type || "all", parsedTags);
     void loadTags();
   };
 
   const openView = (c: Campaign) => {
-    const parsedTags = c.target_tags ? (JSON.parse(c.target_tags) as string[]) : [];
+    const parsedTags = c.target_tags
+      ? (JSON.parse(c.target_tags) as string[])
+      : [];
     setEditingId(c.id);
     setViewOnly(true);
     setFormData({
       name: c.name,
       subject: c.subject,
-      preheader: c.preheader || '',
-      html_content: c.html_content || '',
-      text_content: c.text_content || '',
-      target_type: c.target_type || 'all',
+      preheader: c.preheader || "",
+      html_content: c.html_content || "",
+      text_content: c.text_content || "",
+      target_type: c.target_type || "all",
       target_tags: parsedTags,
     });
     setFormError(null);
@@ -195,7 +225,7 @@ export default function CampaignsTab() {
 
   const handleSave = async () => {
     if (!formData.name || !formData.subject || !formData.html_content) {
-      setFormError('Name, subject, and HTML content are required.');
+      setFormError("Name, subject, and HTML content are required.");
       return;
     }
     setFormLoading(true);
@@ -209,20 +239,27 @@ export default function CampaignsTab() {
       setShowForm(false);
       void loadCampaigns();
     } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setFormError(e.response?.data?.error?.message ?? e.message ?? 'Failed to save campaign');
+      const e = err as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+      setFormError(
+        e.response?.data?.error?.message ??
+          e.message ??
+          "Failed to save campaign",
+      );
     } finally {
       setFormLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this draft campaign?')) return;
+    if (!confirm("Delete this draft campaign?")) return;
     try {
       await campaignsApi.remove(id);
       void loadCampaigns();
     } catch {
-      setError('Failed to delete campaign.');
+      setError("Failed to delete campaign.");
     }
   };
 
@@ -234,11 +271,20 @@ export default function CampaignsTab() {
       void loadCampaigns();
       const stats = result.stats;
       if (stats) {
-        alert(`Campaign sent to ${stats.sent}/${stats.total} subscribers${stats.errors ? ` (${stats.errors} failed)` : ''}.`);
+        alert(
+          `Campaign sent to ${stats.sent}/${stats.total} subscribers${stats.errors ? ` (${stats.errors} failed)` : ""}.`,
+        );
       }
     } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(e.response?.data?.error?.message ?? e.message ?? 'Failed to send campaign');
+      const e = err as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+      setError(
+        e.response?.data?.error?.message ??
+          e.message ??
+          "Failed to send campaign",
+      );
       setSendingId(null);
     } finally {
       setSendLoading(false);
@@ -250,7 +296,13 @@ export default function CampaignsTab() {
       {error && (
         <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}
-          <button type="button" onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">&#10005;</button>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="ml-4 text-red-500 hover:text-red-700"
+          >
+            &#10005;
+          </button>
         </div>
       )}
 
@@ -264,20 +316,40 @@ export default function CampaignsTab() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {([
-          { icon: MegaphoneIcon, color: 'text-blue-600', label: 'Total Campaigns', value: totalCount, filter: null as 'draft' | 'sent' | null },
-          { icon: DocumentTextIcon, color: 'text-amber-600', label: 'Drafts', value: draftCount, filter: 'draft' as const },
-          { icon: PaperAirplaneIcon, color: 'text-green-600', label: 'Sent', value: sentCount, filter: 'sent' as const },
-        ]).map(({ icon: Icon, color, label, value, filter }) => {
+        {[
+          {
+            icon: MegaphoneIcon,
+            color: "text-blue-600",
+            label: "Total Campaigns",
+            value: totalCount,
+            filter: null as "draft" | "sent" | null,
+          },
+          {
+            icon: DocumentTextIcon,
+            color: "text-amber-600",
+            label: "Drafts",
+            value: draftCount,
+            filter: "draft" as const,
+          },
+          {
+            icon: PaperAirplaneIcon,
+            color: "text-green-600",
+            label: "Sent",
+            value: sentCount,
+            filter: "sent" as const,
+          },
+        ].map(({ icon: Icon, color, label, value, filter }) => {
           const isClear = filter === null;
           const isActive = !isClear && campaignFilter === filter;
           return (
             <Card
               key={label}
               className={`transition-all cursor-pointer hover:shadow-md ${
-                isActive ? 'ring-2 ring-foreground bg-muted' : ''
+                isActive ? "ring-2 ring-foreground bg-muted" : ""
               }`}
-              onClick={() => isClear ? setCampaignFilter(null) : toggleCampaignFilter(filter)}
+              onClick={() =>
+                isClear ? setCampaignFilter(null) : toggleCampaignFilter(filter)
+              }
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -303,7 +375,9 @@ export default function CampaignsTab() {
             <div className="text-center py-8">Loading campaigns...</div>
           ) : filteredCampaigns.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              {campaigns.length === 0 ? 'No campaigns yet. Create your first one!' : 'No campaigns match this filter'}
+              {campaigns.length === 0
+                ? "No campaigns yet. Create your first one!"
+                : "No campaigns match this filter"}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -322,53 +396,90 @@ export default function CampaignsTab() {
                   {filteredCampaigns.map((campaign) => (
                     <tr key={campaign.id} className="border-b hover:bg-accent">
                       <td className="p-3 font-medium">{campaign.name}</td>
-                      <td className="p-3 text-sm text-muted-foreground max-w-[200px] truncate">{campaign.subject}</td>
+                      <td className="p-3 text-sm text-muted-foreground max-w-[200px] truncate">
+                        {campaign.subject}
+                      </td>
                       <td className="p-3">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          campaign.status === 'sent'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {campaign.status === 'sent' ? 'Sent' : 'Draft'}
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            campaign.status === "sent"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {campaign.status === "sent" ? "Sent" : "Draft"}
                         </span>
                       </td>
                       <td className="p-3 text-sm text-muted-foreground">
-                        {campaign.status === 'sent'
-                          ? (campaign.sent_count ?? campaign.recipient_count ?? '-')
+                        {campaign.status === "sent"
+                          ? (campaign.sent_count ??
+                            campaign.recipient_count ??
+                            "-")
                           : (() => {
-                              const type = campaign.target_type || 'all';
-                              if (type === 'all') return <span className="text-muted-foreground">All</span>;
-                              const tags = campaign.target_tags ? JSON.parse(campaign.target_tags) as string[] : [];
+                              const type = campaign.target_type || "all";
+                              if (type === "all")
+                                return (
+                                  <span className="text-muted-foreground">
+                                    All
+                                  </span>
+                                );
+                              const tags = campaign.target_tags
+                                ? (JSON.parse(campaign.target_tags) as string[])
+                                : [];
                               return tags.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
-                                  {tags.map(t => (
-                                    <span key={t} className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px] font-medium">{t}</span>
+                                  {tags.map((t) => (
+                                    <span
+                                      key={t}
+                                      className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                                    >
+                                      {t}
+                                    </span>
                                   ))}
                                 </div>
-                              ) : <span className="text-muted-foreground">All</span>;
-                            })()
-                        }
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  All
+                                </span>
+                              );
+                            })()}
                       </td>
                       <td className="p-3 text-sm text-muted-foreground">
-                        {campaign.status === 'sent' && campaign.sent_at
+                        {campaign.status === "sent" && campaign.sent_at
                           ? formatDate(campaign.sent_at)
                           : formatDate(campaign.created_at)}
                       </td>
                       <td className="p-3">
-                        {campaign.status === 'draft' ? (
+                        {campaign.status === "draft" ? (
                           <div className="flex gap-1">
-                            <Button size="sm" variant="outline" onClick={() => openEdit(campaign)}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEdit(campaign)}
+                            >
                               <PencilSquareIcon className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => void openSendDialog(campaign)}>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => void openSendDialog(campaign)}
+                            >
                               <PaperAirplaneIcon className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => void handleDelete(campaign.id)}>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => void handleDelete(campaign.id)}
+                            >
                               <TrashIcon className="h-4 w-4" />
                             </Button>
                           </div>
                         ) : (
-                          <Button size="sm" variant="outline" onClick={() => openView(campaign)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openView(campaign)}
+                          >
                             <EyeIcon className="h-4 w-4" />
                           </Button>
                         )}
@@ -388,242 +499,407 @@ export default function CampaignsTab() {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">{viewOnly ? 'View Campaign' : editingId ? 'Edit Campaign' : 'New Campaign'}</h2>
-                <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>
+                <h2 className="text-xl font-semibold">
+                  {viewOnly
+                    ? "View Campaign"
+                    : editingId
+                      ? "Edit Campaign"
+                      : "New Campaign"}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowForm(false)}
+                >
                   <XMarkIcon className="h-4 w-4" />
                 </Button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Campaign Name {!viewOnly && '*'}</label>
-                  <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="March Newsletter" readOnly={viewOnly} />
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Campaign Name {!viewOnly && "*"}
+                  </label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, name: e.target.value }))
+                    }
+                    placeholder="March Newsletter"
+                    readOnly={viewOnly}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Subject Line {!viewOnly && '*'}</label>
-                  <Input value={formData.subject} onChange={e => setFormData(p => ({ ...p, subject: e.target.value }))} placeholder="Exciting news from our team" readOnly={viewOnly} />
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Subject Line {!viewOnly && "*"}
+                  </label>
+                  <Input
+                    value={formData.subject}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, subject: e.target.value }))
+                    }
+                    placeholder="Exciting news from our team"
+                    readOnly={viewOnly}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Preheader {!viewOnly && '(optional)'}</label>
-                  <Input value={formData.preheader} onChange={e => setFormData(p => ({ ...p, preheader: e.target.value }))} placeholder="Preview text shown in email clients" readOnly={viewOnly} />
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Preheader {!viewOnly && "(optional)"}
+                  </label>
+                  <Input
+                    value={formData.preheader}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, preheader: e.target.value }))
+                    }
+                    placeholder="Preview text shown in email clients"
+                    readOnly={viewOnly}
+                  />
                 </div>
 
                 {/* Audience / Targeting */}
                 {viewOnly ? (
                   <div className="rounded-lg border border-border p-4 space-y-2">
-                    <label className="block text-sm font-medium text-foreground">Audience</label>
+                    <label className="block text-sm font-medium text-foreground">
+                      Audience
+                    </label>
                     <p className="text-sm text-muted-foreground">
-                      {formData.target_type === 'all'
-                        ? 'All subscribers'
-                        : formData.target_tags.length > 0
-                          ? <span className="flex flex-wrap gap-1">{formData.target_tags.map(t => <span key={t} className="bg-blue-100 text-blue-800 rounded-full px-2.5 py-0.5 text-xs font-medium">{t}</span>)}</span>
-                          : 'All subscribers'}
+                      {formData.target_type === "all" ? (
+                        "All subscribers"
+                      ) : formData.target_tags.length > 0 ? (
+                        <span className="flex flex-wrap gap-1">
+                          {formData.target_tags.map((t) => (
+                            <span
+                              key={t}
+                              className="bg-blue-100 text-blue-800 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        "All subscribers"
+                      )}
                     </p>
                   </div>
                 ) : (
-                <div className="rounded-lg border border-border p-4 space-y-3">
-                  <label className="block text-sm font-medium text-foreground">Audience</label>
-                  <div className="flex gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio" name="target_type" value="all"
-                        checked={formData.target_type === 'all'}
-                        onChange={() => {
-                          setFormData(p => ({ ...p, target_type: 'all', target_tags: [] }));
-                          void updateTargetCount('all', []);
-                        }}
-                        className="accent-foreground"
-                      />
-                      <span className="text-sm">All subscribers</span>
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <label className="block text-sm font-medium text-foreground">
+                      Audience
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio" name="target_type" value="tagged"
-                        checked={formData.target_type === 'tagged'}
-                        onChange={() => {
-                          setFormData(p => ({ ...p, target_type: 'tagged' }));
-                          void updateTargetCount('tagged', formData.target_tags);
-                        }}
-                        className="accent-foreground"
-                      />
-                      <span className="text-sm">Subscribers with tags</span>
-                    </label>
-                  </div>
-                  {formData.target_type === 'tagged' && (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-1.5">
-                        {formData.target_tags.map(tag => (
-                          <span key={tag} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 rounded-full px-2.5 py-0.5 text-xs font-medium">
-                            {tag}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const next = formData.target_tags.filter(t => t !== tag);
-                                setFormData(p => ({ ...p, target_tags: next }));
-                                void updateTargetCount('tagged', next);
-                              }}
-                              className="hover:text-blue-600"
-                            >
-                              <XMarkIcon className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        {availableTags.length > 0 && (
-                          <select
-                            value=""
-                            onChange={e => {
-                              const tag = e.target.value;
-                              if (tag && !formData.target_tags.includes(tag)) {
-                                const next = [...formData.target_tags, tag];
-                                setFormData(p => ({ ...p, target_tags: next }));
-                                void updateTargetCount('tagged', next);
-                              }
-                            }}
-                            className="h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                          >
-                            <option value="">Select a tag...</option>
-                            {availableTags.filter(t => !formData.target_tags.includes(t)).map(t => (
-                              <option key={t} value={t}>{t}</option>
-                            ))}
-                          </select>
-                        )}
-                        <div className="flex gap-1">
-                          <Input
-                            value={newTagInput}
-                            onChange={e => setNewTagInput(e.target.value)}
-                            placeholder="New tag..."
-                            className="h-9 w-32"
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                const tag = newTagInput.trim();
-                                if (tag && !formData.target_tags.includes(tag)) {
-                                  const next = [...formData.target_tags, tag];
-                                  setFormData(p => ({ ...p, target_tags: next }));
-                                  void updateTargetCount('tagged', next);
-                                  setNewTagInput('');
-                                }
-                              }
-                            }}
-                          />
-                          <Button
-                            type="button" variant="outline" size="sm"
-                            className="h-9"
-                            onClick={() => {
-                              const tag = newTagInput.trim();
-                              if (tag && !formData.target_tags.includes(tag)) {
-                                const next = [...formData.target_tags, tag];
-                                setFormData(p => ({ ...p, target_tags: next }));
-                                void updateTargetCount('tagged', next);
-                                setNewTagInput('');
-                              }
-                            }}
-                            disabled={!newTagInput.trim()}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                      </div>
-                      {formData.target_tags.length === 0 && (
-                        <p className="text-xs text-amber-600">Select at least one tag to target specific subscribers.</p>
-                      )}
-                    </div>
-                  )}
-                  {targetCount !== null && (
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        Will send to <strong>{targetCount}</strong> subscriber{targetCount !== 1 ? 's' : ''}
-                      </p>
-                      {targetCount > 0 && (
-                        <button
-                          type="button"
-                          className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                          onClick={() => {
-                            if (!showRecipientPreview) {
-                              void loadRecipientPreview(formData.target_type, formData.target_tags);
-                            }
-                            setShowRecipientPreview(!showRecipientPreview);
+                    <div className="flex gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="target_type"
+                          value="all"
+                          checked={formData.target_type === "all"}
+                          onChange={() => {
+                            setFormData((p) => ({
+                              ...p,
+                              target_type: "all",
+                              target_tags: [],
+                            }));
+                            void updateTargetCount("all", []);
                           }}
-                        >
-                          {showRecipientPreview ? 'Hide list' : 'Preview list'}
-                        </button>
-                      )}
+                          className="accent-foreground"
+                        />
+                        <span className="text-sm">All subscribers</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="target_type"
+                          value="tagged"
+                          checked={formData.target_type === "tagged"}
+                          onChange={() => {
+                            setFormData((p) => ({
+                              ...p,
+                              target_type: "tagged",
+                            }));
+                            void updateTargetCount(
+                              "tagged",
+                              formData.target_tags,
+                            );
+                          }}
+                          className="accent-foreground"
+                        />
+                        <span className="text-sm">Subscribers with tags</span>
+                      </label>
                     </div>
-                  )}
-                  {showRecipientPreview && (
-                    <div className="border border-border rounded-md max-h-[160px] overflow-y-auto">
-                      {recipientPreviewLoading ? (
-                        <p className="text-xs text-muted-foreground p-3">Loading...</p>
-                      ) : recipientPreview.length === 0 ? (
-                        <p className="text-xs text-muted-foreground p-3">No matching subscribers</p>
-                      ) : (
-                        <table className="w-full text-xs">
-                          <thead className="sticky top-0 bg-muted">
-                            <tr className="border-b">
-                              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Email</th>
-                              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Name</th>
-                              <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Tags</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {recipientPreview.map(s => {
-                              let tags: string[] = [];
-                              try { tags = s.tags ? JSON.parse(s.tags) : []; } catch { /* skip */ }
-                              return (
-                                <tr key={s.id} className="border-b last:border-0 hover:bg-accent">
-                                  <td className="px-3 py-1.5 text-foreground">{s.email}</td>
-                                  <td className="px-3 py-1.5 text-muted-foreground">{s.name || '-'}</td>
-                                  <td className="px-3 py-1.5">
-                                    {tags.length > 0 ? (
-                                      <div className="flex flex-wrap gap-0.5">
-                                        {tags.map(t => (
-                                          <span key={t} className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]">{t}</span>
-                                        ))}
-                                      </div>
-                                    ) : <span className="text-muted-foreground/50">-</span>}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    {formData.target_type === "tagged" && (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {formData.target_tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = formData.target_tags.filter(
+                                    (t) => t !== tag,
+                                  );
+                                  setFormData((p) => ({
+                                    ...p,
+                                    target_tags: next,
+                                  }));
+                                  void updateTargetCount("tagged", next);
+                                }}
+                                className="hover:text-blue-600"
+                              >
+                                <XMarkIcon className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          {availableTags.length > 0 && (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                const tag = e.target.value;
+                                if (
+                                  tag &&
+                                  !formData.target_tags.includes(tag)
+                                ) {
+                                  const next = [...formData.target_tags, tag];
+                                  setFormData((p) => ({
+                                    ...p,
+                                    target_tags: next,
+                                  }));
+                                  void updateTargetCount("tagged", next);
+                                }
+                              }}
+                              className="h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                            >
+                              <option value="">Select a tag...</option>
+                              {availableTags
+                                .filter(
+                                  (t) => !formData.target_tags.includes(t),
+                                )
+                                .map((t) => (
+                                  <option key={t} value={t}>
+                                    {t}
+                                  </option>
+                                ))}
+                            </select>
+                          )}
+                          <div className="flex gap-1">
+                            <Input
+                              value={newTagInput}
+                              onChange={(e) => setNewTagInput(e.target.value)}
+                              placeholder="New tag..."
+                              className="h-9 w-32"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const tag = newTagInput.trim();
+                                  if (
+                                    tag &&
+                                    !formData.target_tags.includes(tag)
+                                  ) {
+                                    const next = [...formData.target_tags, tag];
+                                    setFormData((p) => ({
+                                      ...p,
+                                      target_tags: next,
+                                    }));
+                                    void updateTargetCount("tagged", next);
+                                    setNewTagInput("");
+                                  }
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9"
+                              onClick={() => {
+                                const tag = newTagInput.trim();
+                                if (
+                                  tag &&
+                                  !formData.target_tags.includes(tag)
+                                ) {
+                                  const next = [...formData.target_tags, tag];
+                                  setFormData((p) => ({
+                                    ...p,
+                                    target_tags: next,
+                                  }));
+                                  void updateTargetCount("tagged", next);
+                                  setNewTagInput("");
+                                }
+                              }}
+                              disabled={!newTagInput.trim()}
+                            >
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+                        {formData.target_tags.length === 0 && (
+                          <p className="text-xs text-amber-600">
+                            Select at least one tag to target specific
+                            subscribers.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {targetCount !== null && (
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          Will send to <strong>{targetCount}</strong> subscriber
+                          {targetCount !== 1 ? "s" : ""}
+                        </p>
+                        {targetCount > 0 && (
+                          <button
+                            type="button"
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                            onClick={() => {
+                              if (!showRecipientPreview) {
+                                void loadRecipientPreview(
+                                  formData.target_type,
+                                  formData.target_tags,
+                                );
+                              }
+                              setShowRecipientPreview(!showRecipientPreview);
+                            }}
+                          >
+                            {showRecipientPreview
+                              ? "Hide list"
+                              : "Preview list"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {showRecipientPreview && (
+                      <div className="border border-border rounded-md max-h-[160px] overflow-y-auto">
+                        {recipientPreviewLoading ? (
+                          <p className="text-xs text-muted-foreground p-3">
+                            Loading...
+                          </p>
+                        ) : recipientPreview.length === 0 ? (
+                          <p className="text-xs text-muted-foreground p-3">
+                            No matching subscribers
+                          </p>
+                        ) : (
+                          <table className="w-full text-xs">
+                            <thead className="sticky top-0 bg-muted">
+                              <tr className="border-b">
+                                <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">
+                                  Email
+                                </th>
+                                <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">
+                                  Name
+                                </th>
+                                <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">
+                                  Tags
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {recipientPreview.map((s) => {
+                                let tags: string[] = [];
+                                try {
+                                  tags = s.tags ? JSON.parse(s.tags) : [];
+                                } catch {
+                                  /* skip */
+                                }
+                                return (
+                                  <tr
+                                    key={s.id}
+                                    className="border-b last:border-0 hover:bg-accent"
+                                  >
+                                    <td className="px-3 py-1.5 text-foreground">
+                                      {s.email}
+                                    </td>
+                                    <td className="px-3 py-1.5 text-muted-foreground">
+                                      {s.name || "-"}
+                                    </td>
+                                    <td className="px-3 py-1.5">
+                                      {tags.length > 0 ? (
+                                        <div className="flex flex-wrap gap-0.5">
+                                          {tags.map((t) => (
+                                            <span
+                                              key={t}
+                                              className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]"
+                                            >
+                                              {t}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted-foreground/50">
+                                          -
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">HTML Content {!viewOnly && '*'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    HTML Content {!viewOnly && "*"}
+                  </label>
                   <textarea
                     className="w-full rounded-md border border-border px-3 py-2 text-sm font-mono min-h-[200px] focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
                     value={formData.html_content}
-                    onChange={e => setFormData(p => ({ ...p, html_content: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        html_content: e.target.value,
+                      }))
+                    }
                     placeholder="<html><body>Your email content here...</body></html>"
                     readOnly={viewOnly}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Text Fallback {!viewOnly && '(optional)'}</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    Text Fallback {!viewOnly && "(optional)"}
+                  </label>
                   <textarea
                     className="w-full rounded-md border border-border px-3 py-2 text-sm min-h-[100px] focus:outline-none focus:ring-2 focus:ring-foreground focus:border-transparent"
                     value={formData.text_content}
-                    onChange={e => setFormData(p => ({ ...p, text_content: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        text_content: e.target.value,
+                      }))
+                    }
                     placeholder="Plain text version of your email"
                     readOnly={viewOnly}
                   />
                 </div>
                 {!viewOnly && formError && (
-                  <div className="p-3 rounded-md bg-red-50 text-red-800 border border-red-200 text-sm">{formError}</div>
+                  <div className="p-3 rounded-md bg-red-50 text-red-800 border border-red-200 text-sm">
+                    {formError}
+                  </div>
                 )}
                 <div className="flex gap-2 pt-2">
                   {!viewOnly && (
-                    <Button onClick={() => void handleSave()} disabled={formLoading} className="flex items-center gap-2">
-                      {formLoading ? 'Saving...' : editingId ? 'Update Campaign' : 'Create Draft'}
+                    <Button
+                      onClick={() => void handleSave()}
+                      disabled={formLoading}
+                      className="flex items-center gap-2"
+                    >
+                      {formLoading
+                        ? "Saving..."
+                        : editingId
+                          ? "Update Campaign"
+                          : "Create Draft"}
                     </Button>
                   )}
-                  <Button variant="outline" onClick={() => setShowForm(false)}>{viewOnly ? 'Close' : 'Cancel'}</Button>
+                  <Button variant="outline" onClick={() => setShowForm(false)}>
+                    {viewOnly ? "Close" : "Cancel"}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -638,11 +914,11 @@ export default function CampaignsTab() {
             <div className="p-6 flex flex-col gap-4">
               <h2 className="text-xl font-semibold">Send Campaign</h2>
               <p className="text-muted-foreground">
-                Are you sure you want to send this campaign to{' '}
+                Are you sure you want to send this campaign to{" "}
                 <strong>
                   {subscriberCount !== null
-                    ? `${subscriberCount} active subscriber${subscriberCount !== 1 ? 's' : ''}`
-                    : 'all active subscribers'}
+                    ? `${subscriberCount} active subscriber${subscriberCount !== 1 ? "s" : ""}`
+                    : "all active subscribers"}
                 </strong>
                 ? This action cannot be undone.
               </p>
@@ -655,34 +931,62 @@ export default function CampaignsTab() {
                     className="text-xs text-blue-600 hover:text-blue-800 font-medium mb-2"
                     onClick={() => setShowSendRecipients(!showSendRecipients)}
                   >
-                    {showSendRecipients ? 'Hide recipient list' : `View all ${sendRecipients.length} recipients`}
+                    {showSendRecipients
+                      ? "Hide recipient list"
+                      : `View all ${sendRecipients.length} recipients`}
                   </button>
                   {showSendRecipients && (
                     <div className="border border-border rounded-md max-h-[200px] overflow-y-auto">
                       <table className="w-full text-xs">
                         <thead className="sticky top-0 bg-muted">
                           <tr className="border-b">
-                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Email</th>
-                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Name</th>
-                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">Tags</th>
+                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">
+                              Email
+                            </th>
+                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">
+                              Name
+                            </th>
+                            <th className="text-left px-3 py-1.5 font-medium text-muted-foreground">
+                              Tags
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {sendRecipients.map(s => {
+                          {sendRecipients.map((s) => {
                             let tags: string[] = [];
-                            try { tags = s.tags ? JSON.parse(s.tags) : []; } catch { /* skip */ }
+                            try {
+                              tags = s.tags ? JSON.parse(s.tags) : [];
+                            } catch {
+                              /* skip */
+                            }
                             return (
-                              <tr key={s.id} className="border-b last:border-0 hover:bg-accent">
-                                <td className="px-3 py-1.5 text-foreground">{s.email}</td>
-                                <td className="px-3 py-1.5 text-muted-foreground">{s.name || '-'}</td>
+                              <tr
+                                key={s.id}
+                                className="border-b last:border-0 hover:bg-accent"
+                              >
+                                <td className="px-3 py-1.5 text-foreground">
+                                  {s.email}
+                                </td>
+                                <td className="px-3 py-1.5 text-muted-foreground">
+                                  {s.name || "-"}
+                                </td>
                                 <td className="px-3 py-1.5">
                                   {tags.length > 0 ? (
                                     <div className="flex flex-wrap gap-0.5">
-                                      {tags.map(t => (
-                                        <span key={t} className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]">{t}</span>
+                                      {tags.map((t) => (
+                                        <span
+                                          key={t}
+                                          className="bg-blue-50 text-blue-700 rounded-full px-1.5 py-0.5 text-[10px]"
+                                        >
+                                          {t}
+                                        </span>
                                       ))}
                                     </div>
-                                  ) : <span className="text-muted-foreground/50">-</span>}
+                                  ) : (
+                                    <span className="text-muted-foreground/50">
+                                      -
+                                    </span>
+                                  )}
                                 </td>
                               </tr>
                             );
@@ -701,9 +1005,15 @@ export default function CampaignsTab() {
                   disabled={sendLoading}
                 >
                   <PaperAirplaneIcon className="h-4 w-4" />
-                  {sendLoading ? 'Sending...' : 'Send Now'}
+                  {sendLoading ? "Sending..." : "Send Now"}
                 </Button>
-                <Button variant="outline" onClick={() => setSendingId(null)} disabled={sendLoading}>Cancel</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSendingId(null)}
+                  disabled={sendLoading}
+                >
+                  Cancel
+                </Button>
               </div>
             </div>
           </div>

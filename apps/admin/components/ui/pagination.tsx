@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
 interface PaginationProps {
   currentPage: number;
@@ -7,10 +7,17 @@ interface PaginationProps {
   className?: string;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange, className }: PaginationProps) {
+export function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+  className,
+}: PaginationProps) {
   if (totalPages <= 1) return null;
   return (
-    <div className={`flex justify-center items-center gap-2 ${className ?? 'mt-6'}`}>
+    <div
+      className={`flex justify-center items-center gap-2 ${className ?? "mt-6"}`}
+    >
       <Button
         variant="outline"
         disabled={currentPage === 1}

@@ -1,25 +1,25 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   // Demo mode — no auth required, all routes accessible
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
     return NextResponse.next();
   }
 
   const { pathname } = request.nextUrl;
 
   // Allow access to login page and API routes
-  if (pathname.startsWith('/login') || pathname.startsWith('/api')) {
+  if (pathname.startsWith("/login") || pathname.startsWith("/api")) {
     return NextResponse.next();
   }
 
   // Check for auth cookie (the actual validation happens on the backend)
-  const hasAuthCookie = request.cookies.has('accessToken');
+  const hasAuthCookie = request.cookies.has("accessToken");
 
   // Redirect to login if no auth cookie
-  if (!hasAuthCookie && pathname !== '/login') {
-    const loginUrl = new URL('/login', request.url);
+  if (!hasAuthCookie && pathname !== "/login") {
+    const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -35,6 +35,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
   ],
 };

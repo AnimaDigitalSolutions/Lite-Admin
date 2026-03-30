@@ -1,17 +1,18 @@
-import maxmind, { type Reader, type CountryResponse } from 'maxmind';
-import { type GeoIpDbName } from 'geolite2-redist';
-import logger from '../../utils/logger.js';
+import maxmind, { type Reader, type CountryResponse } from "maxmind";
+import { type GeoIpDbName } from "geolite2-redist";
+import logger from "../../utils/logger.js";
 
 export interface GeoResult {
-  country?: string;      // ISO 2-letter code, e.g. "FR"
+  country?: string; // ISO 2-letter code, e.g. "FR"
   country_name?: string; // e.g. "France"
-  city?: string;         // always undefined with Country DB (reserved for City DB upgrade)
-  region?: string;       // always undefined with Country DB
+  city?: string; // always undefined with Country DB (reserved for City DB upgrade)
+  region?: string; // always undefined with Country DB
 }
 
 class GeoService {
   private static instance: GeoService | null = null;
-  private reader: (Reader<CountryResponse> & { close?: () => void }) | null = null;
+  private reader: (Reader<CountryResponse> & { close?: () => void }) | null =
+    null;
   private initPromise: Promise<void> | null = null;
   private unavailable = false;
 
@@ -28,19 +29,24 @@ class GeoService {
 
     this.initPromise = (async () => {
       try {
-        const geolite2 = await import('geolite2-redist');
+        const geolite2 = await import("geolite2-redist");
         // geolite2-redist ships as ESM — handle both named and default export shapes
-        const lib = (geolite2 as unknown as { default?: typeof geolite2 }).default ?? geolite2;
+        const lib =
+          (geolite2 as unknown as { default?: typeof geolite2 }).default ??
+          geolite2;
         const dbName = geolite2.GeoIpDbName.Country as GeoIpDbName; // ~6 MB vs ~70 MB for City
 
-        this.reader = await lib.open(
-          dbName,
-          (dbPath: string) => maxmind.open<CountryResponse>(dbPath)
+        this.reader = await lib.open(dbName, (dbPath: string) =>
+          maxmind.open<CountryResponse>(dbPath),
         );
 
-        logger.info('GeoIP service initialized (GeoLite2-Country, ~6 MB)');
+        logger.info("GeoIP service initialized (GeoLite2-Country, ~6 MB)");
       } catch (err) {
-        logger.warn({ message: 'GeoIP database unavailable — location data will not be recorded', err });
+        logger.warn({
+          message:
+            "GeoIP database unavailable — location data will not be recorded",
+          err,
+        });
         this.unavailable = true;
       } finally {
         this.initPromise = null;
@@ -58,8 +64,11 @@ class GeoService {
 
   /** Extract real client IP — handles X-Forwarded-For and IPv6-mapped IPv4. */
   static extractIp(raw: string | undefined): string {
-    if (!raw) return '';
-    return raw.split(',')[0].trim().replace(/^::ffff:/, '');
+    if (!raw) return "";
+    return raw
+      .split(",")[0]
+      .trim()
+      .replace(/^::ffff:/, "");
   }
 
   async lookup(rawIp: string): Promise<GeoResult> {
@@ -85,13 +94,13 @@ class GeoService {
 
   private isPrivateIp(ip: string): boolean {
     return (
-      ip === '127.0.0.1' ||
-      ip === '::1' ||
-      ip.startsWith('10.') ||
-      ip.startsWith('192.168.') ||
+      ip === "127.0.0.1" ||
+      ip === "::1" ||
+      ip.startsWith("10.") ||
+      ip.startsWith("192.168.") ||
       /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
-      ip === 'unknown' ||
-      ip === 'admin'
+      ip === "unknown" ||
+      ip === "admin"
     );
   }
 }

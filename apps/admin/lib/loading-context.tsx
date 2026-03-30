@@ -1,6 +1,13 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -26,7 +33,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       // Gradually increase progress while loading
       if (progressInterval.current) clearInterval(progressInterval.current);
       progressInterval.current = setInterval(() => {
-        setProgress(prev => {
+        setProgress((prev) => {
           const next = prev + Math.random() * 30;
           return next > 90 ? 90 : next;
         });
@@ -56,7 +63,9 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <LoadingContext.Provider value={{ isLoading, startLoading, stopLoading, progress }}>
+    <LoadingContext.Provider
+      value={{ isLoading, startLoading, stopLoading, progress }}
+    >
       {children}
     </LoadingContext.Provider>
   );
@@ -65,7 +74,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 export function useLoading() {
   const context = useContext(LoadingContext);
   if (!context) {
-    throw new Error('useLoading must be used within LoadingProvider');
+    throw new Error("useLoading must be used within LoadingProvider");
   }
   return context;
 }

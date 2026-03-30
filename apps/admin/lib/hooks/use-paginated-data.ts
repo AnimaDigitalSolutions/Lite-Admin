@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -50,8 +50,13 @@ export function usePaginatedData<T>(
         setTotalPages(Math.ceil(response.pagination.total / pageSize) || 1);
       }
     } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(e.response?.data?.error?.message ?? e.message ?? 'Failed to load data');
+      const e = err as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+      setError(
+        e.response?.data?.error?.message ?? e.message ?? "Failed to load data",
+      );
     } finally {
       setLoading(false);
     }
@@ -65,5 +70,14 @@ export function usePaginatedData<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refetch]);
 
-  return { data, loading, error, currentPage, totalPages, setCurrentPage, refetch, setData };
+  return {
+    data,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    refetch,
+    setData,
+  };
 }

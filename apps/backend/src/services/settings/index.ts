@@ -1,12 +1,13 @@
-import DatabaseService from '../database.service.js';
-import logger from '../../utils/logger.js';
+import DatabaseService from "../database.service.js";
+import logger from "../../utils/logger.js";
 
 const DEFAULTS: Record<string, string> = {
-  email_enabled: 'true',
-  maintenance_mode: 'false',
-  maintenance_message: 'We are currently under maintenance. Please check back soon.',
-  rate_limit_forms_max: '10',
-  rate_limit_forms_window_minutes: '10',
+  email_enabled: "true",
+  maintenance_mode: "false",
+  maintenance_message:
+    "We are currently under maintenance. Please check back soon.",
+  rate_limit_forms_max: "10",
+  rate_limit_forms_window_minutes: "10",
 };
 
 class SettingsService {
@@ -42,7 +43,7 @@ class SettingsService {
       }
     }
 
-    logger.info('Settings service initialized');
+    logger.info("Settings service initialized");
   }
 
   get(key: string): string | undefined {
@@ -60,23 +61,29 @@ class SettingsService {
   }
 
   isEmailEnabled(): boolean {
-    return this.cache['email_enabled'] !== 'false';
+    return this.cache["email_enabled"] !== "false";
   }
 
   isMaintenanceMode(): boolean {
-    return this.cache['maintenance_mode'] === 'true';
+    return this.cache["maintenance_mode"] === "true";
   }
 
   getMaintenanceMessage(): string {
-    return this.cache['maintenance_message'] ?? DEFAULTS['maintenance_message'] ?? 'Maintenance in progress.';
+    return (
+      this.cache["maintenance_message"] ??
+      DEFAULTS["maintenance_message"] ??
+      "Maintenance in progress."
+    );
   }
 
   getRateLimitFormsMax(): number {
-    return parseInt(this.cache['rate_limit_forms_max'] ?? '10', 10) || 10;
+    return parseInt(this.cache["rate_limit_forms_max"] ?? "10", 10) || 10;
   }
 
   getRateLimitFormsWindowMinutes(): number {
-    return parseInt(this.cache['rate_limit_forms_window_minutes'] ?? '10', 10) || 10;
+    return (
+      parseInt(this.cache["rate_limit_forms_window_minutes"] ?? "10", 10) || 10
+    );
   }
 }
 
