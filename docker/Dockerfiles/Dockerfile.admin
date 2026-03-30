@@ -1,0 +1,30 @@
+# Dockerfile for Next.js Admin Dashboard
+# Expects pre-built standalone output from CI/CD (apps/admin/.next/standalone)
+FROM node:24-alpine AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN apk add --no-cache libc6-compat
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
+
+# Copy pre-built Next.js standalone server (includes pruned node_modules)
+COPY --chown=nextjs:nodejs apps/admin/.next/standalone ./
+
+# Copy static assets (CSS, JS bundles)
+COPY --chown=nextjs:nodejs apps/admin/.next/static ./apps/admin/.next/static
+
+# Copy public assets (logos, favicons, etc.)
+COPY --chown=nextjs:nodejs apps/admin/public ./apps/admin/public
+
+USER nextjs
+
+EXPOSE 3002
+ENV PORT=3002
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "apps/admin/server.js"]

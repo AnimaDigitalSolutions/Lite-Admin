@@ -1,0 +1,43 @@
+# Demo deployment configuration
+# Same as production but with DEMO_MODE=true, different ports, and isolated data
+# Runs alongside prod on the same server without conflicts
+
+services:
+  backend:
+    image: ${BACKEND_IMAGE}:${VERSION:-latest}
+    container_name: lite-admin-demo-backend
+    ports:
+      - "${REMOTE_DEMO_BACKEND_PORT:-3011}:3001"
+    env_file:
+      - ${ENV_FILE:-./.env}
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DEMO_MODE=true
+      - TRUST_PROXY=true
+      - UPLOAD_DIR=/app/uploads
+      - DATABASE_DIR=/app/database
+    volumes:
+      - /opt/lite-admin-demo/uploads:/app/uploads
+      - /opt/lite-admin-demo/database:/app/database
+      - /opt/lite-admin-demo/logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - lite-admin-demo-network
+
+  admin:
+    image: ${ADMIN_IMAGE}:${VERSION:-latest}
+    container_name: lite-admin-demo-admin
+    ports:
+      - "${REMOTE_DEMO_ADMIN_PORT:-3012}:3002"
+    environment:
+      - NODE_ENV=production
+      - DEMO_MODE=true
+      - NEXT_PUBLIC_API_URL=${DEMO_API_URL:-http://localhost:3011}
+    restart: unless-stopped
+    networks:
+      - lite-admin-demo-network
+
+networks:
+  lite-admin-demo-network:
+    driver: bridge

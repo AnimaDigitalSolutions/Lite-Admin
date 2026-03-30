@@ -1,0 +1,29 @@
+# Docker Compose Build Configuration
+# Used by CI/CD to build Docker images with proper naming and labels
+# Usage: docker compose -p $COMPOSE_PROJECT_NAME -f docker/docker-compose.build.yml build --parallel
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfiles/Dockerfile.backend
+      args:
+        - NODE_ENV=production
+    image: ${BACKEND_IMAGE:-lite-admin/backend}:${VERSION:-latest}
+    container_name: lite-admin-backend-build
+    labels:
+      - "com.docker.compose.project=${COMPOSE_PROJECT_NAME}"
+      - "com.lite-admin.service=backend"
+
+  admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfiles/Dockerfile.admin
+      args:
+        - NODE_ENV=production
+        - NEXT_TELEMETRY_DISABLED=1
+    image: ${ADMIN_IMAGE:-lite-admin/admin}:${VERSION:-latest}
+    container_name: lite-admin-admin-build
+    labels:
+      - "com.docker.compose.project=${COMPOSE_PROJECT_NAME}"
+      - "com.lite-admin.service=admin"

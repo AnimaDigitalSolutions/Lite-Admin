@@ -59,7 +59,7 @@ const config: Config = {
   
   database: {
     type: (process.env.DB_TYPE || 'sqlite') as 'sqlite' | 'postgres' | 'mysql',
-    path: process.env.DB_PATH || path.join(__dirname, '../../database/lite.db'),
+    path: process.env.DB_PATH || path.join(process.env.DATABASE_DIR || path.join(__dirname, '../../database'), 'lite.db'),
     url: process.env.DB_URL,
   },
   
@@ -78,7 +78,7 @@ const config: Config = {
   storage: {
     provider: (process.env.STORAGE_PROVIDER || 'local') as 'local' | 's3',
     local: {
-      uploadDir: path.join(__dirname, '../public/uploads'),
+      uploadDir: process.env.UPLOAD_DIR || path.join(__dirname, '../public/uploads'),
     },
     s3: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',

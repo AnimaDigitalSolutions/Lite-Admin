@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfiles/Dockerfile.backend
     container_name: lite-admin
     restart: unless-stopped
     ports:

@@ -44,7 +44,7 @@ app.use((req, _res, next) => {
 });
 
 // Static files
-app.use('/uploads', express.static('src/public/uploads'));
+app.use('/uploads', express.static(config.storage.local?.uploadDir ?? 'src/public/uploads'));
 
 // API routes
 app.use('/api', routes);

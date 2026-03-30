@@ -216,26 +216,128 @@ build:
   @echo -e "${BLUE}🏗️  Building for production...${NC}"
   @NODE_ENV=production pnpm build
 
-# === DOCKER ===
+# === DOCKER (Development) ===
 
-# Build Docker image
+# Compute compose project name from folder + git branch
+export DOCKER_NAME_BASE := `basename $(pwd) | tr '[:upper:]' '[:lower:]' | tr '.' '-'`
+export BRANCH_NAME := `git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main"`
+
+# Build Docker images (requires pre-built artifacts: run 'just build' first)
 docker-build:
-  @echo -e "${BLUE}🐳 Building Docker image...${NC}"
-  @docker build -t lite-admin:latest -f docker/Dockerfile .
+  @echo -e "${BLUE}🐳 Building Docker images...${NC}"
+  @if [ ! -d "apps/backend/dist" ]; then echo -e "${RED}❌ Backend not built. Run 'just build' first.${NC}" && exit 1; fi
+  @if [ ! -d "apps/admin/.next/standalone" ]; then echo -e "${RED}❌ Admin not built. Run 'just build' first.${NC}" && exit 1; fi
+  @COMPOSE_PROJECT_NAME="${DOCKER_NAME_BASE}_${BRANCH_NAME}" \
+    BACKEND_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_backend" \
+    ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" \
+    docker compose -f docker/docker-compose.build.yml build --parallel
+  @echo -e "${GREEN}✅ Docker images built${NC}"
 
-# Run with Docker Compose
+# Build a specific Docker image (backend or admin)
+docker-build-app APP:
+  @echo -e "${BLUE}🐳 Building {{APP}} image...${NC}"
+  @docker build -t lite-admin-{{APP}}:latest -f docker/Dockerfiles/Dockerfile.{{APP}} .
+
+# Run dev stack with Docker Compose
 docker-up:
   @echo -e "${GREEN}🚀 Starting Lite-Admin with Docker...${NC}"
-  @docker-compose -f docker/docker-compose.yml up -d
+  @docker compose -f docker/docker-compose.yml up -d
 
 # Stop Docker services
 docker-down:
   @echo -e "${YELLOW}🛑 Stopping Docker services...${NC}"
-  @docker-compose -f docker/docker-compose.yml down
+  @docker compose -f docker/docker-compose.yml down
 
 # View Docker logs
 docker-logs:
-  @docker-compose -f docker/docker-compose.yml logs -f
+  @docker compose -f docker/docker-compose.yml logs -f
+
+# === DOCKER CI/CD ===
+
+# Build images for CI (same as docker-build but outputs image names)
+docker-build-ci:
+  @echo -e "${BLUE}🐳 Building Docker images for CI...${NC}"
+  @if [ ! -d "apps/backend/dist" ]; then echo -e "${RED}❌ Backend not built${NC}" && exit 1; fi
+  @if [ ! -d "apps/admin/.next/standalone" ]; then echo -e "${RED}❌ Admin not built${NC}" && exit 1; fi
+  @export COMPOSE_PROJECT_NAME="${DOCKER_NAME_BASE}_${BRANCH_NAME}" && \
+    export BACKEND_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_backend" && \
+    export ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" && \
+    docker compose -p $$COMPOSE_PROJECT_NAME -f docker/docker-compose.build.yml build --parallel && \
+    echo -e "${GREEN}✅ Images built:${NC}" && \
+    echo -e "  Backend: $$BACKEND_IMAGE:latest" && \
+    echo -e "  Admin:   $$ADMIN_IMAGE:latest"
+
+# Save Docker images as compressed tar files
+docker-save:
+  @echo -e "${BLUE}💾 Saving Docker images as tar files...${NC}"
+  @export BACKEND_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_backend" && \
+    export ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" && \
+    docker save $$BACKEND_IMAGE:latest | gzip > $$BACKEND_IMAGE.tar.gz && \
+    docker save $$ADMIN_IMAGE:latest | gzip > $$ADMIN_IMAGE.tar.gz && \
+    echo -e "${GREEN}✅ Images saved:${NC}" && \
+    ls -lah *.tar.gz
+
+# Load Docker images from tar files
+docker-load:
+  @echo -e "${BLUE}📦 Loading Docker images from tar files...${NC}"
+  @for f in *.tar.gz; do \
+    echo "Loading $$f..."; \
+    gunzip -c "$$f" | docker load; \
+  done
+  @echo -e "${GREEN}✅ Images loaded${NC}"
+
+# Run production stack locally
+docker-prod:
+  @echo -e "${GREEN}🚀 Starting production stack...${NC}"
+  @sudo mkdir -p /opt/lite-admin/{uploads/portfolio,uploads/thumbnails,database,logs}
+  @export BACKEND_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_backend" && \
+    export ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" && \
+    docker compose -f docker/docker-compose.prod.yml up -d
+
+# Run demo stack locally
+docker-demo:
+  @echo -e "${GREEN}🚀 Starting demo stack...${NC}"
+  @sudo mkdir -p /opt/lite-admin-demo/{uploads/portfolio,uploads/thumbnails,database,logs}
+  @export BACKEND_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_backend" && \
+    export ADMIN_IMAGE="${DOCKER_NAME_BASE}_${BRANCH_NAME}_admin" && \
+    docker compose -f docker/docker-compose.demo.yml up -d
+
+# Stop all Docker stacks (dev + prod + demo)
+docker-stop-all:
+  @echo -e "${YELLOW}🛑 Stopping all Docker stacks...${NC}"
+  @docker compose -f docker/docker-compose.yml down 2>/dev/null || true
+  @docker compose -f docker/docker-compose.prod.yml down 2>/dev/null || true
+  @docker compose -f docker/docker-compose.demo.yml down 2>/dev/null || true
+  @echo -e "${GREEN}✅ All stacks stopped${NC}"
+
+# Docker health check
+docker-health:
+  @echo -e "${CYAN}🏥 Docker Health Check${NC}"
+  @echo -e "\n${BLUE}Backend:${NC}"
+  @curl -sf http://localhost:3001/health | python3 -m json.tool 2>/dev/null || echo -e "  ${RED}❌ Backend not responding${NC}"
+  @echo -e "\n${BLUE}Admin:${NC}"
+  @curl -sf -o /dev/null -w "  HTTP %{http_code}" http://localhost:3002 2>/dev/null && echo "" || echo -e "  ${RED}❌ Admin not responding${NC}"
+
+# Full local deploy simulation: build → images → save → load → run
+docker-deploy-test:
+  @echo -e "${CYAN}🧪 Running local deploy simulation...${NC}"
+  @just build
+  @just docker-build-ci
+  @just docker-save
+  @just docker-stop-all
+  @just docker-load
+  @just docker-prod
+  @echo -e "\n${GREEN}✅ Local deploy simulation complete${NC}"
+  @sleep 5
+  @just docker-health
+
+# Clean up lite-admin Docker resources
+docker-clean:
+  @echo -e "${YELLOW}🧹 Cleaning Docker resources...${NC}"
+  @docker ps -a --filter "name=lite-admin" -q | xargs -r docker rm -f 2>/dev/null || true
+  @docker images --filter "reference=*lite-admin*" -q | xargs -r docker rmi -f 2>/dev/null || true
+  @rm -f *.tar.gz
+  @echo -e "${GREEN}✅ Docker resources cleaned${NC}"
 
 # === UTILITY COMMANDS ===
 
@@ -323,9 +425,20 @@ help:
   @echo -e "  just export-submissions - Export form submissions"
   @echo -e "  just clean-data       - Clean old data"
   @echo -e "\n${BLUE}🐳 Docker:${NC}"
-  @echo -e "  just docker-build     - Build Docker image"
-  @echo -e "  just docker-up        - Start with Docker Compose"
-  @echo -e "  just docker-down      - Stop Docker services"
+  @echo -e "  just docker-build     - Build Docker images (backend + admin)"
+  @echo -e "  just docker-build-app - Build a specific image (backend or admin)"
+  @echo -e "  just docker-up        - Start dev stack with Docker Compose"
+  @echo -e "  just docker-down      - Stop dev Docker services"
+  @echo -e "  just docker-prod      - Run production stack locally"
+  @echo -e "  just docker-demo      - Run demo stack locally"
+  @echo -e "  just docker-stop-all  - Stop all Docker stacks"
+  @echo -e "  just docker-health    - Check Docker service health"
+  @echo -e "\n${BLUE}🚢 Docker CI/CD:${NC}"
+  @echo -e "  just docker-build-ci  - Build images for CI pipeline"
+  @echo -e "  just docker-save      - Save images as compressed tar files"
+  @echo -e "  just docker-load      - Load images from tar files"
+  @echo -e "  just docker-deploy-test - Full local deploy simulation"
+  @echo -e "  just docker-clean     - Clean lite-admin Docker resources"
   @echo -e "\n${BLUE}🔧 Utilities:${NC}"
   @echo -e "  just doctor           - System diagnostics"
   @echo -e "  just health           - API health check"
