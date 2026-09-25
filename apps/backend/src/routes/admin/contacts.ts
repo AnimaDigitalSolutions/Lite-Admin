@@ -544,7 +544,7 @@ router.post(
       // Log as a 'message' note in the activity thread
       await db.contactNotes.create({
         contact_id: id,
-        content: `Email sent — Subject: ${subject.trim()}`,
+        content: `Email sent, subject: ${subject.trim()}`,
         type: "manual",
         color: "green",
         subtype: "message",

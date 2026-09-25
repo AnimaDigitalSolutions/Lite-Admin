@@ -17,7 +17,7 @@ export const api = axios.create({
   },
 });
 
-// Demo mode interceptor — short-circuits all requests with mock data
+// Demo mode interceptor: short-circuits all requests with mock data
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (!isDemoMode) return config;
 
@@ -89,7 +89,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // If the refresh request itself failed, give up immediately — retrying would loop
+      // If the refresh request itself failed, give up immediately: retrying would loop
       if (originalRequest.url?.includes("/auth/refresh")) {
         clearAuthAndRedirect();
         return Promise.reject(error);
@@ -121,7 +121,7 @@ api.interceptors.response.use(
         // Retry the original request
         return api(originalRequest);
       } catch (refreshError) {
-        // 401 from refresh is expected when not logged in — no need to log it
+        // 401 from refresh is expected when not logged in: no need to log it
         const is401 =
           (refreshError as { response?: { status?: number } }).response
             ?.status === 401;
@@ -147,7 +147,7 @@ function clearAuthAndRedirect() {
   refreshPromise = null;
 
   if (typeof window !== "undefined") {
-    // Don't redirect if already on the login page — avoids an infinite reload loop
+    // Don't redirect if already on the login page: avoids an infinite reload loop
     // when checkAuth() fires on mount and finds no valid session.
     if (!window.location.pathname.startsWith("/login")) {
       window.location.href = isDemoMode ? "/" : "/login";

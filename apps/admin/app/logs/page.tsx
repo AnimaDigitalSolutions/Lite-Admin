@@ -13,6 +13,7 @@ import {
   TrashIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { ScrollX } from "@/components/ui/scroll-x";
 
 interface LogEntry {
   id: number;
@@ -28,7 +29,7 @@ const PAGE_SIZE = 50;
 
 const SNEAKY_MESSAGES = [
   "You sneaky wish has been executed.",
-  "You are being sneaky — but that's OK.",
+  "You are being sneaky, but that's OK.",
   "Evidence destroyed. We saw nothing.",
   "Logs? What logs? Never heard of 'em.",
   "The past is gone. Breathe easy.",
@@ -173,8 +174,8 @@ export default function LogsPage() {
                 No activity recorded yet.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <ScrollX>
+                <table className="w-full min-w-[760px] text-sm max-lg:[&_td]:whitespace-nowrap">
                   <thead>
                     <tr className="border-b bg-muted text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       <th className="px-4 py-3">Action</th>
@@ -214,10 +215,10 @@ export default function LogsPage() {
                           )}
                         </td>
                         <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
-                          {log.details ?? "—"}
+                          {log.details ?? "-"}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                          {log.ip_address ?? "—"}
+                          {log.ip_address ?? "-"}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                           {formatDate(log.created_at)}
@@ -237,7 +238,7 @@ export default function LogsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollX>
             )}
 
             {/* Pagination */}
@@ -248,6 +249,7 @@ export default function LogsPage() {
                 </span>
                 <div className="flex gap-2">
                   <Button
+                    aria-label="Previous page"
                     variant="outline"
                     size="sm"
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -256,6 +258,7 @@ export default function LogsPage() {
                     <ChevronLeftIcon className="h-4 w-4" />
                   </Button>
                   <Button
+                    aria-label="Next page"
                     variant="outline"
                     size="sm"
                     onClick={() =>

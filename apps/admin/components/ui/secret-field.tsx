@@ -34,12 +34,12 @@ export function SecretField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder ?? "••••••••"}
-          className="font-mono text-sm"
+          className="min-w-0 font-mono text-sm"
         />
         <button
           type="button"
           onClick={() => setRevealed((r) => !r)}
-          className="rounded border px-2 text-muted-foreground hover:bg-accent"
+          className="w-10 shrink-0 inline-flex items-center justify-center rounded border text-muted-foreground hover:bg-accent"
           title={revealed ? "Hide" : "Reveal"}
         >
           {revealed ? (
@@ -51,7 +51,7 @@ export function SecretField({
         <button
           type="button"
           onClick={() => void copy(value, label)}
-          className="rounded border px-2 text-muted-foreground hover:bg-accent"
+          className="w-10 shrink-0 inline-flex items-center justify-center rounded border text-muted-foreground hover:bg-accent"
           title="Copy"
         >
           <ClipboardDocumentIcon

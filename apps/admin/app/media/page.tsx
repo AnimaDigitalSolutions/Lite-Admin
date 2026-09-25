@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ErrorBanner } from "@/components/ui/error-banner";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
@@ -33,6 +33,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useSelection } from "@/lib/hooks/use-selection";
 import MediaEditModal from "./components/media-edit-modal";
+import { ScrollX } from "@/components/ui/scroll-x";
 // --- Types ---
 
 interface MediaItem {
@@ -200,6 +201,8 @@ export default function MediaPage() {
   const [filterProject, setFilterProject] = useState("");
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
+  // Swipe left/right in the preview to move between items (touch)
+  const touchStartX = useRef<number | null>(null);
   const {
     selectedIds,
     setSelectedIds,
@@ -472,9 +475,9 @@ export default function MediaPage() {
       <div className="space-y-6">
         <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">
               Media Library
             </h1>
             <p className="mt-1 text-muted-foreground">
@@ -486,7 +489,7 @@ export default function MediaPage() {
           </div>
           {/* Bulk actions */}
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {selectedIds.size} selected
               </span>
@@ -510,7 +513,12 @@ export default function MediaPage() {
                 <TrashIcon className="h-4 w-4 mr-1" />
                 Delete ({selectedIds.size})
               </Button>
-              <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <Button
+                aria-label="Clear selection"
+                size="sm"
+                variant="ghost"
+                onClick={clearSelection}
+              >
                 <XMarkIcon className="h-4 w-4" />
               </Button>
             </div>
@@ -537,9 +545,18 @@ export default function MediaPage() {
               <input {...getInputProps()} />
               <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-muted-foreground" />
               <p className="mt-2 text-sm text-muted-foreground">
-                {isDragActive
-                  ? "Drop the files here..."
-                  : "Drag & drop files here, or click to select"}
+                {isDragActive ? (
+                  "Drop the files here..."
+                ) : (
+                  <>
+                    <span className="[@media(hover:none)]:hidden">
+                      Drag &amp; drop files here, or click to select
+                    </span>
+                    <span className="hidden [@media(hover:none)]:inline">
+                      Tap to choose files
+                    </span>
+                  </>
+                )}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Images: JPEG, PNG, WebP, GIF · Videos: MP4, WebM, MOV ·
@@ -556,7 +573,7 @@ export default function MediaPage() {
                     className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700"
                   >
                     <span className="font-medium truncate">{file.name}</span>
-                    <span>—</span>
+                    <span>-</span>
                     <span>
                       {errors
                         .map((e) =>
@@ -609,7 +626,7 @@ export default function MediaPage() {
 
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-[200px]">
+          <div className="basis-full sm:basis-auto sm:flex-1 sm:min-w-[200px]">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -660,6 +677,7 @@ export default function MediaPage() {
 
           <div className="flex border border-border rounded-md">
             <Button
+              aria-label="Grid view"
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("grid")}
@@ -668,6 +686,7 @@ export default function MediaPage() {
               <Squares2X2Icon className="h-4 w-4" />
             </Button>
             <Button
+              aria-label="List view"
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("list")}
@@ -689,7 +708,7 @@ export default function MediaPage() {
           </div>
         ) : viewMode === "grid" ? (
           /* --- Grid View --- */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filteredAndSortedItems.map((item) => {
               const badge = getTypeBadge(item.mime_type);
               const mediaType = getMediaType(item.mime_type);
@@ -700,7 +719,7 @@ export default function MediaPage() {
                   className={`overflow-hidden group relative ${isSelected ? "ring-2 ring-blue-500" : ""}`}
                 >
                   <div
-                    className="relative h-48 cursor-pointer"
+                    className="relative h-32 cursor-pointer sm:h-48"
                     onClick={() => setPreviewItem(item)}
                   >
                     {item.thumbnailUrl ? (
@@ -717,7 +736,7 @@ export default function MediaPage() {
                         fill
                         unoptimized
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                       />
                     ) : (
                       <div className="w-full h-full bg-accent flex items-center justify-center">
@@ -725,7 +744,7 @@ export default function MediaPage() {
                       </div>
                     )}
                     {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 [@media(hover:none)]:items-end [@media(hover:none)]:justify-end [@media(hover:none)]:gap-1 [@media(hover:none)]:p-1.5">
                       <Button
                         size="sm"
                         variant="secondary"
@@ -815,13 +834,13 @@ export default function MediaPage() {
                         )}
                       </button>
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 min-w-0">
                       {item.project_name && (
-                        <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
+                        <span className="truncate text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
                           {item.project_name}
                         </span>
                       )}
-                      <span className="text-xs text-muted-foreground">
+                      <span className="whitespace-nowrap text-xs text-muted-foreground">
                         {formatFileSize(item.file_size)}
                       </span>
                     </div>
@@ -834,8 +853,8 @@ export default function MediaPage() {
           /* --- List View --- */
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <ScrollX>
+                <table className="w-full min-w-[760px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b bg-muted">
                       <th className="p-3 w-8">
@@ -975,7 +994,7 @@ export default function MediaPage() {
                           <td className="p-3 text-sm text-muted-foreground">
                             {item.width && item.height
                               ? `${item.width} × ${item.height}`
-                              : "—"}
+                              : "-"}
                           </td>
                           <td className="p-3">
                             {item.project_name ? (
@@ -983,7 +1002,7 @@ export default function MediaPage() {
                                 {highlightMatch(item.project_name, searchTerm)}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">—</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </td>
                           <td
@@ -1037,7 +1056,7 @@ export default function MediaPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </ScrollX>
             </CardContent>
           </Card>
         )}
@@ -1055,9 +1074,22 @@ export default function MediaPage() {
               <div
                 className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
                 onClick={() => setPreviewItem(null)}
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0].clientX;
+                }}
+                onTouchEnd={(e) => {
+                  const start = touchStartX.current;
+                  touchStartX.current = null;
+                  if (start === null) return;
+                  const dx = e.changedTouches[0].clientX - start;
+                  if (Math.abs(dx) < 50) return;
+                  if (dx > 0 && hasPrev) navigatePreview(-1);
+                  if (dx < 0 && hasNext) navigatePreview(1);
+                }}
               >
                 {/* Close button */}
                 <button
+                  aria-label="Close preview"
                   className="absolute top-4 right-4 text-white/70 hover:text-white z-10"
                   onClick={() => setPreviewItem(null)}
                 >
@@ -1065,7 +1097,7 @@ export default function MediaPage() {
                 </button>
 
                 {/* Info bar */}
-                <div className="absolute top-4 left-4 text-white/80 text-sm z-10">
+                <div className="absolute top-4 left-4 right-14 truncate text-white/80 text-sm z-10">
                   <span className="font-medium">{previewItem.filename}</span>
                   <span className="ml-3 text-white/50">
                     {formatFileSize(previewItem.file_size)}
@@ -1083,7 +1115,8 @@ export default function MediaPage() {
                 {/* Prev/Next */}
                 {hasPrev && (
                   <button
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
+                    aria-label="Previous item"
+                    className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigatePreview(-1);
@@ -1094,7 +1127,8 @@ export default function MediaPage() {
                 )}
                 {hasNext && (
                   <button
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
+                    aria-label="Next item"
+                    className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigatePreview(1);
@@ -1125,7 +1159,8 @@ export default function MediaPage() {
                     >
                       Your browser does not support the video tag.
                     </video>
-                  ) : previewItem.mime_type === "application/pdf" ? (
+                  ) : previewItem.mime_type === "application/pdf" &&
+                    !window.matchMedia("(pointer: coarse)").matches ? (
                     <iframe
                       src={previewItem.url}
                       className="w-[80vw] h-[85vh] rounded bg-white"
@@ -1151,7 +1186,7 @@ export default function MediaPage() {
                 </div>
 
                 {/* Bottom actions */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10 w-max max-w-[calc(100vw-1rem)] flex-wrap justify-center">
                   <Button
                     size="sm"
                     variant="secondary"

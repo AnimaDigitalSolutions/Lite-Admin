@@ -154,7 +154,7 @@ export default function DashboardPage() {
         ) : stats ? (
           <>
             {/* Stat cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                   <EnvelopeIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {stats.contacts.total}
                   </div>
                   {stats.contacts.recent && (
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                   <UsersIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {stats.waitlist.total}
                   </div>
                   {stats.waitlist.recent && (
@@ -209,7 +209,9 @@ export default function DashboardPage() {
                   <PhotoIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.media.total}</div>
+                  <div className="text-xl font-bold sm:text-2xl">
+                    {stats.media.total}
+                  </div>
                   {stats.media.recent && (
                     <p className="text-xs text-muted-foreground">
                       Last:{" "}
@@ -230,7 +232,7 @@ export default function DashboardPage() {
                   <SignalIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {formatUptime(stats.system.uptime)}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -242,14 +244,14 @@ export default function DashboardPage() {
 
             {/* Activity trend chart */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
                 <CardTitle>{days}-Day Activity</CardTitle>
                 <div className="flex gap-1">
                   {DATE_RANGE_OPTIONS.map((d) => (
                     <button
                       key={d}
                       onClick={() => handleDaysChange(d)}
-                      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                      className={`rounded px-2.5 py-1 text-xs [@media(pointer:coarse)]:px-3 [@media(pointer:coarse)]:py-2 font-medium transition-colors ${
                         days === d
                           ? "bg-foreground text-background"
                           : "text-muted-foreground hover:bg-accent"
@@ -264,14 +266,15 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart
                     data={chartData}
-                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                    margin={{ top: 5, right: 8, left: -16, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis
                       dataKey="date"
                       tick={{ fontSize: 11 }}
                       tickLine={false}
-                      interval={Math.floor(days / 7) - 1}
+                      interval="preserveStartEnd"
+                      minTickGap={24}
                     />
                     <YAxis
                       allowDecimals={false}

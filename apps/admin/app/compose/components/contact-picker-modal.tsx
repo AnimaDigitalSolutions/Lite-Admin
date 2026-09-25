@@ -160,12 +160,12 @@ export default function ContactPickerModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-[60]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[85dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b shrink-0">
           <div className="flex items-center gap-2.5">
@@ -183,6 +183,7 @@ export default function ContactPickerModal({
             </div>
           </div>
           <button
+            aria-label="Close"
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent"
@@ -220,7 +221,7 @@ export default function ContactPickerModal({
         </div>
 
         {/* Contact list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground" />

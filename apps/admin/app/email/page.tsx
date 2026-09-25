@@ -260,8 +260,8 @@ export default function EmailPage() {
                         />
                       </div>
                     )}
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                      <div className="min-w-0 flex-1">
                         <SecretField
                           label="API Key"
                           value={
@@ -283,7 +283,7 @@ export default function EmailPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="shrink-0 mb-0"
+                        className="h-10 shrink-0 mb-0 sm:h-9"
                         disabled={
                           isVerifying ||
                           !(
@@ -314,7 +314,7 @@ export default function EmailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label className="text-sm font-medium">Display name</Label>
                 <Input
@@ -355,7 +355,7 @@ export default function EmailPage() {
             </CardTitle>
             <CardDescription>
               Where contact form submissions are sent. Use your actual inbox
-              here — not a no-reply address.
+              here, not a no-reply address.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -372,27 +372,27 @@ export default function EmailPage() {
             />
             {!config.notification_address && (
               <p className="mt-2 text-xs text-amber-600 bg-amber-50 rounded px-3 py-2 border border-amber-200">
-                No notification address set — contact form alerts will fall back
-                to the From address.
+                No notification address set, so contact form alerts will fall
+                back to the From address.
               </p>
             )}
           </CardContent>
         </Card>
 
         {/* Save */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Button onClick={() => void handleSave()} disabled={saving}>
             {saving ? "Saving…" : "Save Email Settings"}
           </Button>
           {saved && (
             <span className="flex items-center gap-1.5 text-sm text-emerald-600">
               <CheckCircleIcon className="h-4 w-4" />
-              Saved — provider reset
+              Saved, provider reset
             </span>
           )}
         </div>
 
-        {/* Send test email — collapsible */}
+        {/* Send test email: collapsible */}
         <Card>
           <button
             type="button"
@@ -414,7 +414,7 @@ export default function EmailPage() {
           </button>
           {testOpen && (
             <CardContent className="space-y-3 border-t border-border pt-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <Label className="text-sm font-medium">Send to</Label>
                   <Input

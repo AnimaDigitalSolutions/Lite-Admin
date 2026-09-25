@@ -83,7 +83,7 @@ class ContactFormService {
         await this.initializeServices();
       }
 
-      // Geo lookup (non-blocking — empty object on failure)
+      // Geo lookup (non-blocking, empty object on failure)
       const geo = await GeoService.getInstance().lookup(requestInfo.ip);
 
       // Add request metadata
@@ -224,7 +224,7 @@ class ContactFormService {
         await this.initializeServices();
       }
 
-      // Build a transient object — no DB write for test emails
+      // Build a transient object: no DB write for test emails
       const testContact = {
         id: 0,
         name: formData.name || "Test User",
@@ -252,7 +252,7 @@ class ContactFormService {
         });
       }
 
-      // Log admin activity (no resource_id — nothing was saved)
+      // Log admin activity (no resource_id, nothing was saved)
       await this.db!.adminLogs.create({
         action: "contact_form_test",
         resource: "contacts",

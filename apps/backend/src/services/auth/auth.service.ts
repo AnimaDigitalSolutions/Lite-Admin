@@ -28,7 +28,7 @@ export class AuthService {
         return;
       }
     } catch {
-      // Settings not yet ready — use env password
+      // Settings not yet ready: use env password
     }
 
     // Hash the admin password on startup

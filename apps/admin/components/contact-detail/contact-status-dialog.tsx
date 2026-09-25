@@ -42,9 +42,9 @@ export default function ContactStatusDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-[60]">
       <div
-        className="bg-white rounded-lg max-w-md w-full shadow-xl"
+        className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain"
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -53,12 +53,13 @@ export default function ContactStatusDialog({
           if (e.key === "Escape") onCancel();
         }}
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-semibold text-foreground">
               Change Status
             </h3>
             <button
+              aria-label="Close"
               type="button"
               onClick={onCancel}
               className="text-muted-foreground hover:text-foreground"
@@ -88,9 +89,10 @@ export default function ContactStatusDialog({
               placeholder="Add a note about this status change..."
               rows={3}
               className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              autoFocus
+              // Focus for mouse users only; on phones it would pop the keyboard over the dialog
+              autoFocus={window.matchMedia("(pointer: fine)").matches}
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1 [@media(hover:none)]:hidden">
               Press Enter to confirm, Shift+Enter for new line
             </p>
           </div>

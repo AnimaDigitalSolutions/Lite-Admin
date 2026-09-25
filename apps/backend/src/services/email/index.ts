@@ -23,7 +23,7 @@ class EmailFactory {
           const settingsService = await SettingsService.getInstance();
           overrides = settingsService.getAll();
         } catch {
-          // Settings not yet ready — fall back to env config
+          // Settings not yet ready: fall back to env config
         }
 
         switch (provider) {
@@ -77,9 +77,7 @@ class EmailFactory {
   static reset(): void {
     this.instance = null;
     this.initPromise = null;
-    logger.info(
-      "Email provider instance reset — will reinitialize on next use",
-    );
+    logger.info("Email provider instance reset, will reinitialize on next use");
   }
 }
 

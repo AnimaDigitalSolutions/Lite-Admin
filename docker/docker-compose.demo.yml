@@ -1,5 +1,5 @@
 # Demo deployment configuration
-# Frontend-only — demo mode uses mocked data via axios interceptor, no backend needed
+# Frontend-only: demo mode uses mocked data via axios interceptor, no backend needed
 # NEXT_PUBLIC_DEMO_MODE=true is set at build time in the CI workflow
 
 services:

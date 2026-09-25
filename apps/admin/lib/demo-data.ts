@@ -529,7 +529,7 @@ const INVOICES = [
     template: "minimal",
     tax_rate: 0,
     discount: 0,
-    notes: "OVERDUE — please remit payment",
+    notes: "OVERDUE: please remit payment",
     subtotal: 2500,
     tax_amount: 0,
     total: 2500,
@@ -564,7 +564,7 @@ const CAMPAIGNS = [
   },
   {
     id: 2,
-    name: "Monthly Newsletter — March",
+    name: "Monthly Newsletter (March)",
     subject: "What's new in March 2026",
     status: "draft",
     target_type: "tagged",
@@ -718,7 +718,7 @@ const demoRoutes: [RegExp, DemoHandler][] = [
   // Submissions (contacts)
   [
     /\/admin\/submissions\/todos-summary$/,
-    () => ({ data: { total: 3, overdue: 1, upcoming: 2 } }),
+    () => ({ data: { total: 3, contacts: 2 } }),
   ],
   [/\/admin\/submissions\/todo-contact-ids$/, () => ({ data: [1, 4] })],
   [/\/admin\/submissions\/activity$/, () => ({ data: [] })],
@@ -928,7 +928,10 @@ const demoRoutes: [RegExp, DemoHandler][] = [
       data: {
         email_enabled: true,
         maintenance_mode: false,
-        maintenance_message: "",
+        maintenance_message:
+          "We are currently under maintenance. Please check back soon.",
+        rate_limit_forms_max: 10,
+        rate_limit_forms_window_minutes: 10,
         display_timezone: "America/New_York",
         default_dashboard_days: 30,
         show_ip_addresses: false,
@@ -949,7 +952,13 @@ const demoRoutes: [RegExp, DemoHandler][] = [
           display_name: "Anima Digital",
           notification_address: "admin@anima.dev",
         },
-        storage: {},
+        storage: {
+          active_provider: "local",
+          s3_access_key_id: "",
+          s3_secret_access_key: "",
+          s3_bucket: "",
+          s3_region: "",
+        },
       },
     }),
   ],
@@ -1056,7 +1065,7 @@ const demoRoutes: [RegExp, DemoHandler][] = [
     /\/admin\/email-templates$/,
     () => ({
       data: {
-        "contact-confirmation": {
+        contact: {
           name: "Contact Confirmation",
           default_html: `<!DOCTYPE html>
 <html>
@@ -1085,9 +1094,16 @@ const demoRoutes: [RegExp, DemoHandler][] = [
 </body>
 </html>`,
           custom_html: null,
-          variables: ["name", "company"],
+          variables: [
+            "name",
+            "email",
+            "company",
+            "project_type",
+            "message",
+            "date",
+          ],
         },
-        "waitlist-welcome": {
+        waitlist: {
           name: "Waitlist Welcome",
           default_html: `<!DOCTYPE html>
 <html>
@@ -1113,7 +1129,7 @@ const demoRoutes: [RegExp, DemoHandler][] = [
 </body>
 </html>`,
           custom_html: null,
-          variables: ["name", "email"],
+          variables: ["name", "email", "date"],
         },
       },
     }),

@@ -61,11 +61,12 @@ export default function AddContactModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Add Contact</h3>
           <button
+            aria-label="Close"
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground"

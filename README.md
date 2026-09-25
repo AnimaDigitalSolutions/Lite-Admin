@@ -4,7 +4,7 @@
 
 <h1 align="center">Lite Admin</h1>
 
-<p align="center">A lightweight TypeScript admin platform with CRM, email campaigns, media management, and invoicing — powered by Express and Next.js.</p>
+<p align="center">A lightweight TypeScript admin platform with CRM, email campaigns, media management, and invoicing, powered by Express and Next.js.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen" alt="Node 20+" />
@@ -19,12 +19,12 @@
 <img width="1907" height="1194" alt="ContactScreenshot" src="https://github.com/user-attachments/assets/20f2a5da-82c1-479f-8179-2abbc6c76f5e" />
 
 <!-- Add screenshots here as they become available -->
-<!-- screenshot: Dashboard — 30-day trend charts and at-a-glance stats -->
-<!-- screenshot: CRM Kanban — Drag-and-drop contact pipeline -->
-<!-- screenshot: Invoice Preview — PDF generation with line items -->
-<!-- screenshot: Email Compose — Multi-recipient with contact picker -->
-<!-- screenshot: Campaigns — Create and target email campaigns -->
-<!-- screenshot: Media Gallery — Multi-format uploads with thumbnails -->
+<!-- screenshot: Dashboard (30-day trend charts and at-a-glance stats) -->
+<!-- screenshot: CRM Kanban (Drag-and-drop contact pipeline) -->
+<!-- screenshot: Invoice Preview (PDF generation with line items) -->
+<!-- screenshot: Email Compose (Multi-recipient with contact picker) -->
+<!-- screenshot: Campaigns (Create and target email campaigns) -->
+<!-- screenshot: Media Gallery (Multi-format uploads with thumbnails) -->
 
 ---
 
@@ -34,14 +34,14 @@
 
 - Kanban, Calendar, and Table views with 8-stage contact status workflow
 - Notes & todos per contact with follow-up scheduling
-- Bulk operations — multi-select delete for contacts
+- Bulk operations: multi-select delete for contacts
 - IP duplicate detection with badge on repeated IPs
 
 ### Email
 
 - Multi-recipient compose (To/CC/BCC) with contact picker and rich preview
-- Campaigns — create, target by tags or all subscribers, track delivery
-- Multi-provider support — AHASEND and Resend with runtime hot-swap
+- Campaigns: create, target by tags or all subscribers, track delivery
+- Multi-provider support: AHASEND and Resend with runtime hot-swap
 - Customizable HTML templates for contact and subscriber confirmation emails
 
 ### Invoicing
@@ -51,24 +51,24 @@
 
 ### Media
 
-- Multi-format upload — video, PDF, and images
+- Multi-format upload: video, PDF, and images
 - Server-side thumbnail generation (Sharp + ffmpeg + MuPDF)
-- Flexible storage — local filesystem and AWS S3
+- Flexible storage: local filesystem and AWS S3
 
 ### Infrastructure
 
-- TypeScript monorepo — Turbo.js orchestration with pnpm workspaces and shared type/schema package
-- Multi-database support — SQLite, (future PostgreSQL, MySQL with seamless switching)
-- Dashboard charts — 30-day trend visualizations for contacts and subscribers (Recharts)
-- Activity log — auditable admin action history with per-entry deletion
-- Multi-site support — site API keys (`X-Site-Key` header) to tag form submissions per site
+- TypeScript monorepo: Turbo.js orchestration with pnpm workspaces and shared type/schema package
+- Multi-database support: SQLite, (future PostgreSQL, MySQL with seamless switching)
+- Dashboard charts: 30-day trend visualizations for contacts and subscribers (Recharts)
+- Activity log: auditable admin action history with per-entry deletion
+- Multi-site support: site API keys (`X-Site-Key` header) to tag form submissions per site
 
 ### Security
 
 - Smart rate limiting, CORS, JWT authentication, input validation, Helmet.js
-- Geolocation — IP-based country/region enrichment on form submissions (MaxMind GeoLite2)
-- Suspicious activity detection — automatic blocking of scanning attempts
-- Integration tests — auth middleware, error handling, and validation middleware coverage
+- Geolocation: IP-based country/region enrichment on form submissions (MaxMind GeoLite2)
+- Suspicious activity detection: automatic blocking of scanning attempts
+- Integration tests: auth middleware, error handling, and validation middleware coverage
 
 ---
 
@@ -190,7 +190,7 @@ lite-admin/
 │       ├── components/        # UI primitives, contact detail
 │       └── lib/               # API client, auth, theme
 ├── packages/
-│   └── shared/                # @lite/shared — types, schemas, utils
+│   └── shared/                # @lite/shared: types, schemas, utils
 ├── docker/
 └── turbo.json
 ```
@@ -237,7 +237,7 @@ docker-compose -f docker/docker-compose.prod.yml up -d     # Production
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE) for details.
 
 ## Support
 

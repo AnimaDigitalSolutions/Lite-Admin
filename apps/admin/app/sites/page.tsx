@@ -170,7 +170,7 @@ export default function SitesPage() {
               <CardTitle className="text-sm font-semibold">New site</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <Label className="text-xs">Site name *</Label>
                   <Input
@@ -367,7 +367,7 @@ export default function SitesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <pre className="rounded bg-gray-900 px-4 py-3 text-xs text-gray-200 overflow-x-auto">{`fetch('https://your-api.com/api/forms/contact', {
+              <pre className="rounded bg-gray-900 px-4 py-3 text-xs text-gray-200 overflow-x-auto overscroll-x-contain">{`fetch('https://your-api.com/api/forms/contact', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

@@ -78,7 +78,7 @@ router.post(
         if (match) {
           await db.contactNotes.create({
             contact_id: match.id,
-            content: `Email sent — Subject: ${subject.trim()}`,
+            content: `Email sent, subject: ${subject.trim()}`,
             type: "manual",
             color: "green",
             subtype: "message",
@@ -92,7 +92,7 @@ router.post(
         if (match) {
           await db.contactNotes.create({
             contact_id: match.id,
-            content: `CC'd on email — Subject: ${subject.trim()}`,
+            content: `CC'd on email, subject: ${subject.trim()}`,
             type: "manual",
             color: "green",
             subtype: "message",

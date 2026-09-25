@@ -42,7 +42,8 @@ function fillDays(
     d.setDate(d.getDate() - i);
     map.set(d.toISOString().split("T")[0]!, 0);
   }
-  for (const p of trend) map.set(p.date, p.count);
+  // Ignore points outside the window so they don't get appended out of order
+  for (const p of trend) if (map.has(p.date)) map.set(p.date, p.count);
   return Array.from(map.entries()).map(([date, count]) => ({
     date: date.slice(5),
     count,
@@ -108,7 +109,7 @@ export default function StatsPage() {
         />
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           {[
             {
               label: "Total Contacts",
@@ -145,7 +146,7 @@ export default function StatsPage() {
         {/* Contacts trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Contact Form Submissions — Last 30 Days</CardTitle>
+            <CardTitle>Contact Form Submissions (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
@@ -162,7 +163,8 @@ export default function StatsPage() {
                   dataKey="date"
                   tick={{ fontSize: 10 }}
                   tickLine={false}
-                  interval={4}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
                 />
                 <YAxis
                   allowDecimals={false}
@@ -184,7 +186,7 @@ export default function StatsPage() {
         {/* Waitlist trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Waitlist Signups — Last 30 Days</CardTitle>
+            <CardTitle>Waitlist Signups (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
@@ -201,7 +203,8 @@ export default function StatsPage() {
                   dataKey="date"
                   tick={{ fontSize: 10 }}
                   tickLine={false}
-                  interval={4}
+                  interval="preserveStartEnd"
+                  minTickGap={24}
                 />
                 <YAxis
                   allowDecimals={false}

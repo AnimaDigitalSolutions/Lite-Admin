@@ -63,7 +63,7 @@ class AhasendProvider {
       const custom = settings.get(`email_template_${templateName}`);
       if (custom) return custom;
     } catch {
-      // Settings not ready — fall through to file
+      // Settings not ready: fall through to file
     }
 
     if (!this.templates[templateName]) {

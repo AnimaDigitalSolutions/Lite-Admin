@@ -176,6 +176,7 @@ export default function RecipientField({
                 {r.name || r.email}
               </span>
               <button
+                aria-label={`Remove ${r.email}`}
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -216,7 +217,7 @@ export default function RecipientField({
 
       {showDropdown && options.length > 0 && (
         <div className="relative z-10">
-          <div className="absolute top-1 left-0 right-0 bg-white border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto py-1">
+          <div className="absolute top-1 left-0 right-0 bg-white border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto overscroll-contain py-1">
             {!query.trim() && filteredContacts.length > 0 && (
               <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Contacts

@@ -102,11 +102,11 @@ export default function ContactEmailComposer({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-[60]"
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="bg-white rounded-lg max-w-lg w-full shadow-xl max-h-[90vh] flex flex-col"
+        className="bg-white rounded-lg max-w-lg w-full shadow-xl max-h-[calc(100dvh-1.5rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -122,6 +122,7 @@ export default function ContactEmailComposer({
             </h3>
           </div>
           <button
+            aria-label="Close"
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground"
@@ -131,7 +132,7 @@ export default function ContactEmailComposer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
           {fromAddress && (
             <div>
               <label className="text-xs font-medium text-muted-foreground block mb-1">
@@ -183,7 +184,7 @@ export default function ContactEmailComposer({
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Plain text — line breaks will be preserved.
+                  Plain text. Line breaks will be preserved.
                 </p>
               </div>
             </>

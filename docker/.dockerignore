@@ -6,7 +6,7 @@ node_modules
 .git
 .gitignore
 
-# Environment files (public repo — never include secrets)
+# Environment files (public repo, never include secrets)
 .env
 .env.*
 !.env.example

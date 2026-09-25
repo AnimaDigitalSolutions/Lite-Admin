@@ -349,7 +349,7 @@ function ClassicTemplate({ data }: { data: InvoiceData }) {
 
         {/* Footer */}
         <Text style={classicStyles.footer}>
-          {data.company_name ? `${data.company_name} — ` : ""}Thank you for your
+          {data.company_name ? `${data.company_name} · ` : ""}Thank you for your
           business.
         </Text>
       </Page>
@@ -654,7 +654,7 @@ function ModernTemplate({ data }: { data: InvoiceData }) {
         </View>
 
         <Text style={modernStyles.footer}>
-          {data.company_name ? `${data.company_name} — ` : ""}Thank you for your
+          {data.company_name ? `${data.company_name} · ` : ""}Thank you for your
           business.
         </Text>
       </Page>
@@ -887,7 +887,7 @@ function MinimalTemplate({ data }: { data: InvoiceData }) {
         {data.notes && <Text style={minimalStyles.notes}>{data.notes}</Text>}
 
         <Text style={minimalStyles.footer}>
-          {data.company_name || "Invoice"} — {data.invoice_number}
+          {data.company_name || "Invoice"} · {data.invoice_number}
         </Text>
       </Page>
     </Document>

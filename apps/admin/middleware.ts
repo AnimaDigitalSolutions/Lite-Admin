@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // Demo mode — no auth required, all routes accessible
+  // Demo mode: no auth required, all routes accessible
   if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
     return NextResponse.next();
   }

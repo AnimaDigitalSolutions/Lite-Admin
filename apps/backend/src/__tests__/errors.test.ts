@@ -13,7 +13,7 @@ import errorHandler from "../middleware/errorHandler.js";
 /**
  * Tests that the error handler middleware produces the correct HTTP responses
  * for each error class. This matters because the frontend parses these response
- * shapes — if the format changes, the admin dashboard breaks silently.
+ * shapes: if the format changes, the admin dashboard breaks silently.
  */
 
 function createTestApp(

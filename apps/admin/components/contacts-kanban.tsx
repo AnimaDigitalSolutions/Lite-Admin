@@ -178,7 +178,7 @@ export default function ContactsKanban({
       setDragState({ contactId: contact.id, sourceStatus: status });
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", contact.id);
-      // Capture element before rAF — React recycles the event so currentTarget becomes null
+      // Capture element before rAF: React recycles the event so currentTarget becomes null
       const el = e.currentTarget as HTMLElement;
       requestAnimationFrame(() => {
         el.style.opacity = "0.5";
@@ -278,7 +278,7 @@ export default function ContactsKanban({
   return (
     <>
       {/* Column Filter Toolbar */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
         <FunnelIcon className="h-4 w-4 text-muted-foreground" />
         <span className="text-xs text-muted-foreground font-medium">
           Columns:
@@ -296,7 +296,7 @@ export default function ContactsKanban({
                 setColumnFilter(value);
                 if (value === "custom") setShowColumnPicker(true);
               }}
-              className={`px-3 py-1 text-xs font-medium transition-colors ${
+              className={`px-3 py-1 text-xs font-medium [@media(pointer:coarse)]:py-2 transition-colors ${
                 columnFilter === value
                   ? "bg-foreground text-background"
                   : "bg-background text-muted-foreground hover:bg-accent"
@@ -354,7 +354,11 @@ export default function ContactsKanban({
         </div>
       )}
 
-      <div className="overflow-x-auto pb-4">
+      {/* Drag and drop needs a mouse; touch users change status from the panel */}
+      <p className="mb-2 hidden text-xs text-muted-foreground [@media(hover:none)]:block">
+        Tap a card to open it and change its status.
+      </p>
+      <div className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-4 snap-x snap-mandatory sm:mx-0 sm:px-0 sm:snap-none">
         <div className="flex gap-3 min-w-max">
           {visibleStages.map((stage) => {
             const stageContacts = contacts.filter(
@@ -366,7 +370,7 @@ export default function ContactsKanban({
             return (
               <div
                 key={stage.value}
-                className="w-[240px] flex-shrink-0 flex flex-col"
+                className="w-[240px] flex-shrink-0 flex flex-col snap-start"
               >
                 {/* Column header */}
                 <div
@@ -377,7 +381,7 @@ export default function ContactsKanban({
                     {stageContacts.length}
                   </span>
                 </div>
-                {/* Column body — drop zone */}
+                {/* Column body: drop zone */}
                 <div
                   onDragOver={(e) => handleDragOver(e, stage.value)}
                   onDragLeave={handleDragLeave}
@@ -467,17 +471,18 @@ export default function ContactsKanban({
 
       {/* Confirmation Dialog */}
       {confirmDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-50">
           <div
-            className="bg-white rounded-lg max-w-md w-full shadow-xl"
+            className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain"
             onKeyDown={handleConfirmKeyDown}
           >
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-foreground">
                   Move Contact
                 </h3>
                 <button
+                  aria-label="Close"
                   type="button"
                   onClick={handleCancelMove}
                   className="text-muted-foreground hover:text-foreground"
@@ -513,7 +518,7 @@ export default function ContactsKanban({
                   rows={3}
                   className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 [@media(hover:none)]:hidden">
                   Press Enter to confirm, Shift+Enter for new line
                 </p>
               </div>

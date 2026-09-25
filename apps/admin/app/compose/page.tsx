@@ -57,7 +57,7 @@ export default function ComposePage() {
           if (page.length < limit) break;
           offset += limit;
         }
-        // Deduplicate by email — keep the most recent entry (first in list)
+        // Deduplicate by email, keeping the most recent entry (first in list)
         const seen = new Map<string, Contact>();
         for (const c of all) {
           const key = c.email.toLowerCase();
@@ -209,9 +209,9 @@ export default function ComposePage() {
         )}
 
         <Card>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="p-4 sm:p-6 space-y-4">
             {/* Step header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <PaperAirplaneIcon className="h-5 w-5 text-blue-600" />
                 <h3 className="text-lg font-semibold">
@@ -354,7 +354,7 @@ export default function ComposePage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Plain text — line breaks will be preserved.
+                    Plain text. Line breaks will be preserved.
                   </p>
                 </div>
 
