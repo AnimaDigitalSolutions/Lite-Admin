@@ -174,7 +174,7 @@ export default function LogsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[760px] text-sm max-lg:[&_td]:whitespace-nowrap">
                   <thead>
                     <tr className="border-b bg-muted text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       <th className="px-4 py-3">Action</th>

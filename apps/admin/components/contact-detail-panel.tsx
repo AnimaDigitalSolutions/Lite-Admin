@@ -5,7 +5,7 @@ import { useTimezone } from "@/lib/timezone";
 import { useDisplayPrefs } from "@/lib/display-prefs";
 import { isPrivateIp, truncateEmail } from "@/lib/utils";
 import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
-import { submissionsApi } from "@/lib/api";
+import { submissionsApi, isDemoMode } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -162,10 +162,10 @@ export default function ContactDetailPanel({
       {/* Slide-in panel */}
       <div
         ref={panelRef}
-        className={`fixed top-0 right-0 h-full ${panelWidth} max-w-full bg-white shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200 transition-[width] ease-in-out`}
+        className={`fixed ${isDemoMode ? "top-8" : "top-0"} right-0 bottom-0 ${panelWidth} max-w-full bg-white shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200 transition-[width] ease-in-out`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-5 py-4">
+        <div className="flex items-center justify-between border-b px-4 py-3 sm:px-5 sm:py-4">
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold truncate">{contact.name}</h2>
             <div className="group flex items-center gap-1.5 mt-0.5">
@@ -219,6 +219,7 @@ export default function ContactDetailPanel({
               size="sm"
               onClick={() => setExpanded((e) => !e)}
               title={expanded ? "Collapse panel" : "Expand panel"}
+              className="hidden md:inline-flex"
             >
               {expanded ? (
                 <ArrowsPointingInIcon className="h-4 w-4" />
@@ -233,11 +234,11 @@ export default function ContactDetailPanel({
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 sm:px-5">
           {editMode ? (
             /* Edit mode */
             <div className="space-y-4">
-              <div className="grid gap-3 grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">
                     Name

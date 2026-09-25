@@ -102,11 +102,11 @@ export default function ContactEmailComposer({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-[60]"
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="bg-white rounded-lg max-w-lg w-full shadow-xl max-h-[90vh] flex flex-col"
+        className="bg-white rounded-lg max-w-lg w-full shadow-xl max-h-[calc(100dvh-1.5rem)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

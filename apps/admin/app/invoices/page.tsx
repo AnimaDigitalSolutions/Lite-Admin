@@ -355,7 +355,7 @@ export default function InvoicesPage() {
       <ProtectedLayout>
         <div className="space-y-4">
           <PageHeader title={`Preview: ${previewInvoice.invoice_number}`}>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <PDFDownloadButton data={previewInvoice} />
               <Button
                 variant="outline"
@@ -388,7 +388,7 @@ export default function InvoicesPage() {
           className="space-y-6"
         >
           <PageHeader title={editId ? "Edit Invoice" : "New Invoice"}>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -434,7 +434,7 @@ export default function InvoicesPage() {
                   <CardTitle>Invoice Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Invoice Number
@@ -514,7 +514,7 @@ export default function InvoicesPage() {
                   <CardTitle>Your Company</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Company Name
@@ -554,7 +554,7 @@ export default function InvoicesPage() {
                   <CardTitle>Client</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1">
                         Client Name
@@ -613,7 +613,7 @@ export default function InvoicesPage() {
                   )}
                   <div className="space-y-3">
                     {/* Header */}
-                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase">
+                    <div className="hidden sm:grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase">
                       <div className="col-span-5">Description</div>
                       <div className="col-span-2">Qty</div>
                       <div className="col-span-2">Unit Price</div>
@@ -621,9 +621,12 @@ export default function InvoicesPage() {
                       <div className="col-span-1"></div>
                     </div>
                     {fields.map((field, i) => (
-                      <div key={field.id}>
+                      <div
+                        key={field.id}
+                        className="rounded-md border border-border p-2 sm:rounded-none sm:border-0 sm:p-0"
+                      >
                         <div className="grid grid-cols-12 gap-2 items-center">
-                          <div className="col-span-5">
+                          <div className="col-span-12 sm:col-span-5">
                             <Input
                               placeholder="Description"
                               {...form.register(`items.${i}.description`)}
@@ -634,7 +637,10 @@ export default function InvoicesPage() {
                               }
                             />
                           </div>
-                          <div className="col-span-2">
+                          <div className="col-span-3 sm:col-span-2">
+                            <span className="mb-0.5 block text-[10px] font-medium uppercase text-muted-foreground sm:hidden">
+                              Qty
+                            </span>
                             <Controller
                               control={form.control}
                               name={`items.${i}.quantity`}
@@ -656,7 +662,10 @@ export default function InvoicesPage() {
                               )}
                             />
                           </div>
-                          <div className="col-span-2">
+                          <div className="col-span-4 sm:col-span-2">
+                            <span className="mb-0.5 block text-[10px] font-medium uppercase text-muted-foreground sm:hidden">
+                              Unit price
+                            </span>
                             <Controller
                               control={form.control}
                               name={`items.${i}.unit_price`}
@@ -678,14 +687,14 @@ export default function InvoicesPage() {
                               )}
                             />
                           </div>
-                          <div className="col-span-2 text-right text-sm font-medium">
+                          <div className="col-span-3 self-end pb-2 text-right text-sm font-medium sm:col-span-2 sm:self-auto sm:pb-0">
                             {formatMoney(
                               (watchedValues.items?.[i]?.quantity || 0) *
                                 (watchedValues.items?.[i]?.unit_price || 0),
                               watchedValues.currency,
                             )}
                           </div>
-                          <div className="col-span-1 flex justify-end">
+                          <div className="col-span-2 flex justify-end self-end sm:col-span-1 sm:self-auto">
                             <Button
                               type="button"
                               variant="ghost"
@@ -705,19 +714,19 @@ export default function InvoicesPage() {
                           errors.items?.[i]?.quantity ||
                           errors.items?.[i]?.unit_price) && (
                           <div className="grid grid-cols-12 gap-2 mt-0.5">
-                            <div className="col-span-5">
+                            <div className="col-span-12 sm:col-span-5">
                               <FieldError
                                 message={
                                   errors.items?.[i]?.description?.message
                                 }
                               />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-6 sm:col-span-2">
                               <FieldError
                                 message={errors.items?.[i]?.quantity?.message}
                               />
                             </div>
-                            <div className="col-span-2">
+                            <div className="col-span-6 sm:col-span-2">
                               <FieldError
                                 message={errors.items?.[i]?.unit_price?.message}
                               />
@@ -866,7 +875,7 @@ export default function InvoicesPage() {
         <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
         {/* Filters & actions */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <select
             value={statusFilter}
             onChange={(e) => {
@@ -906,7 +915,7 @@ export default function InvoicesPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[720px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                   <thead>
                     <tr className="border-b bg-muted">
                       <th className="text-left p-3 font-medium text-sm">

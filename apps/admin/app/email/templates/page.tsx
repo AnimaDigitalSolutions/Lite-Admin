@@ -235,8 +235,8 @@ export default function EmailTemplatesPage() {
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
         {/* Template tabs + variable chips: single compact row */}
-        <div className="flex items-center justify-between gap-4 border-b border-border pb-0">
-          <div className="flex gap-1">
+        <div className="flex flex-col gap-2 border-b border-border pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="-mb-px flex gap-1 overflow-x-auto">
             {templateNames.map((name) => {
               const active = activeTemplate === name;
               const tpl = templates[name];
@@ -244,9 +244,9 @@ export default function EmailTemplatesPage() {
                 <button
                   key={name}
                   onClick={() => switchTemplate(name)}
-                  className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+                  className={`relative shrink-0 whitespace-nowrap px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 ${
                     active
-                      ? "text-foreground border-b-2 border-foreground -mb-px"
+                      ? "text-foreground border-b-2 border-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -344,7 +344,7 @@ export default function EmailTemplatesPage() {
                     ref={textareaRef}
                     value={editorContent}
                     onChange={(e) => setEditorContent(e.target.value)}
-                    className="h-full min-h-[400px] w-full resize-none rounded-md border border-border bg-muted p-3 font-mono text-xs leading-relaxed text-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="h-full min-h-[320px] w-full resize-none sm:min-h-[400px] rounded-md border border-border bg-muted p-3 font-mono text-xs leading-relaxed text-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
                     spellCheck={false}
                   />
                 </CardContent>
@@ -364,7 +364,7 @@ export default function EmailTemplatesPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 p-3 pt-0">
-                  <div className="h-full min-h-[400px] overflow-hidden rounded-md border border-border bg-card">
+                  <div className="h-full min-h-[320px] overflow-hidden rounded-md sm:min-h-[400px] border border-border bg-card">
                     <iframe
                       srcDoc={renderPreview(
                         debouncedPreview,
@@ -380,7 +380,7 @@ export default function EmailTemplatesPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Button
                 onClick={() => void handleSave()}
                 disabled={saving || !isDirty}
@@ -398,7 +398,7 @@ export default function EmailTemplatesPage() {
                 </Button>
               )}
               {confirmingReset && (
-                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                   <ExclamationTriangleIcon className="h-4 w-4 text-amber-600 shrink-0" />
                   <span className="text-sm text-amber-800">
                     Delete custom template and restore default?

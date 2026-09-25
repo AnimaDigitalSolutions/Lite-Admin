@@ -59,9 +59,9 @@ export default function AddSubscriberModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className="p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+        <div className="p-4 sm:p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Add Subscriber</h2>
             <Button variant="ghost" size="sm" onClick={handleClose}>

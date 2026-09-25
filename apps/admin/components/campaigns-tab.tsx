@@ -306,8 +306,7 @@ export default function CampaignsTab() {
         </div>
       )}
 
-      <div className="flex justify-between items-center">
-        <div />
+      <div className="flex justify-end">
         <Button onClick={openCreate} className="flex items-center gap-2">
           <PlusIcon className="h-4 w-4" />
           New Campaign
@@ -315,7 +314,7 @@ export default function CampaignsTab() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
           {
             icon: MegaphoneIcon,
@@ -351,12 +350,16 @@ export default function CampaignsTab() {
                 isClear ? setCampaignFilter(null) : toggleCampaignFilter(filter)
               }
             >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Icon className={`h-8 w-8 ${color}`} />
-                  <div>
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="text-2xl font-bold">{value}</p>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Icon
+                    className={`hidden h-8 w-8 shrink-0 sm:block ${color}`}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground sm:text-sm">
+                      {label}
+                    </p>
+                    <p className="text-xl font-bold sm:text-2xl">{value}</p>
                   </div>
                 </div>
               </CardContent>
@@ -380,8 +383,8 @@ export default function CampaignsTab() {
                 : "No campaigns match this filter"}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="-mx-4 overflow-x-auto sm:mx-0">
+              <table className="w-full min-w-[680px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-3 font-medium">Name</th>
@@ -495,9 +498,9 @@ export default function CampaignsTab() {
 
       {/* Create/Edit Campaign Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">
                   {viewOnly
@@ -585,7 +588,7 @@ export default function CampaignsTab() {
                     <label className="block text-sm font-medium text-foreground">
                       Audience
                     </label>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="radio"
@@ -653,7 +656,7 @@ export default function CampaignsTab() {
                             </span>
                           ))}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           {availableTags.length > 0 && (
                             <select
                               value=""
@@ -772,7 +775,7 @@ export default function CampaignsTab() {
                       </div>
                     )}
                     {showRecipientPreview && (
-                      <div className="border border-border rounded-md max-h-[160px] overflow-y-auto">
+                      <div className="border border-border rounded-md max-h-[160px] overflow-auto">
                         {recipientPreviewLoading ? (
                           <p className="text-xs text-muted-foreground p-3">
                             Loading...
@@ -909,9 +912,9 @@ export default function CampaignsTab() {
 
       {/* Send Confirmation Dialog */}
       {sendingId !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-lg w-full max-h-[80vh] flex flex-col">
-            <div className="p-6 flex flex-col gap-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[calc(100dvh-1.5rem)] flex flex-col overflow-y-auto">
+            <div className="p-4 sm:p-6 flex flex-col gap-4">
               <h2 className="text-xl font-semibold">Send Campaign</h2>
               <p className="text-muted-foreground">
                 Are you sure you want to send this campaign to{" "}
@@ -936,7 +939,7 @@ export default function CampaignsTab() {
                       : `View all ${sendRecipients.length} recipients`}
                   </button>
                   {showSendRecipients && (
-                    <div className="border border-border rounded-md max-h-[200px] overflow-y-auto">
+                    <div className="border border-border rounded-md max-h-[200px] overflow-auto">
                       <table className="w-full text-xs">
                         <thead className="sticky top-0 bg-muted">
                           <tr className="border-b">

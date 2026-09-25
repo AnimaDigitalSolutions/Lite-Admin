@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import ProtectedLayout from "@/components/protected-layout";
 import { settingsApi, credentialsApi, menuApi } from "@/lib/api";
 import { useDisplayPrefs } from "@/lib/display-prefs";
@@ -135,6 +136,7 @@ const menuStructure: {
 ];
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { prefs: displayPrefs, setPrefs: setDisplayPrefs } = useDisplayPrefs();
   const [settings, setSettings] = useState<Settings>({
     email_enabled: true,
@@ -211,6 +213,11 @@ export default function SettingsPage() {
   };
 
   const handleOpenMenu = async () => {
+    // The side panel only fits on wide screens; use the dedicated page otherwise
+    if (!window.matchMedia("(min-width: 1024px)").matches) {
+      router.push("/settings/menu");
+      return;
+    }
     if (menuOpen) {
       setMenuOpen(false);
       return;
@@ -283,7 +290,7 @@ export default function SettingsPage() {
     <ProtectedLayout>
       <div className="flex gap-6 items-start">
         {/* Left column */}
-        <div className="max-w-2xl space-y-6">
+        <div className="w-full min-w-0 max-w-2xl space-y-6">
           <PageHeader
             title="Settings"
             description="Runtime toggles and storage configuration."
@@ -402,7 +409,7 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="text-sm font-medium">
                     Max submissions per IP
@@ -591,7 +598,7 @@ export default function SettingsPage() {
                     setStorage((p) => ({ ...p, s3_secret_access_key: v }))
                   }
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <Label className="text-sm font-medium">Bucket</Label>
                     <Input

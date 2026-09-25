@@ -312,7 +312,7 @@ export default function ContactsPage() {
           title="Contact Submissions"
           description="Manage customer inquiries and contact form submissions"
         >
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {selectedIds.size > 0 && (
               <Button
                 variant="destructive"
@@ -342,8 +342,8 @@ export default function ContactsPage() {
         </PageHeader>
 
         {/* Search + Status Filter + View Toggle */}
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap sm:gap-4">
+          <div className="relative min-w-0 basis-full sm:basis-auto sm:flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               ref={inputRef}
@@ -397,7 +397,7 @@ export default function ContactsPage() {
             onChange={(e) =>
               setStatusFilter(e.target.value as ContactStatus | "")
             }
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-[160px]"
+            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-w-0 flex-1 sm:flex-none sm:min-w-[160px]"
           >
             <option value="">All statuses</option>
             <option value="new">New</option>
@@ -409,7 +409,7 @@ export default function ContactsPage() {
             <option value="lost">Lost</option>
             <option value="archived">Archived</option>
           </select>
-          <div className="flex rounded-md border border-input overflow-hidden">
+          <div className="flex shrink-0 rounded-md border border-input overflow-hidden">
             {[
               {
                 mode: "table" as ViewMode,
@@ -445,7 +445,7 @@ export default function ContactsPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           {[
             {
               icon: EnvelopeIcon,
@@ -513,12 +513,16 @@ export default function ContactsPage() {
                       : undefined
                 }
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Icon className={`h-8 w-8 ${color}`} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">{label}</p>
-                      <p className="text-2xl font-bold">{value}</p>
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Icon
+                      className={`h-6 w-6 shrink-0 sm:h-8 sm:w-8 ${color}`}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground sm:text-sm">
+                        {label}
+                      </p>
+                      <p className="text-xl font-bold sm:text-2xl">{value}</p>
                       {extra && (
                         <p className="text-xs text-muted-foreground">{extra}</p>
                       )}
@@ -577,8 +581,8 @@ export default function ContactsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
+                  <div className="-mx-4 overflow-x-auto sm:mx-0">
+                    <table className="w-full min-w-[760px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                       <thead className="sticky top-0 z-10">
                         <tr className="border-b bg-muted">
                           <th className="p-3 w-8">

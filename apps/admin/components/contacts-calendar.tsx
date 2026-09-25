@@ -70,7 +70,6 @@ const WINDOW_DAYS = [180, 150, 90, 90, 60, 30, 21, 14, 7];
 const DEFAULT_ZOOM = 3; // index 3 = 18px/day, 90 days
 const ITEMS_PER_PAGE = 10;
 const ROW_HEIGHT = 36;
-const LABEL_WIDTH = 220;
 
 type TimeFilter = "last30" | "last90" | "month" | "all";
 
@@ -280,12 +279,12 @@ export default function ContactsCalendar({
       <CardHeader>
         <div className="flex flex-col gap-3">
           {/* Top row: navigation + legend */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button variant="outline" size="sm" onClick={prevPeriod}>
                 <ChevronLeftIcon className="h-4 w-4" />
               </Button>
-              <CardTitle className="min-w-[180px] text-center text-sm">
+              <CardTitle className="min-w-0 text-center text-sm sm:min-w-[180px]">
                 {headerLabel}
               </CardTitle>
               <Button variant="outline" size="sm" onClick={nextPeriod}>
@@ -315,8 +314,8 @@ export default function ContactsCalendar({
           </div>
 
           {/* Bottom row: time filter + zoom + pagination info */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-muted-foreground font-medium">
                 Show:
               </span>
@@ -331,7 +330,7 @@ export default function ContactsCalendar({
                     key={value}
                     type="button"
                     onClick={() => setTimeFilter(value)}
-                    className={`px-3 py-1 text-xs font-medium transition-colors ${
+                    className={`whitespace-nowrap px-2 py-1 text-xs font-medium transition-colors sm:px-3 ${
                       timeFilter === value
                         ? "bg-foreground text-background"
                         : "bg-background text-muted-foreground hover:bg-accent"
@@ -385,10 +384,7 @@ export default function ContactsCalendar({
           <>
             <div className="flex border-t border-border">
               {/* Fixed left column: contact labels */}
-              <div
-                className="shrink-0 border-r border-border z-10"
-                style={{ width: LABEL_WIDTH }}
-              >
+              <div className="w-[132px] shrink-0 border-r border-border z-10 sm:w-[220px]">
                 {/* Header spacer */}
                 <div className="h-[52px] border-b border-border px-3 flex items-end pb-1 bg-white">
                   <span className="text-xs font-medium text-muted-foreground">
@@ -419,7 +415,7 @@ export default function ContactsCalendar({
                         {highlightMatch(contact.name, searchTerm)}
                       </span>
                       <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${badge.color}`}
+                        className={`hidden text-[10px] px-1.5 py-0.5 rounded-full shrink-0 sm:inline ${badge.color}`}
                       >
                         {badge.label}
                       </span>

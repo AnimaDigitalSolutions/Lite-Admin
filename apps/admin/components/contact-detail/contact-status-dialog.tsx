@@ -42,9 +42,9 @@ export default function ContactStatusDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-[60]">
       <div
-        className="bg-white rounded-lg max-w-md w-full shadow-xl"
+        className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -53,7 +53,7 @@ export default function ContactStatusDialog({
           if (e.key === "Escape") onCancel();
         }}
       >
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-lg font-semibold text-foreground">
               Change Status

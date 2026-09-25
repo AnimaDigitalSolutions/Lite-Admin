@@ -278,7 +278,7 @@ export default function ContactsKanban({
   return (
     <>
       {/* Column Filter Toolbar */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
         <FunnelIcon className="h-4 w-4 text-muted-foreground" />
         <span className="text-xs text-muted-foreground font-medium">
           Columns:
@@ -354,7 +354,11 @@ export default function ContactsKanban({
         </div>
       )}
 
-      <div className="overflow-x-auto pb-4">
+      {/* Drag and drop needs a mouse; touch users change status from the panel */}
+      <p className="mb-2 hidden text-xs text-muted-foreground [@media(hover:none)]:block">
+        Tap a card to open it and change its status.
+      </p>
+      <div className="-mx-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory sm:mx-0 sm:px-0 sm:snap-none">
         <div className="flex gap-3 min-w-max">
           {visibleStages.map((stage) => {
             const stageContacts = contacts.filter(
@@ -366,7 +370,7 @@ export default function ContactsKanban({
             return (
               <div
                 key={stage.value}
-                className="w-[240px] flex-shrink-0 flex flex-col"
+                className="w-[240px] flex-shrink-0 flex flex-col snap-start"
               >
                 {/* Column header */}
                 <div
@@ -467,12 +471,12 @@ export default function ContactsKanban({
 
       {/* Confirmation Dialog */}
       {confirmDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-50">
           <div
-            className="bg-white rounded-lg max-w-md w-full shadow-xl"
+            className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
             onKeyDown={handleConfirmKeyDown}
           >
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-foreground">
                   Move Contact
