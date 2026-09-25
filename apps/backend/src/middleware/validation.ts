@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import type { Request, Response, NextFunction } from 'express';
-import logger from '../utils/logger.js';
+import { z } from "zod";
+import type { Request, Response, NextFunction } from "express";
+import logger from "../utils/logger.js";
 
 const validate = (schema: z.ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -10,31 +10,31 @@ const validate = (schema: z.ZodSchema) => {
         query: req.query,
         params: req.params,
       });
-      
+
       // Attach validated data to request
       req.validatedData = validatedData;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.warn({
-          message: 'Validation failed',
+          message: "Validation failed",
           errors: error.errors,
           url: req.url,
           method: req.method,
         });
-        
+
         return res.status(400).json({
           error: {
-            message: 'Validation failed',
+            message: "Validation failed",
             status: 400,
-            details: error.errors.map(err => ({
-              field: err.path.join('.'),
+            details: error.errors.map((err) => ({
+              field: err.path.join("."),
               message: err.message,
             })),
           },
         });
       }
-      
+
       next(error);
     }
   };
@@ -50,24 +50,24 @@ const validateBody = (schema: z.ZodSchema) => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.warn({
-          message: 'Body validation failed',
+          message: "Body validation failed",
           errors: error.errors,
           url: req.url,
           method: req.method,
         });
-        
+
         return res.status(400).json({
           error: {
-            message: 'Validation failed',
+            message: "Validation failed",
             status: 400,
-            details: error.errors.map(err => ({
-              field: err.path.join('.'),
+            details: error.errors.map((err) => ({
+              field: err.path.join("."),
               message: err.message,
             })),
           },
         });
       }
-      
+
       next(error);
     }
   };
@@ -83,24 +83,24 @@ const validateQuery = (schema: z.ZodSchema) => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.warn({
-          message: 'Query validation failed',
+          message: "Query validation failed",
           errors: error.errors,
           url: req.url,
           method: req.method,
         });
-        
+
         return res.status(400).json({
           error: {
-            message: 'Query validation failed',
+            message: "Query validation failed",
             status: 400,
-            details: error.errors.map(err => ({
-              field: err.path.join('.'),
+            details: error.errors.map((err) => ({
+              field: err.path.join("."),
               message: err.message,
             })),
           },
         });
       }
-      
+
       next(error);
     }
   };
@@ -116,24 +116,24 @@ const validateParams = (schema: z.ZodSchema) => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.warn({
-          message: 'Params validation failed',
+          message: "Params validation failed",
           errors: error.errors,
           url: req.url,
           method: req.method,
         });
-        
+
         return res.status(400).json({
           error: {
-            message: 'Parameter validation failed',
+            message: "Parameter validation failed",
             status: 400,
-            details: error.errors.map(err => ({
-              field: err.path.join('.'),
+            details: error.errors.map((err) => ({
+              field: err.path.join("."),
               message: err.message,
             })),
           },
         });
       }
-      
+
       next(error);
     }
   };

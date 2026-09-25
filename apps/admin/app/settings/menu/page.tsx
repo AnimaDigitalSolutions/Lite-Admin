@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import ProtectedLayout from '@/components/protected-layout';
-import { menuApi } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from "react";
+import ProtectedLayout from "@/components/protected-layout";
+import { menuApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   LockClosedIcon,
-} from '@heroicons/react/24/outline';
-import { PageHeader } from '@/components/page-header';
-import { navigation, type NavGroup } from '@/lib/nav-config';
+} from "@heroicons/react/24/outline";
+import { PageHeader } from "@/components/page-header";
+import { navigation, type NavGroup } from "@/lib/nav-config";
 
 export default function MenuConfigPage() {
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
@@ -30,29 +30,31 @@ export default function MenuConfigPage() {
     }
   }, []);
 
-  useEffect(() => { void fetchPrefs(); }, [fetchPrefs]);
+  useEffect(() => {
+    void fetchPrefs();
+  }, [fetchPrefs]);
 
   const notifySidebar = () => {
-    window.dispatchEvent(new Event('menu-prefs-updated'));
+    window.dispatchEvent(new Event("menu-prefs-updated"));
   };
 
   const toggleItem = async (key: string) => {
     const newVal = !prefs[key];
-    setPrefs(prev => ({ ...prev, [key]: newVal }));
+    setPrefs((prev) => ({ ...prev, [key]: newVal }));
     try {
       await menuApi.update({ [key]: newVal });
       notifySidebar();
     } catch {
       // revert on failure
-      setPrefs(prev => ({ ...prev, [key]: !newVal }));
+      setPrefs((prev) => ({ ...prev, [key]: !newVal }));
     }
   };
 
   const toggleGroup = async (group: NavGroup) => {
-    const toggleable = group.items.filter(i => i.navKey !== null);
+    const toggleable = group.items.filter((i) => i.navKey !== null);
     if (toggleable.length === 0) return;
 
-    const allVisible = toggleable.every(i => prefs[i.navKey!] !== false);
+    const allVisible = toggleable.every((i) => prefs[i.navKey!] !== false);
     const newVal = !allVisible;
 
     const updates: Record<string, boolean> = {};
@@ -60,7 +62,7 @@ export default function MenuConfigPage() {
       updates[item.navKey!] = newVal;
     }
 
-    setPrefs(prev => ({ ...prev, ...updates }));
+    setPrefs((prev) => ({ ...prev, ...updates }));
     try {
       await menuApi.update(updates);
       notifySidebar();
@@ -70,7 +72,7 @@ export default function MenuConfigPage() {
       for (const item of toggleable) {
         reverted[item.navKey!] = !newVal;
       }
-      setPrefs(prev => ({ ...prev, ...reverted }));
+      setPrefs((prev) => ({ ...prev, ...reverted }));
     }
   };
 
@@ -81,7 +83,7 @@ export default function MenuConfigPage() {
         if (item.navKey) updates[item.navKey] = true;
       }
     }
-    setPrefs(prev => ({ ...prev, ...updates }));
+    setPrefs((prev) => ({ ...prev, ...updates }));
     try {
       await menuApi.update(updates);
       notifySidebar();
@@ -91,25 +93,31 @@ export default function MenuConfigPage() {
   };
 
   const toggleCollapse = (group: string) => {
-    setCollapsed(prev => ({ ...prev, [group]: !prev[group] }));
+    setCollapsed((prev) => ({ ...prev, [group]: !prev[group] }));
   };
 
   const getGroupStats = (group: NavGroup) => {
-    const toggleable = group.items.filter(i => i.navKey !== null);
-    const visible = toggleable.filter(i => prefs[i.navKey!] !== false).length;
-    const locked = group.items.filter(i => i.navKey === null).length;
+    const toggleable = group.items.filter((i) => i.navKey !== null);
+    const visible = toggleable.filter((i) => prefs[i.navKey!] !== false).length;
+    const locked = group.items.filter((i) => i.navKey === null).length;
     return { visible: visible + locked, total: group.items.length };
   };
 
   const isGroupAllVisible = (group: NavGroup) => {
-    const toggleable = group.items.filter(i => i.navKey !== null);
-    return toggleable.length === 0 || toggleable.every(i => prefs[i.navKey!] !== false);
+    const toggleable = group.items.filter((i) => i.navKey !== null);
+    return (
+      toggleable.length === 0 ||
+      toggleable.every((i) => prefs[i.navKey!] !== false)
+    );
   };
 
   return (
     <ProtectedLayout>
       <div className="max-w-2xl mx-auto">
-        <PageHeader title="Configure Menu" description="Show or hide sidebar navigation items">
+        <PageHeader
+          title="Configure Menu"
+          description="Show or hide sidebar navigation items"
+        >
           <Button
             onClick={resetAll}
             variant="outline"
@@ -131,7 +139,7 @@ export default function MenuConfigPage() {
               const stats = getGroupStats(group);
               const isCollapsed = collapsed[group.group];
               const allVisible = isGroupAllVisible(group);
-              const hasToggleable = group.items.some(i => i.navKey !== null);
+              const hasToggleable = group.items.some((i) => i.navKey !== null);
 
               return (
                 <Card key={group.group}>
@@ -163,12 +171,16 @@ export default function MenuConfigPage() {
                             void toggleGroup(group);
                           }}
                           className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                            allVisible ? 'bg-blue-600' : 'bg-muted'
+                            allVisible ? "bg-blue-600" : "bg-muted"
                           }`}
                         >
-                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                            allVisible ? 'translate-x-[18px]' : 'translate-x-[3px]'
-                          }`} />
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                              allVisible
+                                ? "translate-x-[18px]"
+                                : "translate-x-[3px]"
+                            }`}
+                          />
                         </button>
                       )}
                     </div>
@@ -178,7 +190,8 @@ export default function MenuConfigPage() {
                       <ul className="space-y-1">
                         {group.items.map((item) => {
                           const locked = item.navKey === null;
-                          const visible = locked || prefs[item.navKey!] !== false;
+                          const visible =
+                            locked || prefs[item.navKey!] !== false;
 
                           return (
                             <li
@@ -186,8 +199,12 @@ export default function MenuConfigPage() {
                               className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-accent"
                             >
                               <div className="flex items-center gap-2.5">
-                                <item.icon className={`h-4 w-4 ${visible ? 'text-muted-foreground' : 'text-muted-foreground/50'}`} />
-                                <span className={`text-sm ${visible ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                <item.icon
+                                  className={`h-4 w-4 ${visible ? "text-muted-foreground" : "text-muted-foreground/50"}`}
+                                />
+                                <span
+                                  className={`text-sm ${visible ? "text-foreground" : "text-muted-foreground"}`}
+                                >
                                   {item.name}
                                 </span>
                                 {locked && (

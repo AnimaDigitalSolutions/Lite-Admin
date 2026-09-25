@@ -1,22 +1,50 @@
+# Dependencies (installed inside Docker)
 node_modules
-npm-debug.log
+**/node_modules
+
+# Git
 .git
 .gitignore
+
+# Environment files (public repo — never include secrets)
 .env
-.env.local
-.env.development
+.env.*
+!.env.example
+
+# Runtime data (bind-mounted in production)
 database/*.db
 logs/*
-src/public/uploads/*
-.DS_Store
-README.md
-docker
+
+# Docker (prevent recursive copy)
+docker/
+*.tar.gz
+
+# Turbo cache
+.turbo
+
+# IDE
 .vscode
 .idea
 *.swp
 *.swo
+
+# OS
+.DS_Store
+
+# Testing & coverage
 coverage
 .nyc_output
-jest.config.js
-.eslintrc.js
+
+# Documentation
+README.md
+CLAUDE.md
+docs/
+
+# Config files not needed in image
+jest.config.*
+.eslintrc.*
 .prettierrc
+tsconfig*.json
+turbo.json
+justfile
+Makefile

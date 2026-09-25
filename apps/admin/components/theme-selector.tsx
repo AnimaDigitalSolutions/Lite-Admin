@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { THEMES, useTheme } from '@/lib/theme-context';
+import { THEMES, useTheme } from "@/lib/theme-context";
 
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme();
@@ -15,8 +15,8 @@ export function ThemeSelector() {
           onClick={() => setTheme(t.id)}
           className={`h-5 w-5 rounded-full border transition-shadow ${
             theme === t.id
-              ? 'ring-2 ring-offset-1 ring-sidebar-active'
-              : 'border-sidebar-border hover:scale-110'
+              ? "ring-2 ring-offset-1 ring-sidebar-active"
+              : "border-sidebar-border hover:scale-110"
           }`}
           style={{ backgroundColor: t.swatch }}
         />

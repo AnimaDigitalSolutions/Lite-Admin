@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { usePaginatedData } from '@/lib/hooks/use-paginated-data';
-import dynamic from 'next/dynamic';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import ProtectedLayout from '@/components/protected-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { invoicesApi } from '@/lib/api';
-import { useTimezone } from '@/lib/timezone';
+import { useState } from "react";
+import { usePaginatedData } from "@/lib/hooks/use-paginated-data";
+import dynamic from "next/dynamic";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import ProtectedLayout from "@/components/protected-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { invoicesApi } from "@/lib/api";
+import { useTimezone } from "@/lib/timezone";
 import {
   PlusIcon,
   TrashIcon,
@@ -18,74 +18,107 @@ import {
   EyeIcon,
   XMarkIcon,
   DocumentDuplicateIcon,
-} from '@heroicons/react/24/outline';
-import type { InvoiceData } from '@/components/invoice-pdf-template';
-import { TEMPLATES } from '@/components/invoice-pdf-template';
-import { ErrorBanner } from '@/components/ui/error-banner';
-import { invoiceFormSchema, formToInvoiceData, FieldError } from './schemas/invoice-form';
-import type { InvoiceFormValues } from './schemas/invoice-form';
-import { Pagination } from '@/components/ui/pagination';
-import { PageHeader } from '@/components/page-header';
+} from "@heroicons/react/24/outline";
+import type { InvoiceData } from "@/components/invoice-pdf-template";
+import { TEMPLATES } from "@/components/invoice-pdf-template";
+import { ErrorBanner } from "@/components/ui/error-banner";
+import {
+  invoiceFormSchema,
+  formToInvoiceData,
+  FieldError,
+} from "./schemas/invoice-form";
+import type { InvoiceFormValues } from "./schemas/invoice-form";
+import { Pagination } from "@/components/ui/pagination";
+import { PageHeader } from "@/components/page-header";
 
 // Lazy-load PDF components (client-side only) to avoid SSR issues with @react-pdf/renderer
 const InvoicePDFPreview = dynamic(
-  () => import('@/components/invoice-pdf-preview'),
-  { ssr: false, loading: () => <div className="h-[680px] bg-muted rounded-lg animate-pulse" /> }
+  () => import("@/components/invoice-pdf-preview"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[680px] bg-muted rounded-lg animate-pulse" />
+    ),
+  },
 );
 const PDFDownloadButton = dynamic(
-  () => import('@/components/invoice-pdf-preview').then(mod => ({ default: mod.PDFDownloadButton })),
-  { ssr: false }
+  () =>
+    import("@/components/invoice-pdf-preview").then((mod) => ({
+      default: mod.PDFDownloadButton,
+    })),
+  { ssr: false },
 );
 const PDFFullViewer = dynamic(
-  () => import('@/components/invoice-pdf-preview').then(mod => ({ default: mod.PDFFullViewer })),
-  { ssr: false }
+  () =>
+    import("@/components/invoice-pdf-preview").then((mod) => ({
+      default: mod.PDFFullViewer,
+    })),
+  { ssr: false },
 );
 
-type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 const STATUS_COLORS: Record<InvoiceStatus, string> = {
-  draft: 'bg-gray-100 text-foreground',
-  sent: 'bg-blue-100 text-blue-700',
-  paid: 'bg-green-100 text-green-700',
-  overdue: 'bg-red-100 text-red-700',
-  cancelled: 'bg-gray-100 text-gray-400',
+  draft: "bg-gray-100 text-foreground",
+  sent: "bg-blue-100 text-blue-700",
+  paid: "bg-green-100 text-green-700",
+  overdue: "bg-red-100 text-red-700",
+  cancelled: "bg-gray-100 text-gray-400",
 };
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL'];
+const CURRENCIES = [
+  "USD",
+  "EUR",
+  "GBP",
+  "JPY",
+  "CAD",
+  "AUD",
+  "CHF",
+  "CNY",
+  "INR",
+  "BRL",
+];
 
 const defaultValues: InvoiceFormValues = {
-  invoice_number: '',
-  status: 'draft',
-  currency: 'USD',
-  issued_date: new Date().toISOString().split('T')[0],
-  due_date: '',
+  invoice_number: "",
+  status: "draft",
+  currency: "USD",
+  issued_date: new Date().toISOString().split("T")[0],
+  due_date: "",
   tax_rate: 0,
   discount: 0,
-  notes: '',
-  client_name: '',
-  client_email: '',
-  client_address: '',
-  company_name: '',
-  company_email: '',
-  company_address: '',
-  company_phone: '',
-  company_logo_url: '',
-  template: 'classic',
-  items: [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
+  notes: "",
+  client_name: "",
+  client_email: "",
+  client_address: "",
+  company_name: "",
+  company_email: "",
+  company_address: "",
+  company_phone: "",
+  company_logo_url: "",
+  template: "classic",
+  items: [{ description: "", quantity: 1, unit_price: 0, amount: 0 }],
 };
 
 export default function InvoicesPage() {
   const { formatDate } = useTimezone();
 
   // List state
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [pageError, setPageError] = useState<string | null>(null);
   const {
-    data: invoices, loading, currentPage, totalPages, setCurrentPage,
+    data: invoices,
+    loading,
+    currentPage,
+    totalPages,
+    setCurrentPage,
     refetch: loadInvoices,
   } = usePaginatedData<InvoiceData>(
     (limit, offset) => {
-      const params: { limit: number; offset: number; status?: string } = { limit, offset };
+      const params: { limit: number; offset: number; status?: string } = {
+        limit,
+        offset,
+      };
       if (statusFilter) params.status = statusFilter;
       return invoicesApi.list(params);
     },
@@ -94,24 +127,26 @@ export default function InvoicesPage() {
   );
 
   // Editor state
-  const [mode, setMode] = useState<'list' | 'edit' | 'preview'>('list');
+  const [mode, setMode] = useState<"list" | "edit" | "preview">("list");
   const [editId, setEditId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Preview state
-  const [previewInvoice, setPreviewInvoice] = useState<InvoiceData | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<InvoiceData | null>(
+    null,
+  );
   const [showLivePreview, setShowLivePreview] = useState(false);
 
   // ── Form ──
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues,
-    mode: 'onSubmit',
+    mode: "onSubmit",
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'items',
+    name: "items",
   });
 
   const watchedValues = form.watch();
@@ -121,15 +156,18 @@ export default function InvoicesPage() {
     form.reset(data);
     setEditId(id);
     setPageError(null);
-    setMode('edit');
+    setMode("edit");
   };
 
   const handleNew = async () => {
     try {
       const res = await invoicesApi.nextNumber();
-      openEditor({ ...defaultValues, invoice_number: res.data.invoice_number }, null);
+      openEditor(
+        { ...defaultValues, invoice_number: res.data.invoice_number },
+        null,
+      );
     } catch {
-      setPageError('Failed to generate invoice number.');
+      setPageError("Failed to generate invoice number.");
     }
   };
 
@@ -137,35 +175,45 @@ export default function InvoicesPage() {
     try {
       const res = await invoicesApi.get(id);
       const inv = res.data;
-      openEditor({
-        invoice_number: inv.invoice_number || '',
-        status: inv.status || 'draft',
-        currency: inv.currency || 'USD',
-        issued_date: inv.issued_date || '',
-        due_date: inv.due_date || '',
-        tax_rate: inv.tax_rate || 0,
-        discount: inv.discount || 0,
-        notes: inv.notes || '',
-        client_name: inv.client_name || '',
-        client_email: inv.client_email || '',
-        client_address: inv.client_address || '',
-        company_name: inv.company_name || '',
-        company_email: inv.company_email || '',
-        company_address: inv.company_address || '',
-        company_phone: inv.company_phone || '',
-        company_logo_url: inv.company_logo_url || '',
-        template: inv.template || 'classic',
-        items: inv.items?.length
-          ? inv.items.map((i: { description: string; quantity: number; unit_price: number; amount?: number }) => ({
-              description: i.description,
-              quantity: i.quantity,
-              unit_price: i.unit_price,
-              amount: i.amount || i.quantity * i.unit_price,
-            }))
-          : [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
-      }, id);
+      openEditor(
+        {
+          invoice_number: inv.invoice_number || "",
+          status: inv.status || "draft",
+          currency: inv.currency || "USD",
+          issued_date: inv.issued_date || "",
+          due_date: inv.due_date || "",
+          tax_rate: inv.tax_rate || 0,
+          discount: inv.discount || 0,
+          notes: inv.notes || "",
+          client_name: inv.client_name || "",
+          client_email: inv.client_email || "",
+          client_address: inv.client_address || "",
+          company_name: inv.company_name || "",
+          company_email: inv.company_email || "",
+          company_address: inv.company_address || "",
+          company_phone: inv.company_phone || "",
+          company_logo_url: inv.company_logo_url || "",
+          template: inv.template || "classic",
+          items: inv.items?.length
+            ? inv.items.map(
+                (i: {
+                  description: string;
+                  quantity: number;
+                  unit_price: number;
+                  amount?: number;
+                }) => ({
+                  description: i.description,
+                  quantity: i.quantity,
+                  unit_price: i.unit_price,
+                  amount: i.amount || i.quantity * i.unit_price,
+                }),
+              )
+            : [{ description: "", quantity: 1, unit_price: 0, amount: 0 }],
+        },
+        id,
+      );
     } catch {
-      setPageError('Failed to load invoice.');
+      setPageError("Failed to load invoice.");
     }
   };
 
@@ -173,9 +221,9 @@ export default function InvoicesPage() {
     try {
       const res = await invoicesApi.get(id);
       setPreviewInvoice(res.data);
-      setMode('preview');
+      setMode("preview");
     } catch {
-      setPageError('Failed to load invoice.');
+      setPageError("Failed to load invoice.");
     }
   };
 
@@ -184,45 +232,55 @@ export default function InvoicesPage() {
       const res = await invoicesApi.get(id);
       const nextNum = await invoicesApi.nextNumber();
       const inv = res.data;
-      openEditor({
-        invoice_number: nextNum.data.invoice_number,
-        status: 'draft',
-        currency: inv.currency || 'USD',
-        issued_date: inv.issued_date || '',
-        due_date: inv.due_date || '',
-        tax_rate: inv.tax_rate || 0,
-        discount: inv.discount || 0,
-        notes: inv.notes || '',
-        client_name: inv.client_name || '',
-        client_email: inv.client_email || '',
-        client_address: inv.client_address || '',
-        company_name: inv.company_name || '',
-        company_email: inv.company_email || '',
-        company_address: inv.company_address || '',
-        company_phone: inv.company_phone || '',
-        company_logo_url: inv.company_logo_url || '',
-        template: inv.template || 'classic',
-        items: inv.items?.length
-          ? inv.items.map((i: { description: string; quantity: number; unit_price: number; amount?: number }) => ({
-              description: i.description,
-              quantity: i.quantity,
-              unit_price: i.unit_price,
-              amount: i.amount || i.quantity * i.unit_price,
-            }))
-          : [{ description: '', quantity: 1, unit_price: 0, amount: 0 }],
-      }, null);
+      openEditor(
+        {
+          invoice_number: nextNum.data.invoice_number,
+          status: "draft",
+          currency: inv.currency || "USD",
+          issued_date: inv.issued_date || "",
+          due_date: inv.due_date || "",
+          tax_rate: inv.tax_rate || 0,
+          discount: inv.discount || 0,
+          notes: inv.notes || "",
+          client_name: inv.client_name || "",
+          client_email: inv.client_email || "",
+          client_address: inv.client_address || "",
+          company_name: inv.company_name || "",
+          company_email: inv.company_email || "",
+          company_address: inv.company_address || "",
+          company_phone: inv.company_phone || "",
+          company_logo_url: inv.company_logo_url || "",
+          template: inv.template || "classic",
+          items: inv.items?.length
+            ? inv.items.map(
+                (i: {
+                  description: string;
+                  quantity: number;
+                  unit_price: number;
+                  amount?: number;
+                }) => ({
+                  description: i.description,
+                  quantity: i.quantity,
+                  unit_price: i.unit_price,
+                  amount: i.amount || i.quantity * i.unit_price,
+                }),
+              )
+            : [{ description: "", quantity: 1, unit_price: 0, amount: 0 }],
+        },
+        null,
+      );
     } catch {
-      setPageError('Failed to duplicate invoice.');
+      setPageError("Failed to duplicate invoice.");
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this invoice?')) return;
+    if (!confirm("Delete this invoice?")) return;
     try {
       await invoicesApi.delete(id);
       void loadInvoices();
     } catch {
-      setPageError('Failed to delete invoice.');
+      setPageError("Failed to delete invoice.");
     }
   };
 
@@ -247,23 +305,34 @@ export default function InvoicesPage() {
         due_date: emptyToNull(data.due_date),
         issued_date: emptyToNull(data.issued_date),
         invoice_number: emptyToNull(data.invoice_number),
-        items: data.items.filter(i => i.description.trim()),
+        items: data.items.filter((i) => i.description.trim()),
       };
       if (editId) {
         await invoicesApi.update(editId, payload);
       } else {
         await invoicesApi.create(payload);
       }
-      setMode('list');
+      setMode("list");
       void loadInvoices();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: string; details?: Array<{ path: string[]; message: string }> } } };
+      const axiosErr = err as {
+        response?: {
+          data?: {
+            error?: string;
+            details?: Array<{ path: string[]; message: string }>;
+          };
+        };
+      };
       const details = axiosErr?.response?.data?.details;
       if (details?.length) {
-        setPageError(details.map(d => `${d.path.join('.')}: ${d.message}`).join('. '));
+        setPageError(
+          details.map((d) => `${d.path.join(".")}: ${d.message}`).join(". "),
+        );
       } else {
         const errMsg = axiosErr?.response?.data?.error;
-        setPageError(typeof errMsg === 'string' ? errMsg : 'Failed to save invoice.');
+        setPageError(
+          typeof errMsg === "string" ? errMsg : "Failed to save invoice.",
+        );
       }
     } finally {
       setSaving(false);
@@ -271,19 +340,30 @@ export default function InvoicesPage() {
   };
 
   const formatMoney = (amount: number, currency: string) => {
-    const symbols: Record<string, string> = { USD: '$', EUR: '\u20AC', GBP: '\u00A3', JPY: '\u00A5' };
-    return `${symbols[currency] || currency + ' '}${amount.toFixed(2)}`;
+    const symbols: Record<string, string> = {
+      USD: "$",
+      EUR: "\u20AC",
+      GBP: "\u00A3",
+      JPY: "\u00A5",
+    };
+    return `${symbols[currency] || currency + " "}${amount.toFixed(2)}`;
   };
 
   // ── Preview mode ──
-  if (mode === 'preview' && previewInvoice) {
+  if (mode === "preview" && previewInvoice) {
     return (
       <ProtectedLayout>
         <div className="space-y-4">
           <PageHeader title={`Preview — ${previewInvoice.invoice_number}`}>
             <div className="flex gap-2">
               <PDFDownloadButton data={previewInvoice} />
-              <Button variant="outline" onClick={() => { setMode('list'); setPreviewInvoice(null); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setMode("list");
+                  setPreviewInvoice(null);
+                }}
+              >
                 <XMarkIcon className="h-4 w-4 mr-1" /> Close
               </Button>
             </div>
@@ -295,30 +375,48 @@ export default function InvoicesPage() {
   }
 
   // ── Edit mode ──
-  if (mode === 'edit') {
-    const { formState: { errors } } = form;
+  if (mode === "edit") {
+    const {
+      formState: { errors },
+    } = form;
 
     return (
       <ProtectedLayout>
-        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-6">
-          <PageHeader title={editId ? 'Edit Invoice' : 'New Invoice'}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
+          className="space-y-6"
+        >
+          <PageHeader title={editId ? "Edit Invoice" : "New Invoice"}>
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => { setPreviewInvoice(liveData); setMode('preview'); }}
+                onClick={() => {
+                  setPreviewInvoice(liveData);
+                  setMode("preview");
+                }}
                 className="flex items-center gap-2"
               >
                 <EyeIcon className="h-4 w-4" /> Preview
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? 'Saving...' : 'Save Invoice'}
+                {saving ? "Saving..." : "Save Invoice"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setMode('list')}>Cancel</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setMode("list")}
+              >
+                Cancel
+              </Button>
             </div>
           </PageHeader>
 
-          <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
+          <ErrorBanner
+            message={pageError}
+            onDismiss={() => setPageError(null)}
+          />
 
           {/* Form-level error summary */}
           {Object.keys(errors).length > 0 && !pageError && (
@@ -332,18 +430,29 @@ export default function InvoicesPage() {
             <div className="space-y-6">
               {/* Invoice details */}
               <Card>
-                <CardHeader><CardTitle>Invoice Details</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Invoice Details</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Invoice Number</label>
-                      <Input {...form.register('invoice_number')} className={errors.invoice_number ? 'border-red-400' : ''} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Invoice Number
+                      </label>
+                      <Input
+                        {...form.register("invoice_number")}
+                        className={
+                          errors.invoice_number ? "border-red-400" : ""
+                        }
+                      />
                       <FieldError message={errors.invoice_number?.message} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Status</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Status
+                      </label>
                       <select
-                        {...form.register('status')}
+                        {...form.register("status")}
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                       >
                         <option value="draft">Draft</option>
@@ -354,30 +463,44 @@ export default function InvoicesPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Issue Date</label>
-                      <Input type="date" {...form.register('issued_date')} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Issue Date
+                      </label>
+                      <Input type="date" {...form.register("issued_date")} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Due Date</label>
-                      <Input type="date" {...form.register('due_date')} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Due Date
+                      </label>
+                      <Input type="date" {...form.register("due_date")} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Currency</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Currency
+                      </label>
                       <select
-                        {...form.register('currency')}
+                        {...form.register("currency")}
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                       >
-                        {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        {CURRENCIES.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Template</label>
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Template
+                      </label>
                       <select
-                        {...form.register('template')}
+                        {...form.register("template")}
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                       >
                         {Object.entries(TEMPLATES).map(([key, t]) => (
-                          <option key={key} value={key}>{t.name}</option>
+                          <option key={key} value={key}>
+                            {t.name}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -387,25 +510,39 @@ export default function InvoicesPage() {
 
               {/* Company info */}
               <Card>
-                <CardHeader><CardTitle>Your Company</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Your Company</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Company Name</label>
-                      <Input {...form.register('company_name')} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Company Name
+                      </label>
+                      <Input {...form.register("company_name")} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Email</label>
-                      <Input type="email" {...form.register('company_email')} className={errors.company_email ? 'border-red-400' : ''} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Email
+                      </label>
+                      <Input
+                        type="email"
+                        {...form.register("company_email")}
+                        className={errors.company_email ? "border-red-400" : ""}
+                      />
                       <FieldError message={errors.company_email?.message} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
-                      <Input {...form.register('company_phone')} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Phone
+                      </label>
+                      <Input {...form.register("company_phone")} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Address</label>
-                      <Input {...form.register('company_address')} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Address
+                      </label>
+                      <Input {...form.register("company_address")} />
                     </div>
                   </div>
                 </CardContent>
@@ -413,22 +550,34 @@ export default function InvoicesPage() {
 
               {/* Client info */}
               <Card>
-                <CardHeader><CardTitle>Client</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Client</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Client Name</label>
-                      <Input {...form.register('client_name')} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Client Name
+                      </label>
+                      <Input {...form.register("client_name")} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1">Email</label>
-                      <Input type="email" {...form.register('client_email')} className={errors.client_email ? 'border-red-400' : ''} />
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        Email
+                      </label>
+                      <Input
+                        type="email"
+                        {...form.register("client_email")}
+                        className={errors.client_email ? "border-red-400" : ""}
+                      />
                       <FieldError message={errors.client_email?.message} />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">Address</label>
-                    <Input {...form.register('client_address')} />
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Address
+                    </label>
+                    <Input {...form.register("client_address")} />
                   </div>
                 </CardContent>
               </Card>
@@ -442,7 +591,14 @@ export default function InvoicesPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => append({ description: '', quantity: 1, unit_price: 0, amount: 0 })}
+                      onClick={() =>
+                        append({
+                          description: "",
+                          quantity: 1,
+                          unit_price: 0,
+                          amount: 0,
+                        })
+                      }
                       className="flex items-center gap-1"
                     >
                       <PlusIcon className="h-4 w-4" /> Add Item
@@ -471,7 +627,11 @@ export default function InvoicesPage() {
                             <Input
                               placeholder="Description"
                               {...form.register(`items.${i}.description`)}
-                              className={errors.items?.[i]?.description ? 'border-red-400' : ''}
+                              className={
+                                errors.items?.[i]?.description
+                                  ? "border-red-400"
+                                  : ""
+                              }
                             />
                           </div>
                           <div className="col-span-2">
@@ -484,8 +644,14 @@ export default function InvoicesPage() {
                                   min="0"
                                   step="1"
                                   value={f.value}
-                                  onChange={e => f.onChange(parseFloat(e.target.value) || 0)}
-                                  className={errors.items?.[i]?.quantity ? 'border-red-400' : ''}
+                                  onChange={(e) =>
+                                    f.onChange(parseFloat(e.target.value) || 0)
+                                  }
+                                  className={
+                                    errors.items?.[i]?.quantity
+                                      ? "border-red-400"
+                                      : ""
+                                  }
                                 />
                               )}
                             />
@@ -500,16 +666,23 @@ export default function InvoicesPage() {
                                   min="0"
                                   step="0.01"
                                   value={f.value}
-                                  onChange={e => f.onChange(parseFloat(e.target.value) || 0)}
-                                  className={errors.items?.[i]?.unit_price ? 'border-red-400' : ''}
+                                  onChange={(e) =>
+                                    f.onChange(parseFloat(e.target.value) || 0)
+                                  }
+                                  className={
+                                    errors.items?.[i]?.unit_price
+                                      ? "border-red-400"
+                                      : ""
+                                  }
                                 />
                               )}
                             />
                           </div>
                           <div className="col-span-2 text-right text-sm font-medium">
                             {formatMoney(
-                              (watchedValues.items?.[i]?.quantity || 0) * (watchedValues.items?.[i]?.unit_price || 0),
-                              watchedValues.currency
+                              (watchedValues.items?.[i]?.quantity || 0) *
+                                (watchedValues.items?.[i]?.unit_price || 0),
+                              watchedValues.currency,
                             )}
                           </div>
                           <div className="col-span-1 flex justify-end">
@@ -517,7 +690,9 @@ export default function InvoicesPage() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              onClick={() => { if (fields.length > 1) remove(i); }}
+                              onClick={() => {
+                                if (fields.length > 1) remove(i);
+                              }}
                               className="text-muted-foreground hover:text-red-500"
                               disabled={fields.length <= 1}
                             >
@@ -526,11 +701,27 @@ export default function InvoicesPage() {
                           </div>
                         </div>
                         {/* Per-row errors */}
-                        {(errors.items?.[i]?.description || errors.items?.[i]?.quantity || errors.items?.[i]?.unit_price) && (
+                        {(errors.items?.[i]?.description ||
+                          errors.items?.[i]?.quantity ||
+                          errors.items?.[i]?.unit_price) && (
                           <div className="grid grid-cols-12 gap-2 mt-0.5">
-                            <div className="col-span-5"><FieldError message={errors.items?.[i]?.description?.message} /></div>
-                            <div className="col-span-2"><FieldError message={errors.items?.[i]?.quantity?.message} /></div>
-                            <div className="col-span-2"><FieldError message={errors.items?.[i]?.unit_price?.message} /></div>
+                            <div className="col-span-5">
+                              <FieldError
+                                message={
+                                  errors.items?.[i]?.description?.message
+                                }
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <FieldError
+                                message={errors.items?.[i]?.quantity?.message}
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <FieldError
+                                message={errors.items?.[i]?.unit_price?.message}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -541,11 +732,15 @@ export default function InvoicesPage() {
                   <div className="mt-6 border-t pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span className="font-medium">{formatMoney(liveData.subtotal, liveData.currency)}</span>
+                      <span className="font-medium">
+                        {formatMoney(liveData.subtotal, liveData.currency)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground">Tax Rate (%)</span>
+                        <span className="text-muted-foreground">
+                          Tax Rate (%)
+                        </span>
                         <Controller
                           control={form.control}
                           name="tax_rate"
@@ -555,16 +750,22 @@ export default function InvoicesPage() {
                               min="0"
                               max="100"
                               step="0.5"
-                              className={`w-20 h-7 text-sm ${errors.tax_rate ? 'border-red-400' : ''}`}
+                              className={`w-20 h-7 text-sm ${errors.tax_rate ? "border-red-400" : ""}`}
                               value={f.value}
-                              onChange={e => f.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) =>
+                                f.onChange(parseFloat(e.target.value) || 0)
+                              }
                             />
                           )}
                         />
                       </div>
-                      <span className="font-medium">{formatMoney(liveData.tax_amount, liveData.currency)}</span>
+                      <span className="font-medium">
+                        {formatMoney(liveData.tax_amount, liveData.currency)}
+                      </span>
                     </div>
-                    {errors.tax_rate && <FieldError message={errors.tax_rate.message} />}
+                    {errors.tax_rate && (
+                      <FieldError message={errors.tax_rate.message} />
+                    )}
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Discount</span>
@@ -576,19 +777,27 @@ export default function InvoicesPage() {
                               type="number"
                               min="0"
                               step="0.01"
-                              className={`w-24 h-7 text-sm ${errors.discount ? 'border-red-400' : ''}`}
+                              className={`w-24 h-7 text-sm ${errors.discount ? "border-red-400" : ""}`}
                               value={f.value}
-                              onChange={e => f.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) =>
+                                f.onChange(parseFloat(e.target.value) || 0)
+                              }
                             />
                           )}
                         />
                       </div>
-                      <span className="font-medium">-{formatMoney(liveData.discount, liveData.currency)}</span>
+                      <span className="font-medium">
+                        -{formatMoney(liveData.discount, liveData.currency)}
+                      </span>
                     </div>
-                    {errors.discount && <FieldError message={errors.discount.message} />}
+                    {errors.discount && (
+                      <FieldError message={errors.discount.message} />
+                    )}
                     <div className="flex justify-between text-base font-bold border-t pt-3">
                       <span>Total</span>
-                      <span>{formatMoney(liveData.total, liveData.currency)}</span>
+                      <span>
+                        {formatMoney(liveData.total, liveData.currency)}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -596,13 +805,15 @@ export default function InvoicesPage() {
 
               {/* Notes */}
               <Card>
-                <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Notes</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <textarea
                     rows={3}
-                    className={`w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y ${errors.notes ? 'border-red-400' : ''}`}
+                    className={`w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-y ${errors.notes ? "border-red-400" : ""}`}
                     placeholder="Payment terms, bank details, thank you note..."
-                    {...form.register('notes')}
+                    {...form.register("notes")}
                   />
                   <FieldError message={errors.notes?.message} />
                 </CardContent>
@@ -613,7 +824,10 @@ export default function InvoicesPage() {
             <div className="hidden xl:block">
               <div className="sticky top-8">
                 {showLivePreview ? (
-                  <InvoicePDFPreview data={liveData} onDisable={() => setShowLivePreview(false)} />
+                  <InvoicePDFPreview
+                    data={liveData}
+                    onDisable={() => setShowLivePreview(false)}
+                  />
                 ) : (
                   <Card>
                     <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -621,7 +835,12 @@ export default function InvoicesPage() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Live preview renders the PDF in real time as you type
                       </p>
-                      <Button type="button" variant="outline" onClick={() => setShowLivePreview(true)} className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowLivePreview(true)}
+                        className="flex items-center gap-2"
+                      >
                         <EyeIcon className="h-4 w-4" /> Enable Live Preview
                       </Button>
                     </CardContent>
@@ -639,7 +858,10 @@ export default function InvoicesPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        <PageHeader title="Invoices" description="Create, manage, and download PDF invoices." />
+        <PageHeader
+          title="Invoices"
+          description="Create, manage, and download PDF invoices."
+        />
 
         <ErrorBanner message={pageError} onDismiss={() => setPageError(null)} />
 
@@ -647,7 +869,10 @@ export default function InvoicesPage() {
         <div className="flex items-center justify-between">
           <select
             value={statusFilter}
-            onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
             <option value="">All Statuses</option>
@@ -672,7 +897,9 @@ export default function InvoicesPage() {
             ) : invoices.length === 0 ? (
               <div className="py-16 text-center text-muted-foreground">
                 <p className="text-lg font-medium">No invoices yet</p>
-                <p className="mt-1 text-sm">Create your first invoice to get started.</p>
+                <p className="mt-1 text-sm">
+                  Create your first invoice to get started.
+                </p>
                 <Button onClick={handleNew} className="mt-4">
                   <PlusIcon className="h-4 w-4 mr-2" /> Create Invoice
                 </Button>
@@ -682,24 +909,45 @@ export default function InvoicesPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b bg-muted">
-                      <th className="text-left p-3 font-medium text-sm">Invoice #</th>
-                      <th className="text-left p-3 font-medium text-sm">Client</th>
-                      <th className="text-left p-3 font-medium text-sm">Status</th>
-                      <th className="text-right p-3 font-medium text-sm">Total</th>
-                      <th className="text-left p-3 font-medium text-sm">Issued</th>
+                      <th className="text-left p-3 font-medium text-sm">
+                        Invoice #
+                      </th>
+                      <th className="text-left p-3 font-medium text-sm">
+                        Client
+                      </th>
+                      <th className="text-left p-3 font-medium text-sm">
+                        Status
+                      </th>
+                      <th className="text-right p-3 font-medium text-sm">
+                        Total
+                      </th>
+                      <th className="text-left p-3 font-medium text-sm">
+                        Issued
+                      </th>
                       <th className="text-left p-3 font-medium text-sm">Due</th>
-                      <th className="text-right p-3 font-medium text-sm">Actions</th>
+                      <th className="text-right p-3 font-medium text-sm">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {invoices.map((inv) => (
-                      <tr key={inv.id} className="border-b hover:bg-muted group/row">
+                      <tr
+                        key={inv.id}
+                        className="border-b hover:bg-muted group/row"
+                      >
                         <td className="p-3">
-                          <span className="font-mono text-sm font-medium">{inv.invoice_number}</span>
+                          <span className="font-mono text-sm font-medium">
+                            {inv.invoice_number}
+                          </span>
                         </td>
-                        <td className="p-3 text-sm text-foreground">{inv.client_name || '-'}</td>
+                        <td className="p-3 text-sm text-foreground">
+                          {inv.client_name || "-"}
+                        </td>
                         <td className="p-3">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[inv.status as InvoiceStatus] || STATUS_COLORS.draft}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[inv.status as InvoiceStatus] || STATUS_COLORS.draft}`}
+                          >
                             {inv.status}
                           </span>
                         </td>
@@ -707,23 +955,44 @@ export default function InvoicesPage() {
                           {formatMoney(inv.total, inv.currency)}
                         </td>
                         <td className="p-3 text-sm text-muted-foreground">
-                          {inv.issued_date ? formatDate(inv.issued_date) : '-'}
+                          {inv.issued_date ? formatDate(inv.issued_date) : "-"}
                         </td>
                         <td className="p-3 text-sm text-muted-foreground">
-                          {inv.due_date ? formatDate(inv.due_date) : '-'}
+                          {inv.due_date ? formatDate(inv.due_date) : "-"}
                         </td>
                         <td className="p-3">
                           <div className="flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="sm" onClick={() => handlePreview(inv.id!)} title="Preview">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePreview(inv.id!)}
+                              title="Preview"
+                            >
                               <EyeIcon className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(inv.id!)} title="Edit">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(inv.id!)}
+                              title="Edit"
+                            >
                               <PencilIcon className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDuplicate(inv.id!)} title="Duplicate">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDuplicate(inv.id!)}
+                              title="Duplicate"
+                            >
                               <DocumentDuplicateIcon className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(inv.id!)} title="Delete" className="text-muted-foreground hover:text-red-500">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(inv.id!)}
+                              title="Delete"
+                              className="text-muted-foreground hover:text-red-500"
+                            >
                               <TrashIcon className="h-4 w-4" />
                             </Button>
                           </div>
@@ -738,7 +1007,12 @@ export default function InvoicesPage() {
         </Card>
 
         {/* Pagination */}
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="" />
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          className=""
+        />
       </div>
     </ProtectedLayout>
   );

@@ -1,0 +1,19 @@
+# Demo deployment configuration
+# Frontend-only — demo mode uses mocked data via axios interceptor, no backend needed
+# NEXT_PUBLIC_DEMO_MODE=true is set at build time in the CI workflow
+
+services:
+  admin:
+    image: ${ADMIN_IMAGE}:${VERSION:-latest}
+    container_name: lite-admin-demo
+    ports:
+      - "${REMOTE_DEMO_PORT:-3012}:3002"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - lite-admin-demo-network
+
+networks:
+  lite-admin-demo-network:
+    driver: bridge

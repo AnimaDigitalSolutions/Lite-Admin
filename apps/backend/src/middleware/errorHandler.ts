@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
-import { AppError } from '@lite/shared';
-import logger from '../utils/logger.js';
+import type { Request, Response, NextFunction } from "express";
+import { AppError } from "@lite/shared";
+import logger from "../utils/logger.js";
 
 interface LegacyError extends Error {
   statusCode?: number;
@@ -10,7 +10,12 @@ interface LegacyError extends Error {
   code?: string;
 }
 
-const errorHandler = (err: LegacyError, req: Request, res: Response, _next: NextFunction) => {
+const errorHandler = (
+  err: LegacyError,
+  req: Request,
+  res: Response,
+  _next: NextFunction,
+) => {
   // Log error details
   logger.error({
     error: err.message,
@@ -18,13 +23,14 @@ const errorHandler = (err: LegacyError, req: Request, res: Response, _next: Next
     url: req.url,
     method: req.method,
     ip: req.ip,
-    userAgent: req.get('user-agent'),
+    userAgent: req.get("user-agent"),
   });
 
   // Determine status code — AppError subclasses carry their own statusCode
-  const statusCode = err instanceof AppError
-    ? err.statusCode
-    : (err.statusCode || err.status || 500);
+  const statusCode =
+    err instanceof AppError
+      ? err.statusCode
+      : err.statusCode || err.status || 500;
 
   // Prepare error response
   const errorResponse: {
@@ -36,7 +42,7 @@ const errorHandler = (err: LegacyError, req: Request, res: Response, _next: Next
     };
   } = {
     error: {
-      message: err.message || 'Internal server error',
+      message: err.message || "Internal server error",
       status: statusCode,
     },
   };
@@ -47,7 +53,7 @@ const errorHandler = (err: LegacyError, req: Request, res: Response, _next: Next
   }
 
   // Add stack trace in development
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     errorResponse.error.stack = err.stack;
     if (!(err instanceof AppError) && (err.details || err.errors)) {
       errorResponse.error.details = err.details || err.errors;
@@ -56,13 +62,13 @@ const errorHandler = (err: LegacyError, req: Request, res: Response, _next: Next
 
   // Handle legacy error types by name (for backwards compatibility)
   if (!(err instanceof AppError)) {
-    if (err.name === 'ValidationError') {
-      errorResponse.error.message = 'Validation failed';
+    if (err.name === "ValidationError") {
+      errorResponse.error.message = "Validation failed";
       errorResponse.error.details = err.errors;
-    } else if (err.name === 'UnauthorizedError') {
-      errorResponse.error.message = 'Unauthorized access';
-    } else if (err.code === 'LIMIT_FILE_SIZE') {
-      errorResponse.error.message = 'File size exceeds limit';
+    } else if (err.name === "UnauthorizedError") {
+      errorResponse.error.message = "Unauthorized access";
+    } else if (err.code === "LIMIT_FILE_SIZE") {
+      errorResponse.error.message = "File size exceeds limit";
     }
   }
 

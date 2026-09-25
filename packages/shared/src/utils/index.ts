@@ -1,55 +1,55 @@
 // Date utilities
 export const formatDate = (date: Date | string): string => {
   const d = new Date(date);
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
 export const formatDateTime = (date: Date | string): string => {
   const d = new Date(date);
-  return d.toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
 // String utilities
 export const truncate = (str: string, length: number): string => {
   if (str.length <= length) return str;
-  return str.slice(0, length) + '...';
+  return str.slice(0, length) + "...";
 };
 
 export const slugify = (str: string): string => {
   return str
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 };
 
 // File utilities
 export const formatFileSize = (bytes: number): string => {
-  const units = ['B', 'KB', 'MB', 'GB'];
+  const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let unitIndex = 0;
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
     unitIndex++;
   }
-  
+
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 };
 
 export const getFileExtension = (filename: string): string => {
-  const parts = filename.split('.');
-  return parts.length > 1 ? `.${parts.pop()}` : '';
+  const parts = filename.split(".");
+  return parts.length > 1 ? `.${parts.pop()}` : "";
 };
 
 // Validation utilities
@@ -61,7 +61,7 @@ export const isValidEmail = (email: string): boolean => {
 export const isValidUrl = (url: string): boolean => {
   try {
     // Use typeof check for browser/node compatibility
-    if (typeof URL !== 'undefined') {
+    if (typeof URL !== "undefined") {
       new URL(url);
     } else {
       // Fallback for environments without URL
@@ -78,7 +78,7 @@ export const isValidUrl = (url: string): boolean => {
 export const createApiResponse = <T>(
   data?: T,
   success = true,
-  error?: { message: string; status?: number }
+  error?: { message: string; status?: number },
 ) => {
   return {
     success,
@@ -90,7 +90,7 @@ export const createApiResponse = <T>(
 
 export const createPaginatedResponse = <T>(
   data: T[],
-  pagination: { limit: number; offset: number; total?: number }
+  pagination: { limit: number; offset: number; total?: number },
 ) => {
   return {
     success: true,
@@ -110,57 +110,57 @@ export class AppError extends Error {
 
   constructor(message: string, statusCode = 500, details?: unknown) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
     this.statusCode = statusCode;
     this.details = details;
-    if (typeof Error.captureStackTrace === 'function') {
+    if (typeof Error.captureStackTrace === "function") {
       Error.captureStackTrace(this, this.constructor);
     }
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed', details?: unknown) {
+  constructor(message = "Validation failed", details?: unknown) {
     super(message, 400, details);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
+  constructor(message = "Resource not found") {
     super(message, 404);
-    this.name = 'NotFoundError';
+    this.name = "NotFoundError";
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Unauthorized access') {
+  constructor(message = "Unauthorized access") {
     super(message, 401);
-    this.name = 'UnauthorizedError';
+    this.name = "UnauthorizedError";
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Access forbidden') {
+  constructor(message = "Access forbidden") {
     super(message, 403);
-    this.name = 'ForbiddenError';
+    this.name = "ForbiddenError";
   }
 }
 
 // Constants
 export const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
 ] as const;
 
 export const PROJECT_TYPES = [
-  'web',
-  'mobile',
-  'erp',
-  'consulting',
-  'other',
+  "web",
+  "mobile",
+  "erp",
+  "consulting",
+  "other",
 ] as const;
 
-export const USER_ROLES = ['admin', 'super_admin'] as const;
+export const USER_ROLES = ["admin", "super_admin"] as const;

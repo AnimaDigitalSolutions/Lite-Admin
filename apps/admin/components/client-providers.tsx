@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { LoadingProvider, useLoading } from '@/lib/loading-context';
-import { ThemeProvider } from '@/lib/theme-context';
-import { setupLoadingInterceptors } from '@/lib/api';
-import { ProgressBar } from './progress-bar';
+import { useEffect } from "react";
+import { LoadingProvider, useLoading } from "@/lib/loading-context";
+import { ThemeProvider } from "@/lib/theme-context";
+import { setupLoadingInterceptors } from "@/lib/api";
+import { ProgressBar } from "./progress-bar";
 
 function ClientProvidersInner({ children }: { children: React.ReactNode }) {
   const { startLoading, stopLoading } = useLoading();

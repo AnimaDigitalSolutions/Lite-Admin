@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from "react";
 
 interface UseAsyncDataOptions<T> {
   initialData?: T;
@@ -32,8 +32,13 @@ export function useAsyncData<T>(
       const result = await fetcher();
       setData(result);
     } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      setError(e.response?.data?.error?.message ?? e.message ?? 'Failed to load data');
+      const e = err as {
+        response?: { data?: { error?: { message?: string } } };
+        message?: string;
+      };
+      setError(
+        e.response?.data?.error?.message ?? e.message ?? "Failed to load data",
+      );
     } finally {
       setLoading(false);
     }

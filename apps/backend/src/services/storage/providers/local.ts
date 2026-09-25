@@ -1,9 +1,9 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import { nanoid } from 'nanoid';
-import type { Express } from 'express';
-import logger from '../../../utils/logger.js';
-import ImageOptimizer from '../utils/optimizer.js';
+import { promises as fs } from "fs";
+import path from "path";
+import { nanoid } from "nanoid";
+import type { Express } from "express";
+import logger from "../../../utils/logger.js";
+import ImageOptimizer from "../utils/optimizer.js";
 
 interface LocalConfig {
   uploadDir: string;
@@ -50,35 +50,48 @@ class LocalStorageProvider {
   async initialize() {
     try {
       await fs.mkdir(this.uploadDir, { recursive: true });
-      await fs.mkdir(path.join(this.uploadDir, 'portfolio'), { recursive: true });
-      await fs.mkdir(path.join(this.uploadDir, 'thumbnails'), { recursive: true });
-      logger.info('Local storage initialized');
+      await fs.mkdir(path.join(this.uploadDir, "portfolio"), {
+        recursive: true,
+      });
+      await fs.mkdir(path.join(this.uploadDir, "thumbnails"), {
+        recursive: true,
+      });
+      logger.info("Local storage initialized");
     } catch (error) {
       logger.error({
-        message: 'Failed to initialize local storage',
-        error: error
+        message: "Failed to initialize local storage",
+        error: error,
       });
       throw error;
     }
   }
 
-  async upload(file: Express.Multer.File, destinationPath?: string): Promise<UploadResult> {
+  async upload(
+    file: Express.Multer.File,
+    destinationPath?: string,
+  ): Promise<UploadResult> {
     try {
       const fileExt = path.extname(file.originalname);
-      const baseName = path.basename(file.originalname, fileExt)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .slice(0, 40) || 'file';
+      const baseName =
+        path
+          .basename(file.originalname, fileExt)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 40) || "file";
       const fileName = `${baseName}-${nanoid(8)}${fileExt}`;
-      const fullPath = path.join(this.uploadDir, destinationPath || '', fileName);
-      
+      const fullPath = path.join(
+        this.uploadDir,
+        destinationPath || "",
+        fileName,
+      );
+
       // Ensure directory exists
       await fs.mkdir(path.dirname(fullPath), { recursive: true });
-      
+
       // Save original file
       await fs.writeFile(fullPath, file.buffer);
-      
+
       // Generate optimized versions for images
       let optimizedData = null;
       let thumbnailUrl: string | undefined;
@@ -86,69 +99,80 @@ class LocalStorageProvider {
 
       if (this.isImage(file.mimetype)) {
         optimizedData = await this.optimizer.optimize(file.buffer, {
-          format: 'webp',
+          format: "webp",
           quality: 85,
         });
 
         // Save optimized version
-        const optimizedPath = fullPath.replace(fileExt, '.webp');
+        const optimizedPath = fullPath.replace(fileExt, ".webp");
         await fs.writeFile(optimizedPath, optimizedData.buffer);
 
         // Generate thumbnail
-        const thumbnailData = await this.optimizer.createThumbnail(file.buffer, {
-          width: 300,
-          height: 300,
-        });
+        const thumbnailData = await this.optimizer.createThumbnail(
+          file.buffer,
+          {
+            width: 300,
+            height: 300,
+          },
+        );
 
         const thumbnailPath = path.join(
           this.uploadDir,
-          'thumbnails',
-          `${thumbBaseName}_thumb.webp`
+          "thumbnails",
+          `${thumbBaseName}_thumb.webp`,
         );
         await fs.writeFile(thumbnailPath, thumbnailData.buffer);
         thumbnailUrl = `/uploads/thumbnails/${thumbBaseName}_thumb.webp`;
       }
 
       // Generate PDF thumbnail
-      if (file.mimetype === 'application/pdf') {
+      if (file.mimetype === "application/pdf") {
         try {
-          const { generatePdfThumbnail } = await import('../utils/pdf-thumbnail.js');
+          const { generatePdfThumbnail } =
+            await import("../utils/pdf-thumbnail.js");
           const result = await generatePdfThumbnail(file.buffer);
           const thumbnailPath = path.join(
             this.uploadDir,
-            'thumbnails',
-            `${thumbBaseName}_thumb.webp`
+            "thumbnails",
+            `${thumbBaseName}_thumb.webp`,
           );
           await fs.writeFile(thumbnailPath, result.buffer);
           thumbnailUrl = `/uploads/thumbnails/${thumbBaseName}_thumb.webp`;
         } catch (err) {
-          logger.warn({ error: err }, 'PDF thumbnail generation failed (non-fatal)');
+          logger.warn(
+            { error: err },
+            "PDF thumbnail generation failed (non-fatal)",
+          );
         }
       }
 
       // Generate video thumbnail
-      if (file.mimetype.startsWith('video/')) {
+      if (file.mimetype.startsWith("video/")) {
         try {
-          const { generateVideoThumbnail } = await import('../utils/video-thumbnail.js');
+          const { generateVideoThumbnail } =
+            await import("../utils/video-thumbnail.js");
           const result = await generateVideoThumbnail(fullPath);
           const thumbnailPath = path.join(
             this.uploadDir,
-            'thumbnails',
-            `${thumbBaseName}_thumb.webp`
+            "thumbnails",
+            `${thumbBaseName}_thumb.webp`,
           );
           await fs.writeFile(thumbnailPath, result.buffer);
           thumbnailUrl = `/uploads/thumbnails/${thumbBaseName}_thumb.webp`;
         } catch (err) {
-          logger.warn({ error: err }, 'Video thumbnail generation failed (non-fatal)');
+          logger.warn(
+            { error: err },
+            "Video thumbnail generation failed (non-fatal)",
+          );
         }
       }
 
       logger.info(`File uploaded to local storage: ${fullPath}`);
 
       return {
-        provider: 'local',
+        provider: "local",
         path: fullPath,
-        url: `/uploads/${destinationPath ? `${destinationPath}/` : ''}${fileName}`,
+        url: `/uploads/${destinationPath ? `${destinationPath}/` : ""}${fileName}`,
         size: file.size,
         mimetype: file.mimetype,
         metadata: optimizedData?.metadata || null,
@@ -156,8 +180,8 @@ class LocalStorageProvider {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to upload file to local storage',
-        error: error
+        message: "Failed to upload file to local storage",
+        error: error,
       });
       throw error;
     }
@@ -169,8 +193,8 @@ class LocalStorageProvider {
       return buffer;
     } catch (error) {
       logger.error({
-        message: 'Failed to download file from local storage',
-        error: error
+        message: "Failed to download file from local storage",
+        error: error,
       });
       throw error;
     }
@@ -179,16 +203,16 @@ class LocalStorageProvider {
   async delete(filePath: string): Promise<boolean> {
     try {
       await fs.unlink(filePath);
-      
+
       // Try to delete associated files (thumbnail, optimized versions)
       const dir = path.dirname(filePath);
       const basename = path.basename(filePath, path.extname(filePath));
-      
+
       const associatedFiles = [
         path.join(dir, `${basename}.webp`),
-        path.join(this.uploadDir, 'thumbnails', `${basename}_thumb.webp`),
+        path.join(this.uploadDir, "thumbnails", `${basename}_thumb.webp`),
       ];
-      
+
       for (const file of associatedFiles) {
         try {
           await fs.unlink(file);
@@ -196,13 +220,13 @@ class LocalStorageProvider {
           // Ignore errors for associated files
         }
       }
-      
+
       logger.info(`File deleted from local storage: ${filePath}`);
       return true;
     } catch (error) {
       logger.error({
-        message: 'Failed to delete file from local storage',
-        error: error
+        message: "Failed to delete file from local storage",
+        error: error,
       });
       throw error;
     }
@@ -211,11 +235,13 @@ class LocalStorageProvider {
   async rename(oldPath: string, newBasename: string): Promise<string> {
     const dir = path.dirname(oldPath);
     const ext = path.extname(oldPath);
-    const sanitized = path.basename(newBasename, path.extname(newBasename))
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 40) || 'file';
+    const sanitized =
+      path
+        .basename(newBasename, path.extname(newBasename))
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 40) || "file";
     const newName = `${sanitized}-${nanoid(8)}${ext}`;
     const newPath = path.join(dir, newName);
     await fs.rename(oldPath, newPath);
@@ -225,10 +251,17 @@ class LocalStorageProvider {
     const newBase = path.basename(newName, ext);
     const renames: [string, string][] = [
       [path.join(dir, `${oldBase}.webp`), path.join(dir, `${newBase}.webp`)],
-      [path.join(this.uploadDir, 'thumbnails', `${oldBase}_thumb.webp`), path.join(this.uploadDir, 'thumbnails', `${newBase}_thumb.webp`)],
+      [
+        path.join(this.uploadDir, "thumbnails", `${oldBase}_thumb.webp`),
+        path.join(this.uploadDir, "thumbnails", `${newBase}_thumb.webp`),
+      ],
     ];
     for (const [src, dst] of renames) {
-      try { await fs.rename(src, dst); } catch { /* associated file may not exist */ }
+      try {
+        await fs.rename(src, dst);
+      } catch {
+        /* associated file may not exist */
+      }
     }
 
     return newPath;
@@ -253,46 +286,49 @@ class LocalStorageProvider {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to get file metadata',
-        error: error
+        message: "Failed to get file metadata",
+        error: error,
       });
       throw error;
     }
   }
 
-  async listFiles(directory: string = ''): Promise<FileListItem[]> {
+  async listFiles(directory: string = ""): Promise<FileListItem[]> {
     try {
       const fullPath = path.join(this.uploadDir, directory);
       const files = await fs.readdir(fullPath, { withFileTypes: true });
-      
+
       return files
-        .filter(dirent => dirent.isFile())
-        .map(dirent => ({
+        .filter((dirent) => dirent.isFile())
+        .map((dirent) => ({
           name: dirent.name,
           path: path.join(fullPath, dirent.name),
-          url: `/uploads/${directory}${directory ? '/' : ''}${dirent.name}`,
+          url: `/uploads/${directory}${directory ? "/" : ""}${dirent.name}`,
         }));
     } catch (error) {
       logger.error({
-        message: 'Failed to list files',
-        error: error
+        message: "Failed to list files",
+        error: error,
       });
       throw error;
     }
   }
 
   isImage(mimetype: string): boolean {
-    return Boolean(mimetype && mimetype.startsWith('image/'));
+    return Boolean(mimetype && mimetype.startsWith("image/"));
   }
 
-  async getSignedUrl(filePath: string, _expiresIn: number = 3600): Promise<string> {
+  async getSignedUrl(
+    filePath: string,
+    _expiresIn: number = 3600,
+  ): Promise<string> {
     // For local storage, just return the direct URL
-    const relativePath = filePath.replace(this.uploadDir, '');
+    const relativePath = filePath.replace(this.uploadDir, "");
     return `/uploads${relativePath}`;
   }
 
   get provider(): string {
-    return 'local';
+    return "local";
   }
 
   getThumbnailUrl(originalUrl: string): string {

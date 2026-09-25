@@ -6,14 +6,18 @@ interface PaginationInfo {
   total?: number;
 }
 
-export const successResponse = (data: unknown, message = 'Success') => ({
+export const successResponse = (data: unknown, message = "Success") => ({
   success: true,
   message,
   data,
   timestamp: new Date().toISOString(),
 });
 
-export const errorResponse = (message: string, status = 500, details = null) => ({
+export const errorResponse = (
+  message: string,
+  status = 500,
+  details = null,
+) => ({
   success: false,
   error: {
     message,
@@ -23,7 +27,10 @@ export const errorResponse = (message: string, status = 500, details = null) => 
   },
 });
 
-export const paginatedResponse = (data: unknown[], pagination: PaginationInfo) => ({
+export const paginatedResponse = (
+  data: unknown[],
+  pagination: PaginationInfo,
+) => ({
   success: true,
   data,
   pagination: {

@@ -1,14 +1,22 @@
-import sqlite3 from 'sqlite3';
-import { promisify } from 'util';
-import path from 'path';
-import { mkdir } from 'fs/promises';
-import logger from '../../utils/logger.js';
+import sqlite3 from "sqlite3";
+import { promisify } from "util";
+import path from "path";
+import { mkdir } from "fs/promises";
+import logger from "../../utils/logger.js";
 
 interface DatabaseConfig {
   path?: string;
 }
 
-type ContactStatus = 'new' | 'reviewed' | 'contacted' | 'qualified' | 'proposal_sent' | 'won' | 'lost' | 'archived';
+type ContactStatus =
+  | "new"
+  | "reviewed"
+  | "contacted"
+  | "qualified"
+  | "proposal_sent"
+  | "won"
+  | "lost"
+  | "archived";
 
 interface Contact {
   id?: number;
@@ -34,8 +42,8 @@ interface ContactNote {
   id?: number;
   contact_id: number;
   content: string;
-  type: 'manual' | 'system';
-  subtype?: 'note' | 'todo' | 'message' | 'reply';
+  type: "manual" | "system";
+  subtype?: "note" | "todo" | "message" | "reply";
   color?: string;
   is_done?: boolean;
   completed_at?: string;
@@ -109,15 +117,15 @@ interface Campaign {
   preheader?: string;
   html_content: string;
   text_content?: string;
-  status: 'draft' | 'sent';
-  target_type: 'all' | 'tagged';
+  status: "draft" | "sent";
+  target_type: "all" | "tagged";
   target_tags?: string;
   sent_count?: number;
   sent_at?: string;
   created_at?: string;
 }
 
-type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 
 interface Invoice {
   id?: number;
@@ -171,24 +179,24 @@ class SQLiteAdapter {
   async initialize() {
     try {
       if (!this.config.path) {
-        throw new Error('Database path is required');
+        throw new Error("Database path is required");
       }
-      
+
       // Ensure database directory exists
       const dbDir = path.dirname(this.config.path);
       await mkdir(dbDir, { recursive: true });
 
       // Create database connection
       await this.connect();
-      
+
       // Run migrations
       await this.migrate();
-      
-      logger.info('SQLite database initialized');
+
+      logger.info("SQLite database initialized");
     } catch (error) {
       logger.error({
-        message: 'Failed to initialize SQLite',
-        error: error
+        message: "Failed to initialize SQLite",
+        error: error,
       });
       throw error;
     }
@@ -196,16 +204,16 @@ class SQLiteAdapter {
 
   async connect(): Promise<void> {
     if (!this.config.path) {
-      throw new Error('Database path is required');
+      throw new Error("Database path is required");
     }
-    
+
     return new Promise<void>((resolve, reject) => {
       this.db = new sqlite3.Database(this.config.path!, (err: Error | null) => {
         if (err) {
           reject(err);
         } else {
           // Enable foreign keys
-          this.db!.run('PRAGMA foreign_keys = ON');
+          this.db!.run("PRAGMA foreign_keys = ON");
           logger.info(`Connected to SQLite database: ${this.config.path}`);
           resolve();
         }
@@ -228,7 +236,7 @@ class SQLiteAdapter {
         user_agent TEXT,
         is_test BOOLEAN DEFAULT 0
       )`,
-      
+
       // Waitlist table
       `CREATE TABLE IF NOT EXISTS waitlist (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -238,7 +246,7 @@ class SQLiteAdapter {
         ip_address VARCHAR(45),
         is_test BOOLEAN DEFAULT 0
       )`,
-      
+
       // Portfolio media table
       `CREATE TABLE IF NOT EXISTS portfolio_media (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -254,7 +262,7 @@ class SQLiteAdapter {
         storage_path VARCHAR(500),
         uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
-      
+
       // Admin logs table
       `CREATE TABLE IF NOT EXISTS admin_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -265,11 +273,11 @@ class SQLiteAdapter {
         ip_address VARCHAR(45),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
-      
+
       // Add test flag columns to existing tables (ignore if already exists)
       `ALTER TABLE contacts ADD COLUMN is_test BOOLEAN DEFAULT 0`,
       `ALTER TABLE waitlist ADD COLUMN is_test BOOLEAN DEFAULT 0`,
-      
+
       // Settings table (runtime toggles)
       `CREATE TABLE IF NOT EXISTS settings (
         key VARCHAR(100) PRIMARY KEY,
@@ -411,9 +419,9 @@ class SQLiteAdapter {
       `CREATE INDEX IF NOT EXISTS idx_waitlist_site ON waitlist(site_id)`,
     ];
 
-    if (!this.db) throw new Error('Database not connected');
+    if (!this.db) throw new Error("Database not connected");
     const runAsync = promisify(this.db.run.bind(this.db));
-    
+
     for (const migration of migrations) {
       try {
         await runAsync(migration);
@@ -422,52 +430,67 @@ class SQLiteAdapter {
         // exists — the table is guaranteed to exist at this point (created above),
         // so there is no other SQLITE_ERROR that can occur for ADD COLUMN.
         const sqlErr = error as { code?: string };
-        if (sqlErr.code === 'SQLITE_ERROR' &&
-            migration.includes('ALTER TABLE') &&
-            migration.includes('ADD COLUMN')) {
+        if (
+          sqlErr.code === "SQLITE_ERROR" &&
+          migration.includes("ALTER TABLE") &&
+          migration.includes("ADD COLUMN")
+        ) {
           logger.debug({
             message: `Column already exists, skipping: ${migration}`,
           });
           continue;
         }
-        
+
         logger.error({
           message: `Migration failed: ${migration}`,
-          error: error
+          error: error,
         });
         throw error;
       }
     }
-    
-    logger.info('Database migrations completed');
+
+    logger.info("Database migrations completed");
   }
 
   async all<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
-    if (!this.db) throw new Error('Database not connected');
-    const allAsync = promisify(this.db.all.bind(this.db)) as (sql: string, params?: unknown[]) => Promise<T[]>;
+    if (!this.db) throw new Error("Database not connected");
+    const allAsync = promisify(this.db.all.bind(this.db)) as (
+      sql: string,
+      params?: unknown[],
+    ) => Promise<T[]>;
     return allAsync(sql, params);
   }
 
-  async get<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
-    if (!this.db) throw new Error('Database not connected');
-    const getAsync = promisify(this.db.get.bind(this.db)) as (sql: string, params?: unknown[]) => Promise<T | null>;
+  async get<T = unknown>(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<T | null> {
+    if (!this.db) throw new Error("Database not connected");
+    const getAsync = promisify(this.db.get.bind(this.db)) as (
+      sql: string,
+      params?: unknown[],
+    ) => Promise<T | null>;
     return getAsync(sql, params);
   }
 
   async run(sql: string, params: unknown[] = []): Promise<DatabaseResult> {
-    if (!this.db) throw new Error('Database not connected');
-    
+    if (!this.db) throw new Error("Database not connected");
+
     return new Promise<DatabaseResult>((resolve, reject) => {
-      this.db!.run(sql, params, function(this: sqlite3.RunResult, err: Error | null) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({
-            lastID: this.lastID,
-            changes: this.changes
-          });
-        }
-      });
+      this.db!.run(
+        sql,
+        params,
+        function (this: sqlite3.RunResult, err: Error | null) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({
+              lastID: this.lastID,
+              changes: this.changes,
+            });
+          }
+        },
+      );
     });
   }
 
@@ -478,7 +501,7 @@ class SQLiteAdapter {
           if (err) {
             reject(err);
           } else {
-            logger.info('SQLite database connection closed');
+            logger.info("SQLite database connection closed");
             resolve();
           }
         });
@@ -512,33 +535,38 @@ class SQLiteAdapter {
         const result = await this.run(sql, params);
         return { id: result.lastID, ...data };
       },
-      
-      findAll: async (limit: number = 100, offset: number = 0): Promise<Contact[]> => {
+
+      findAll: async (
+        limit: number = 100,
+        offset: number = 0,
+      ): Promise<Contact[]> => {
         const sql = `SELECT * FROM contacts ORDER BY submitted_at DESC LIMIT ? OFFSET ?`;
         return this.all(sql, [limit, offset]);
       },
-      
+
       findById: async (id: number): Promise<Contact | null> => {
         const sql = `SELECT * FROM contacts WHERE id = ?`;
         return this.get(sql, [id]);
       },
-      
+
       deleteById: async (id: number): Promise<boolean> => {
         const sql = `DELETE FROM contacts WHERE id = ?`;
         const result = await this.run(sql, [id]);
         return result.changes > 0;
       },
-      
+
       count: async (): Promise<number> => {
         const sql = `SELECT COUNT(*) as count FROM contacts`;
         const result = await this.get(sql, []);
         return (result as { count: number })?.count || 0;
       },
 
-      dailyCounts: async (days: number = 30): Promise<{ date: string; count: number }[]> => {
+      dailyCounts: async (
+        days: number = 30,
+      ): Promise<{ date: string; count: number }[]> => {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - (days - 1));
-        const dateStr = startDate.toISOString().split('T')[0];
+        const dateStr = startDate.toISOString().split("T")[0];
         const sql = `SELECT date(submitted_at) as date, COUNT(*) as count
                      FROM contacts
                      WHERE date(submitted_at) >= ?
@@ -549,7 +577,7 @@ class SQLiteAdapter {
 
       deleteByIds: async (ids: number[]): Promise<number> => {
         if (ids.length === 0) return 0;
-        const placeholders = ids.map(() => '?').join(',');
+        const placeholders = ids.map(() => "?").join(",");
         const sql = `DELETE FROM contacts WHERE id IN (${placeholders})`;
         const result = await this.run(sql, ids);
         return result.changes;
@@ -557,23 +585,44 @@ class SQLiteAdapter {
 
       updateById: async (
         id: number,
-        data: Partial<Pick<Contact, 'name' | 'email' | 'company' | 'project_type' | 'message'>>,
+        data: Partial<
+          Pick<
+            Contact,
+            "name" | "email" | "company" | "project_type" | "message"
+          >
+        >,
       ): Promise<Contact | null> => {
         const keys = Object.keys(data);
-        if (!keys.length) return this.get(`SELECT * FROM contacts WHERE id = ?`, [id]);
-        const fields = keys.map(k => `${k} = ?`).join(', ');
-        await this.run(`UPDATE contacts SET ${fields} WHERE id = ?`, [...Object.values(data), id]);
+        if (!keys.length)
+          return this.get(`SELECT * FROM contacts WHERE id = ?`, [id]);
+        const fields = keys.map((k) => `${k} = ?`).join(", ");
+        await this.run(`UPDATE contacts SET ${fields} WHERE id = ?`, [
+          ...Object.values(data),
+          id,
+        ]);
         return this.get(`SELECT * FROM contacts WHERE id = ?`, [id]);
       },
 
-      updateStatus: async (id: number, status: ContactStatus): Promise<Contact | null> => {
+      updateStatus: async (
+        id: number,
+        status: ContactStatus,
+      ): Promise<Contact | null> => {
         const now = new Date().toISOString();
-        await this.run(`UPDATE contacts SET status = ?, status_changed_at = ? WHERE id = ?`, [status, now, id]);
+        await this.run(
+          `UPDATE contacts SET status = ?, status_changed_at = ? WHERE id = ?`,
+          [status, now, id],
+        );
         return this.get(`SELECT * FROM contacts WHERE id = ?`, [id]);
       },
 
-      updateFollowUp: async (id: number, followUpAt: string | null): Promise<Contact | null> => {
-        await this.run(`UPDATE contacts SET follow_up_at = ? WHERE id = ?`, [followUpAt, id]);
+      updateFollowUp: async (
+        id: number,
+        followUpAt: string | null,
+      ): Promise<Contact | null> => {
+        await this.run(`UPDATE contacts SET follow_up_at = ? WHERE id = ?`, [
+          followUpAt,
+          id,
+        ]);
         return this.get(`SELECT * FROM contacts WHERE id = ?`, [id]);
       },
     };
@@ -581,11 +630,17 @@ class SQLiteAdapter {
 
   get contactNotes() {
     return {
-      create: async (data: Omit<ContactNote, 'id' | 'created_at'>): Promise<ContactNote> => {
+      create: async (
+        data: Omit<ContactNote, "id" | "created_at">,
+      ): Promise<ContactNote> => {
         const sql = `INSERT INTO contact_notes (contact_id, content, type, color, subtype, is_done, due_at) VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const result = await this.run(sql, [
-          data.contact_id, data.content, data.type,
-          data.color || null, data.subtype || 'note', data.is_done ? 1 : 0,
+          data.contact_id,
+          data.content,
+          data.type,
+          data.color || null,
+          data.subtype || "note",
+          data.is_done ? 1 : 0,
           data.due_at || null,
         ]);
         return { id: result.lastID, ...data };
@@ -609,21 +664,30 @@ class SQLiteAdapter {
       toggleDone: async (id: number): Promise<ContactNote | null> => {
         await this.run(
           `UPDATE contact_notes SET is_done = NOT is_done, completed_at = CASE WHEN is_done = 0 THEN CURRENT_TIMESTAMP ELSE NULL END WHERE id = ? AND subtype = 'todo'`,
-          [id]
+          [id],
         );
         return this.get(`SELECT * FROM contact_notes WHERE id = ?`, [id]);
       },
 
-      updateDueAt: async (id: number, dueAt: string | null): Promise<ContactNote | null> => {
-        await this.run(`UPDATE contact_notes SET due_at = ? WHERE id = ? AND subtype = 'todo'`, [dueAt, id]);
+      updateDueAt: async (
+        id: number,
+        dueAt: string | null,
+      ): Promise<ContactNote | null> => {
+        await this.run(
+          `UPDATE contact_notes SET due_at = ? WHERE id = ? AND subtype = 'todo'`,
+          [dueAt, id],
+        );
         return this.get(`SELECT * FROM contact_notes WHERE id = ?`, [id]);
       },
 
-      openTodosCount: async (): Promise<{ total: number; contacts: number }> => {
+      openTodosCount: async (): Promise<{
+        total: number;
+        contacts: number;
+      }> => {
         const result = await this.get<{ total: number; contacts: number }>(
           `SELECT COUNT(*) as total, COUNT(DISTINCT contact_id) as contacts
            FROM contact_notes WHERE subtype = 'todo' AND is_done = 0 AND type = 'manual'`,
-          []
+          [],
         );
         return result || { total: 0, contacts: 0 };
       },
@@ -631,21 +695,34 @@ class SQLiteAdapter {
       openTodoContactIds: async (): Promise<number[]> => {
         const rows = await this.all<{ contact_id: number }>(
           `SELECT DISTINCT contact_id FROM contact_notes WHERE subtype = 'todo' AND is_done = 0 AND type = 'manual'`,
-          []
+          [],
         );
-        return rows.map(r => r.contact_id);
+        return rows.map((r) => r.contact_id);
       },
 
-      findStatusChangesByContactIds: async (contactIds: number[]): Promise<{ contact_id: number; content: string; created_at: string }[]> => {
+      findStatusChangesByContactIds: async (
+        contactIds: number[],
+      ): Promise<
+        { contact_id: number; content: string; created_at: string }[]
+      > => {
         if (contactIds.length === 0) return [];
-        const placeholders = contactIds.map(() => '?').join(',');
+        const placeholders = contactIds.map(() => "?").join(",");
         const sql = `SELECT contact_id, content, created_at FROM contact_notes
                      WHERE contact_id IN (${placeholders}) AND type = 'system' AND content LIKE 'Status changed:%'
                      ORDER BY created_at ASC`;
         return this.all(sql, contactIds);
       },
 
-      findByDateRange: async (startDate: string, endDate: string): Promise<(ContactNote & { contact_name: string; contact_email: string; contact_status: string })[]> => {
+      findByDateRange: async (
+        startDate: string,
+        endDate: string,
+      ): Promise<
+        (ContactNote & {
+          contact_name: string;
+          contact_email: string;
+          contact_status: string;
+        })[]
+      > => {
         const sql = `SELECT cn.*, c.name as contact_name, c.email as contact_email, COALESCE(c.status, 'new') as contact_status
                      FROM contact_notes cn
                      JOIN contacts c ON c.id = cn.contact_id
@@ -675,12 +752,15 @@ class SQLiteAdapter {
         const result = await this.run(sql, params);
         return { id: result.lastID, ...data };
       },
-      
-      findAll: async (limit: number = 100, offset: number = 0): Promise<WaitlistEntry[]> => {
+
+      findAll: async (
+        limit: number = 100,
+        offset: number = 0,
+      ): Promise<WaitlistEntry[]> => {
         const sql = `SELECT * FROM waitlist ORDER BY signed_up_at DESC LIMIT ? OFFSET ?`;
         return this.all(sql, [limit, offset]);
       },
-      
+
       findByEmail: async (email: string): Promise<WaitlistEntry | null> => {
         const sql = `SELECT * FROM waitlist WHERE email = ?`;
         return this.get(sql, [email]);
@@ -692,12 +772,16 @@ class SQLiteAdapter {
 
       updateById: async (
         id: number,
-        data: Partial<Pick<WaitlistEntry, 'name' | 'email' | 'tags'>>,
+        data: Partial<Pick<WaitlistEntry, "name" | "email" | "tags">>,
       ): Promise<WaitlistEntry | null> => {
         const keys = Object.keys(data);
-        if (!keys.length) return this.get(`SELECT * FROM waitlist WHERE id = ?`, [id]);
-        const fields = keys.map(k => `${k} = ?`).join(', ');
-        await this.run(`UPDATE waitlist SET ${fields} WHERE id = ?`, [...Object.values(data), id]);
+        if (!keys.length)
+          return this.get(`SELECT * FROM waitlist WHERE id = ?`, [id]);
+        const fields = keys.map((k) => `${k} = ?`).join(", ");
+        await this.run(`UPDATE waitlist SET ${fields} WHERE id = ?`, [
+          ...Object.values(data),
+          id,
+        ]);
         return this.get(`SELECT * FROM waitlist WHERE id = ?`, [id]);
       },
 
@@ -707,10 +791,12 @@ class SQLiteAdapter {
         return (result as { count: number })?.count || 0;
       },
 
-      dailyCounts: async (days: number = 30): Promise<{ date: string; count: number }[]> => {
+      dailyCounts: async (
+        days: number = 30,
+      ): Promise<{ date: string; count: number }[]> => {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - (days - 1));
-        const dateStr = startDate.toISOString().split('T')[0];
+        const dateStr = startDate.toISOString().split("T")[0];
         const sql = `SELECT date(signed_up_at) as date, COUNT(*) as count
                      FROM waitlist
                      WHERE date(signed_up_at) >= ?
@@ -721,7 +807,7 @@ class SQLiteAdapter {
 
       deleteByIds: async (ids: number[]): Promise<number> => {
         if (ids.length === 0) return 0;
-        const placeholders = ids.map(() => '?').join(',');
+        const placeholders = ids.map(() => "?").join(",");
         const sql = `DELETE FROM waitlist WHERE id IN (${placeholders})`;
         const result = await this.run(sql, ids);
         return result.changes;
@@ -734,33 +820,48 @@ class SQLiteAdapter {
 
       findActiveByTags: async (tags: string[]): Promise<WaitlistEntry[]> => {
         // Find subscribers whose tags JSON array contains ANY of the given tags
-        const conditions = tags.map(() => `tags LIKE ?`).join(' OR ');
-        const params = tags.map(t => `%"${t}"%`);
+        const conditions = tags.map(() => `tags LIKE ?`).join(" OR ");
+        const params = tags.map((t) => `%"${t}"%`);
         const sql = `SELECT * FROM waitlist WHERE is_test = 0 AND (${conditions}) ORDER BY signed_up_at DESC`;
         return this.all(sql, params);
       },
 
-      countByTarget: async (targetType: 'all' | 'tagged', tags?: string[]): Promise<number> => {
-        if (targetType === 'all' || !tags || tags.length === 0) {
-          const result = await this.get(`SELECT COUNT(*) as count FROM waitlist WHERE is_test = 0`, []);
+      countByTarget: async (
+        targetType: "all" | "tagged",
+        tags?: string[],
+      ): Promise<number> => {
+        if (targetType === "all" || !tags || tags.length === 0) {
+          const result = await this.get(
+            `SELECT COUNT(*) as count FROM waitlist WHERE is_test = 0`,
+            [],
+          );
           return (result as { count: number })?.count || 0;
         }
-        const conditions = tags.map(() => `tags LIKE ?`).join(' OR ');
-        const params = tags.map(t => `%"${t}"%`);
-        const result = await this.get(`SELECT COUNT(*) as count FROM waitlist WHERE is_test = 0 AND (${conditions})`, params);
+        const conditions = tags.map(() => `tags LIKE ?`).join(" OR ");
+        const params = tags.map((t) => `%"${t}"%`);
+        const result = await this.get(
+          `SELECT COUNT(*) as count FROM waitlist WHERE is_test = 0 AND (${conditions})`,
+          params,
+        );
         return (result as { count: number })?.count || 0;
       },
 
       getAllTags: async (): Promise<string[]> => {
-        const rows = await this.all(`SELECT DISTINCT tags FROM waitlist WHERE tags IS NOT NULL AND tags != '' AND tags != '[]'`, []);
+        const rows = await this.all(
+          `SELECT DISTINCT tags FROM waitlist WHERE tags IS NOT NULL AND tags != '' AND tags != '[]'`,
+          [],
+        );
         const tagSet = new Set<string>();
         for (const row of rows) {
           try {
             const parsed = JSON.parse((row as { tags: string }).tags);
             if (Array.isArray(parsed)) {
-              for (const t of parsed) if (typeof t === 'string' && t.trim()) tagSet.add(t.trim());
+              for (const t of parsed)
+                if (typeof t === "string" && t.trim()) tagSet.add(t.trim());
             }
-          } catch { /* skip malformed */ }
+          } catch {
+            /* skip malformed */
+          }
         }
         return Array.from(tagSet).sort();
       },
@@ -789,60 +890,66 @@ class SQLiteAdapter {
         const result = await this.run(sql, params);
         return { id: result.lastID, ...data };
       },
-      
-      findAll: async (limit: number = 50, offset: number = 0): Promise<MediaData[]> => {
+
+      findAll: async (
+        limit: number = 50,
+        offset: number = 0,
+      ): Promise<MediaData[]> => {
         const sql = `SELECT * FROM portfolio_media ORDER BY uploaded_at DESC LIMIT ? OFFSET ?`;
         return this.all(sql, [limit, offset]);
       },
-      
+
       findById: async (id: number): Promise<MediaData | null> => {
         const sql = `SELECT * FROM portfolio_media WHERE id = ?`;
         return this.get(sql, [id]);
       },
-      
-      updateById: async (id: number, data: Partial<MediaData>): Promise<boolean> => {
+
+      updateById: async (
+        id: number,
+        data: Partial<MediaData>,
+      ): Promise<boolean> => {
         const fields: string[] = [];
         const values: unknown[] = [];
-        
+
         if (data.filename !== undefined) {
-          fields.push('filename = ?');
+          fields.push("filename = ?");
           values.push(data.filename);
         }
         if (data.original_name !== undefined) {
-          fields.push('original_name = ?');
+          fields.push("original_name = ?");
           values.push(data.original_name);
         }
         if (data.storage_path !== undefined) {
-          fields.push('storage_path = ?');
+          fields.push("storage_path = ?");
           values.push(data.storage_path);
         }
         if (data.project_name !== undefined) {
-          fields.push('project_name = ?');
+          fields.push("project_name = ?");
           values.push(data.project_name);
         }
         if (data.description !== undefined) {
-          fields.push('description = ?');
+          fields.push("description = ?");
           values.push(data.description);
         }
         if (data.thumbnail_url !== undefined) {
-          fields.push('thumbnail_url = ?');
+          fields.push("thumbnail_url = ?");
           values.push(data.thumbnail_url);
         }
 
         if (fields.length === 0) return false;
-        
+
         values.push(id);
-        const sql = `UPDATE portfolio_media SET ${fields.join(', ')} WHERE id = ?`;
+        const sql = `UPDATE portfolio_media SET ${fields.join(", ")} WHERE id = ?`;
         const result = await this.run(sql, values);
         return result.changes > 0;
       },
-      
+
       deleteById: async (id: number): Promise<boolean> => {
         const sql = `DELETE FROM portfolio_media WHERE id = ?`;
         const result = await this.run(sql, [id]);
         return result.changes > 0;
       },
-      
+
       count: async (): Promise<number> => {
         const sql = `SELECT COUNT(*) as count FROM portfolio_media`;
         const result = await this.get(sql, []);
@@ -866,7 +973,10 @@ class SQLiteAdapter {
         await this.run(sql, params);
       },
 
-      findAll: async (limit: number = 50, offset: number = 0): Promise<AdminLog[]> => {
+      findAll: async (
+        limit: number = 50,
+        offset: number = 0,
+      ): Promise<AdminLog[]> => {
         const sql = `SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT ? OFFSET ?`;
         return this.all(sql, [limit, offset]);
       },
@@ -908,21 +1018,33 @@ class SQLiteAdapter {
       getAll: async (): Promise<Record<string, string>> => {
         const sql = `SELECT key, value FROM settings`;
         const rows = await this.all<{ key: string; value: string }>(sql, []);
-        return Object.fromEntries(rows.map(r => [r.key, r.value]));
+        return Object.fromEntries(rows.map((r) => [r.key, r.value]));
       },
     };
   }
 
   get sites() {
     return {
-      create: async (data: Omit<Site, 'id' | 'created_at'> & { api_key: string }): Promise<Site & { api_key: string }> => {
+      create: async (
+        data: Omit<Site, "id" | "created_at"> & { api_key: string },
+      ): Promise<Site & { api_key: string }> => {
         const sql = `INSERT INTO sites (name, domain, description, api_key, is_active, permissions) VALUES (?, ?, ?, ?, ?, ?)`;
-        const perms = data.permissions ?? 'contact,waitlist';
-        const result = await this.run(sql, [data.name, data.domain || null, data.description || null, data.api_key, data.is_active ?? 1, perms]);
+        const perms = data.permissions ?? "contact,waitlist";
+        const result = await this.run(sql, [
+          data.name,
+          data.domain || null,
+          data.description || null,
+          data.api_key,
+          data.is_active ?? 1,
+          perms,
+        ]);
         return { id: result.lastID, ...data, permissions: perms };
       },
 
-      updatePermissions: async (id: number, permissions: string): Promise<boolean> => {
+      updatePermissions: async (
+        id: number,
+        permissions: string,
+      ): Promise<boolean> => {
         const sql = `UPDATE sites SET permissions = ? WHERE id = ?`;
         const result = await this.run(sql, [permissions, id]);
         return result.changes > 0;
@@ -933,12 +1055,16 @@ class SQLiteAdapter {
         return this.all(sql, []);
       },
 
-      findById: async (id: number): Promise<(Site & { api_key: string }) | null> => {
+      findById: async (
+        id: number,
+      ): Promise<(Site & { api_key: string }) | null> => {
         const sql = `SELECT * FROM sites WHERE id = ?`;
         return this.get(sql, [id]);
       },
 
-      findByKey: async (key: string): Promise<(Site & { api_key: string }) | null> => {
+      findByKey: async (
+        key: string,
+      ): Promise<(Site & { api_key: string }) | null> => {
         const sql = `SELECT * FROM sites WHERE api_key = ? AND is_active = 1`;
         return this.get(sql, [key]);
       },
@@ -964,7 +1090,9 @@ class SQLiteAdapter {
   }
   get campaigns() {
     return {
-      create: async (data: Omit<Campaign, 'id' | 'created_at' | 'sent_at' | 'sent_count'>): Promise<Campaign> => {
+      create: async (
+        data: Omit<Campaign, "id" | "created_at" | "sent_at" | "sent_count">,
+      ): Promise<Campaign> => {
         const sql = `INSERT INTO campaigns (name, subject, preheader, html_content, text_content, status, target_type, target_tags)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
         const params = [
@@ -974,14 +1102,17 @@ class SQLiteAdapter {
           data.html_content,
           data.text_content || null,
           data.status,
-          data.target_type || 'all',
+          data.target_type || "all",
           data.target_tags || null,
         ];
         const result = await this.run(sql, params);
         return { id: result.lastID, ...data };
       },
 
-      findAll: async (limit: number = 100, offset: number = 0): Promise<Campaign[]> => {
+      findAll: async (
+        limit: number = 100,
+        offset: number = 0,
+      ): Promise<Campaign[]> => {
         const sql = `SELECT * FROM campaigns ORDER BY created_at DESC LIMIT ? OFFSET ?`;
         return this.all(sql, [limit, offset]);
       },
@@ -991,11 +1122,18 @@ class SQLiteAdapter {
         return this.get(sql, [id]);
       },
 
-      updateById: async (id: number, data: Record<string, string | undefined>): Promise<Campaign | null> => {
-        const keys = Object.keys(data).filter(k => data[k] !== undefined);
-        if (!keys.length) return this.get(`SELECT * FROM campaigns WHERE id = ?`, [id]);
-        const fields = keys.map(k => `${k} = ?`).join(', ');
-        await this.run(`UPDATE campaigns SET ${fields} WHERE id = ?`, [...keys.map(k => data[k]), id]);
+      updateById: async (
+        id: number,
+        data: Record<string, string | undefined>,
+      ): Promise<Campaign | null> => {
+        const keys = Object.keys(data).filter((k) => data[k] !== undefined);
+        if (!keys.length)
+          return this.get(`SELECT * FROM campaigns WHERE id = ?`, [id]);
+        const fields = keys.map((k) => `${k} = ?`).join(", ");
+        await this.run(`UPDATE campaigns SET ${fields} WHERE id = ?`, [
+          ...keys.map((k) => data[k]),
+          id,
+        ]);
         return this.get(`SELECT * FROM campaigns WHERE id = ?`, [id]);
       },
 
@@ -1011,7 +1149,10 @@ class SQLiteAdapter {
         return (result as { count: number })?.count || 0;
       },
 
-      markSent: async (id: number, sentCount: number): Promise<Campaign | null> => {
+      markSent: async (
+        id: number,
+        sentCount: number,
+      ): Promise<Campaign | null> => {
         const sql = `UPDATE campaigns SET status = 'sent', sent_count = ?, sent_at = CURRENT_TIMESTAMP WHERE id = ?`;
         await this.run(sql, [sentCount, id]);
         return this.get(`SELECT * FROM campaigns WHERE id = ?`, [id]);
@@ -1021,22 +1162,42 @@ class SQLiteAdapter {
 
   get invoices() {
     return {
-      create: async (data: Omit<Invoice, 'id' | 'created_at' | 'updated_at'>): Promise<Invoice> => {
+      create: async (
+        data: Omit<Invoice, "id" | "created_at" | "updated_at">,
+      ): Promise<Invoice> => {
         const sql = `INSERT INTO invoices (invoice_number, status, currency, subtotal, tax_rate, tax_amount, discount, total, notes, due_date, issued_date, client_name, client_email, client_address, company_name, company_email, company_address, company_phone, company_logo_url, template)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const params = [
-          data.invoice_number, data.status, data.currency,
-          data.subtotal, data.tax_rate, data.tax_amount, data.discount, data.total,
-          data.notes || null, data.due_date || null, data.issued_date || null,
-          data.client_name || null, data.client_email || null, data.client_address || null,
-          data.company_name || null, data.company_email || null, data.company_address || null,
-          data.company_phone || null, data.company_logo_url || null, data.template,
+          data.invoice_number,
+          data.status,
+          data.currency,
+          data.subtotal,
+          data.tax_rate,
+          data.tax_amount,
+          data.discount,
+          data.total,
+          data.notes || null,
+          data.due_date || null,
+          data.issued_date || null,
+          data.client_name || null,
+          data.client_email || null,
+          data.client_address || null,
+          data.company_name || null,
+          data.company_email || null,
+          data.company_address || null,
+          data.company_phone || null,
+          data.company_logo_url || null,
+          data.template,
         ];
         const result = await this.run(sql, params);
         return { id: result.lastID, ...data };
       },
 
-      findAll: async (limit: number = 50, offset: number = 0, status?: string): Promise<Invoice[]> => {
+      findAll: async (
+        limit: number = 50,
+        offset: number = 0,
+        status?: string,
+      ): Promise<Invoice[]> => {
         let sql = `SELECT * FROM invoices`;
         const params: unknown[] = [];
         if (status) {
@@ -1052,24 +1213,51 @@ class SQLiteAdapter {
         return this.get(`SELECT * FROM invoices WHERE id = ?`, [id]);
       },
 
-      updateById: async (id: number, data: Partial<Invoice>): Promise<Invoice | null> => {
+      updateById: async (
+        id: number,
+        data: Partial<Invoice>,
+      ): Promise<Invoice | null> => {
         const allowed = [
-          'invoice_number', 'status', 'currency', 'subtotal', 'tax_rate',
-          'tax_amount', 'discount', 'total', 'notes', 'due_date', 'issued_date',
-          'client_name', 'client_email', 'client_address',
-          'company_name', 'company_email', 'company_address', 'company_phone',
-          'company_logo_url', 'template',
+          "invoice_number",
+          "status",
+          "currency",
+          "subtotal",
+          "tax_rate",
+          "tax_amount",
+          "discount",
+          "total",
+          "notes",
+          "due_date",
+          "issued_date",
+          "client_name",
+          "client_email",
+          "client_address",
+          "company_name",
+          "company_email",
+          "company_address",
+          "company_phone",
+          "company_logo_url",
+          "template",
         ];
-        const keys = Object.keys(data).filter(k => allowed.includes(k));
-        if (!keys.length) return this.get(`SELECT * FROM invoices WHERE id = ?`, [id]);
-        const fields = [...keys.map(k => `${k} = ?`), 'updated_at = CURRENT_TIMESTAMP'].join(', ');
-        const values = keys.map(k => (data as Record<string, unknown>)[k]);
-        await this.run(`UPDATE invoices SET ${fields} WHERE id = ?`, [...values, id]);
+        const keys = Object.keys(data).filter((k) => allowed.includes(k));
+        if (!keys.length)
+          return this.get(`SELECT * FROM invoices WHERE id = ?`, [id]);
+        const fields = [
+          ...keys.map((k) => `${k} = ?`),
+          "updated_at = CURRENT_TIMESTAMP",
+        ].join(", ");
+        const values = keys.map((k) => (data as Record<string, unknown>)[k]);
+        await this.run(`UPDATE invoices SET ${fields} WHERE id = ?`, [
+          ...values,
+          id,
+        ]);
         return this.get(`SELECT * FROM invoices WHERE id = ?`, [id]);
       },
 
       deleteById: async (id: number): Promise<boolean> => {
-        const result = await this.run(`DELETE FROM invoices WHERE id = ?`, [id]);
+        const result = await this.run(`DELETE FROM invoices WHERE id = ?`, [
+          id,
+        ]);
         return result.changes > 0;
       },
 
@@ -1087,31 +1275,45 @@ class SQLiteAdapter {
       nextNumber: async (): Promise<string> => {
         const result = await this.get<{ max_num: number | null }>(
           `SELECT MAX(CAST(REPLACE(invoice_number, 'INV-', '') AS INTEGER)) as max_num FROM invoices WHERE invoice_number LIKE 'INV-%'`,
-          []
+          [],
         );
         const next = (result?.max_num || 0) + 1;
-        return `INV-${String(next).padStart(4, '0')}`;
+        return `INV-${String(next).padStart(4, "0")}`;
       },
     };
   }
 
   get invoiceItems() {
     return {
-      createMany: async (invoiceId: number, items: Omit<InvoiceItem, 'id' | 'invoice_id'>[]): Promise<void> => {
+      createMany: async (
+        invoiceId: number,
+        items: Omit<InvoiceItem, "id" | "invoice_id">[],
+      ): Promise<void> => {
         for (const item of items) {
           await this.run(
             `INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, amount) VALUES (?, ?, ?, ?, ?)`,
-            [invoiceId, item.description, item.quantity, item.unit_price, item.amount]
+            [
+              invoiceId,
+              item.description,
+              item.quantity,
+              item.unit_price,
+              item.amount,
+            ],
           );
         }
       },
 
       findByInvoiceId: async (invoiceId: number): Promise<InvoiceItem[]> => {
-        return this.all(`SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC`, [invoiceId]);
+        return this.all(
+          `SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY id ASC`,
+          [invoiceId],
+        );
       },
 
       deleteByInvoiceId: async (invoiceId: number): Promise<void> => {
-        await this.run(`DELETE FROM invoice_items WHERE invoice_id = ?`, [invoiceId]);
+        await this.run(`DELETE FROM invoice_items WHERE invoice_id = ?`, [
+          invoiceId,
+        ]);
       },
     };
   }

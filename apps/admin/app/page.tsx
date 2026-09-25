@@ -1,13 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useTimezone } from '@/lib/timezone';
-import { getDisplayPrefs } from '@/lib/display-prefs';
-import ProtectedLayout from '@/components/protected-layout';
-import { statsApi } from '@/lib/api';
-import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UsersIcon, EnvelopeIcon, PhotoIcon, SignalIcon } from '@heroicons/react/24/outline';
+import { useEffect, useState } from "react";
+import { useTimezone } from "@/lib/timezone";
+import { getDisplayPrefs } from "@/lib/display-prefs";
+import ProtectedLayout from "@/components/protected-layout";
+import { statsApi } from "@/lib/api";
+import { PageHeader } from "@/components/page-header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  UsersIcon,
+  EnvelopeIcon,
+  PhotoIcon,
+  SignalIcon,
+} from "@heroicons/react/24/outline";
 import {
   LineChart,
   Line,
@@ -17,7 +22,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 
 interface TrendPoint {
   date: string;
@@ -50,7 +55,7 @@ interface Stats {
 function mergeTrends(
   contacts: TrendPoint[],
   waitlist: TrendPoint[],
-  days: number = 30
+  days: number = 30,
 ): { date: string; contacts: number; waitlist: number }[] {
   const map = new Map<string, { contacts: number; waitlist: number }>();
 
@@ -58,7 +63,7 @@ function mergeTrends(
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0]!;
+    const key = d.toISOString().split("T")[0]!;
     map.set(key, { contacts: 0, waitlist: 0 });
   }
 
@@ -79,19 +84,25 @@ function mergeTrends(
 }
 
 const DATE_RANGE_OPTIONS = [7, 14, 30, 90] as const;
-type DateRange = typeof DATE_RANGE_OPTIONS[number];
+type DateRange = (typeof DATE_RANGE_OPTIONS)[number];
 
 export default function DashboardPage() {
   const { formatDate } = useTimezone();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<DateRange>(() => {
-    if (typeof window === 'undefined') return 30;
-    const saved = parseInt(localStorage.getItem('dashboard_date_range') ?? '', 10);
-    if (DATE_RANGE_OPTIONS.includes(saved as DateRange)) return saved as DateRange;
+    if (typeof window === "undefined") return 30;
+    const saved = parseInt(
+      localStorage.getItem("dashboard_date_range") ?? "",
+      10,
+    );
+    if (DATE_RANGE_OPTIONS.includes(saved as DateRange))
+      return saved as DateRange;
     // Fall back to the admin-configured default
     const defaultDays = getDisplayPrefs().defaultDashboardDays;
-    return (DATE_RANGE_OPTIONS.includes(defaultDays as DateRange) ? defaultDays : 30) as DateRange;
+    return (
+      DATE_RANGE_OPTIONS.includes(defaultDays as DateRange) ? defaultDays : 30
+    ) as DateRange;
   });
 
   useEffect(() => {
@@ -111,7 +122,7 @@ export default function DashboardPage() {
   };
 
   const handleDaysChange = (d: DateRange) => {
-    localStorage.setItem('dashboard_date_range', String(d));
+    localStorage.setItem("dashboard_date_range", String(d));
     setDays(d);
   };
 
@@ -124,7 +135,8 @@ export default function DashboardPage() {
     return `${minutes}m`;
   };
 
-  const formatMemory = (bytes: number) => `${Math.round(bytes / 1024 / 1024)}MB`;
+  const formatMemory = (bytes: number) =>
+    `${Math.round(bytes / 1024 / 1024)}MB`;
 
   const chartData = stats
     ? mergeTrends(stats.contacts.trend, stats.waitlist.trend, days)
@@ -136,21 +148,31 @@ export default function DashboardPage() {
         <PageHeader title="Dashboard" description="Overview of your platform" />
 
         {loading ? (
-          <div className="py-12 text-center text-muted-foreground">Loading...</div>
+          <div className="py-12 text-center text-muted-foreground">
+            Loading...
+          </div>
         ) : stats ? (
           <>
             {/* Stat cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Contacts</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Contacts
+                  </CardTitle>
                   <EnvelopeIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.contacts.total}</div>
+                  <div className="text-2xl font-bold">
+                    {stats.contacts.total}
+                  </div>
                   {stats.contacts.recent && (
                     <p className="text-xs text-muted-foreground">
-                      Last: {formatDate(stats.contacts.recent, { hour: undefined, minute: undefined })}
+                      Last:{" "}
+                      {formatDate(stats.contacts.recent, {
+                        hour: undefined,
+                        minute: undefined,
+                      })}
                     </p>
                   )}
                 </CardContent>
@@ -158,14 +180,22 @@ export default function DashboardPage() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Waitlist Signups</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Waitlist Signups
+                  </CardTitle>
                   <UsersIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.waitlist.total}</div>
+                  <div className="text-2xl font-bold">
+                    {stats.waitlist.total}
+                  </div>
                   {stats.waitlist.recent && (
                     <p className="text-xs text-muted-foreground">
-                      Last: {formatDate(stats.waitlist.recent, { hour: undefined, minute: undefined })}
+                      Last:{" "}
+                      {formatDate(stats.waitlist.recent, {
+                        hour: undefined,
+                        minute: undefined,
+                      })}
                     </p>
                   )}
                 </CardContent>
@@ -173,14 +203,20 @@ export default function DashboardPage() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Media Items</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Media Items
+                  </CardTitle>
                   <PhotoIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.media.total}</div>
                   {stats.media.recent && (
                     <p className="text-xs text-muted-foreground">
-                      Last: {formatDate(stats.media.recent, { hour: undefined, minute: undefined })}
+                      Last:{" "}
+                      {formatDate(stats.media.recent, {
+                        hour: undefined,
+                        minute: undefined,
+                      })}
                     </p>
                   )}
                 </CardContent>
@@ -188,11 +224,15 @@ export default function DashboardPage() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">System Uptime</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    System Uptime
+                  </CardTitle>
                   <SignalIcon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatUptime(stats.system.uptime)}</div>
+                  <div className="text-2xl font-bold">
+                    {formatUptime(stats.system.uptime)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Memory: {formatMemory(stats.system.memory.heapUsed)}
                   </p>
@@ -205,14 +245,14 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <CardTitle>{days}-Day Activity</CardTitle>
                 <div className="flex gap-1">
-                  {DATE_RANGE_OPTIONS.map(d => (
+                  {DATE_RANGE_OPTIONS.map((d) => (
                     <button
                       key={d}
                       onClick={() => handleDaysChange(d)}
                       className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                         days === d
-                          ? 'bg-foreground text-background'
-                          : 'text-muted-foreground hover:bg-accent'
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:bg-accent"
                       }`}
                     >
                       {d}d
@@ -222,7 +262,10 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <LineChart
+                    data={chartData}
+                    margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis
                       dataKey="date"

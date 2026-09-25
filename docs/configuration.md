@@ -73,8 +73,8 @@ The admin panel ships with two themes — **Café Sepia** (default, light) and *
 
 ```ts
 export const THEMES = [
-  { id: 'cafe-sepia', label: 'Café Sepia', swatch: '#f5f0e8' },
-  { id: 'ocean',      label: 'Ocean',      swatch: '#151c2c' },
+  { id: "cafe-sepia", label: "Café Sepia", swatch: "#f5f0e8" },
+  { id: "ocean", label: "Ocean", swatch: "#151c2c" },
   // Add your theme here — { id, label, swatch hex }
 ] as const;
 ```
@@ -111,16 +111,12 @@ Use `reports` as the example name — replace it with your module name throughou
 **1. Frontend page** — create `apps/admin/app/reports/page.tsx`:
 
 ```tsx
-'use client';
+"use client";
 
-import ProtectedLayout from '@/components/protected-layout';
+import ProtectedLayout from "@/components/protected-layout";
 
 export default function ReportsPage() {
-  return (
-    <ProtectedLayout>
-      {/* your content */}
-    </ProtectedLayout>
-  );
+  return <ProtectedLayout>{/* your content */}</ProtectedLayout>;
 }
 ```
 
@@ -131,11 +127,11 @@ Next.js auto-discovers the file — the route `/reports` is available immediatel
 **2. Backend router** — create `apps/backend/src/routes/admin/reports.ts`:
 
 ```ts
-import { Router } from 'express';
+import { Router } from "express";
 
 const router = Router();
 
-router.get('/reports', async (_req, res, next) => {
+router.get("/reports", async (_req, res, next) => {
   // ...
 });
 
@@ -147,7 +143,7 @@ export default router;
 **3. Register the router** — add to `apps/backend/src/routes/admin/index.ts`:
 
 ```ts
-import reportsRouter from './reports';
+import reportsRouter from "./reports";
 // ...
 router.use(reportsRouter);
 ```
@@ -159,7 +155,7 @@ router.use(reportsRouter);
 ```ts
 export const reportsApi = {
   list: async () => {
-    const response = await api.get('/admin/reports');
+    const response = await api.get("/admin/reports");
     return response.data;
   },
   // add create / update / delete as needed
@@ -188,7 +184,7 @@ Place it inside whichever `group` fits, or create a new group. This single file 
 ```ts
 const NAV_KEYS = [
   // existing keys...
-  'nav_visible_reports',
+  "nav_visible_reports",
 ];
 ```
 

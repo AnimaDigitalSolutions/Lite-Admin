@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import ProtectedLayout from '@/components/protected-layout';
-import { usersApi, settingsApi } from '@/lib/api';
-import { useAuth } from '@/lib/auth-context';
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { truncateEmail } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import ProtectedLayout from "@/components/protected-layout";
+import { usersApi, settingsApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import { useCopyToClipboard } from "@/lib/hooks/use-copy-to-clipboard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { truncateEmail } from "@/lib/utils";
 import {
   UserCircleIcon,
   KeyIcon,
@@ -17,23 +23,23 @@ import {
   ShieldCheckIcon,
   ClipboardDocumentIcon,
   GlobeAltIcon,
-} from '@heroicons/react/24/outline';
-import { TIMEZONE_OPTIONS, invalidateTimezoneCache } from '@/lib/timezone';
-import { useDisplayPrefs } from '@/lib/display-prefs';
-import { PageHeader } from '@/components/page-header';
+} from "@heroicons/react/24/outline";
+import { TIMEZONE_OPTIONS, invalidateTimezoneCache } from "@/lib/timezone";
+import { useDisplayPrefs } from "@/lib/display-prefs";
+import { PageHeader } from "@/components/page-header";
 
 export default function UsersPage() {
   const { user } = useAuth();
-  const [currentPw, setCurrentPw] = useState('');
-  const [newPw, setNewPw] = useState('');
-  const [confirmPw, setConfirmPw] = useState('');
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { copy: copyToClipboard, isCopied } = useCopyToClipboard();
 
   // Timezone settings
-  const [timezone, setTimezone] = useState('UTC');
+  const [timezone, setTimezone] = useState("UTC");
 
   // Display preferences
   const { prefs, setPrefs } = useDisplayPrefs();
@@ -43,7 +49,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     void settingsApi.get().then((res) => {
-      const tz = (res.data?.display_timezone as string) || 'UTC';
+      const tz = (res.data?.display_timezone as string) || "UTC";
       setTimezone(tz);
     });
   }, []);
@@ -71,11 +77,11 @@ export default function UsersPage() {
     setError(null);
 
     if (newPw.length < 8) {
-      setError('New password must be at least 8 characters.');
+      setError("New password must be at least 8 characters.");
       return;
     }
     if (newPw !== confirmPw) {
-      setError('New passwords do not match.');
+      setError("New passwords do not match.");
       return;
     }
 
@@ -83,13 +89,18 @@ export default function UsersPage() {
     try {
       await usersApi.changePassword(currentPw, newPw);
       setSuccess(true);
-      setCurrentPw('');
-      setNewPw('');
-      setConfirmPw('');
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(e.response?.data?.error?.message ?? 'Failed to change password. Check your current password.');
+      const e = err as {
+        response?: { data?: { error?: { message?: string } } };
+      };
+      setError(
+        e.response?.data?.error?.message ??
+          "Failed to change password. Check your current password.",
+      );
     } finally {
       setSaving(false);
     }
@@ -98,7 +109,10 @@ export default function UsersPage() {
   return (
     <ProtectedLayout>
       <div className="max-w-xl space-y-6">
-        <PageHeader title="Admin User" description="Manage your admin account credentials." />
+        <PageHeader
+          title="Admin User"
+          description="Manage your admin account credentials."
+        />
 
         {/* Current account info */}
         <Card>
@@ -115,28 +129,52 @@ export default function UsersPage() {
               </div>
               <div>
                 <div className="group flex items-center gap-1.5">
-                  <p className={`font-medium text-foreground ${prefs.truncateEmails ? '' : 'max-w-[220px] truncate'}`}
-                    title={prefs.truncateEmails && truncateEmail(user?.email ?? '') !== (user?.email ?? '') ? user?.email : !prefs.truncateEmails ? user?.email : undefined}>
-                    {prefs.truncateEmails ? truncateEmail(user?.email ?? '') : user?.email}
+                  <p
+                    className={`font-medium text-foreground ${prefs.truncateEmails ? "" : "max-w-[220px] truncate"}`}
+                    title={
+                      prefs.truncateEmails &&
+                      truncateEmail(user?.email ?? "") !== (user?.email ?? "")
+                        ? user?.email
+                        : !prefs.truncateEmails
+                          ? user?.email
+                          : undefined
+                    }
+                  >
+                    {prefs.truncateEmails
+                      ? truncateEmail(user?.email ?? "")
+                      : user?.email}
                   </p>
-                  <button type="button" onClick={() => { if (user?.email) void copyToClipboard(user.email, 'email'); }} title="Copy email"
-                    className={`transition-colors ${isCopied('email') ? 'text-emerald-500' : 'text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground'}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (user?.email)
+                        void copyToClipboard(user.email, "email");
+                    }}
+                    title="Copy email"
+                    className={`transition-colors ${isCopied("email") ? "text-emerald-500" : "text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground"}`}
+                  >
                     <ClipboardDocumentIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <ShieldCheckIcon className="h-3.5 w-3.5 text-emerald-500" />
-                  <span className="text-xs text-emerald-600 font-medium">Super Admin</span>
+                  <span className="text-xs text-emerald-600 font-medium">
+                    Super Admin
+                  </span>
                 </div>
               </div>
             </div>
             <div className="rounded-lg bg-muted border px-4 py-3 text-sm text-muted-foreground space-y-1">
               <p>
-                <span className="font-medium">Login email:</span> configured via{' '}
-                <code className="rounded bg-muted px-1 text-xs">ADMIN_USERNAME</code> env var
+                <span className="font-medium">Login email:</span> configured via{" "}
+                <code className="rounded bg-muted px-1 text-xs">
+                  ADMIN_USERNAME
+                </code>{" "}
+                env var
               </p>
               <p>
-                <span className="font-medium">Role:</span> super_admin (full access)
+                <span className="font-medium">Role:</span> super_admin (full
+                access)
               </p>
             </div>
           </CardContent>
@@ -150,44 +188,56 @@ export default function UsersPage() {
               Change Password
             </CardTitle>
             <CardDescription>
-              Password changes are persisted immediately and survive server restarts.
+              Password changes are persisted immediately and survive server
+              restarts.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={(e) => void handleChangePassword(e)} className="space-y-4">
+            <form
+              onSubmit={(e) => void handleChangePassword(e)}
+              className="space-y-4"
+            >
               <div>
-                <Label htmlFor="current_pw" className="text-sm font-medium">Current password</Label>
+                <Label htmlFor="current_pw" className="text-sm font-medium">
+                  Current password
+                </Label>
                 <Input
                   id="current_pw"
                   type="password"
                   value={currentPw}
-                  onChange={e => setCurrentPw(e.target.value)}
+                  onChange={(e) => setCurrentPw(e.target.value)}
                   className="mt-1.5"
                   autoComplete="current-password"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="new_pw" className="text-sm font-medium">New password</Label>
+                <Label htmlFor="new_pw" className="text-sm font-medium">
+                  New password
+                </Label>
                 <Input
                   id="new_pw"
                   type="password"
                   value={newPw}
-                  onChange={e => setNewPw(e.target.value)}
+                  onChange={(e) => setNewPw(e.target.value)}
                   className="mt-1.5"
                   autoComplete="new-password"
                   minLength={8}
                   required
                 />
-                <p className="mt-1 text-xs text-muted-foreground">Minimum 8 characters</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Minimum 8 characters
+                </p>
               </div>
               <div>
-                <Label htmlFor="confirm_pw" className="text-sm font-medium">Confirm new password</Label>
+                <Label htmlFor="confirm_pw" className="text-sm font-medium">
+                  Confirm new password
+                </Label>
                 <Input
                   id="confirm_pw"
                   type="password"
                   value={confirmPw}
-                  onChange={e => setConfirmPw(e.target.value)}
+                  onChange={(e) => setConfirmPw(e.target.value)}
                   className="mt-1.5"
                   autoComplete="new-password"
                   required
@@ -206,8 +256,11 @@ export default function UsersPage() {
                 </div>
               )}
 
-              <Button type="submit" disabled={saving || !currentPw || !newPw || !confirmPw}>
-                {saving ? 'Updating…' : 'Update password'}
+              <Button
+                type="submit"
+                disabled={saving || !currentPw || !newPw || !confirmPw}
+              >
+                {saving ? "Updating…" : "Update password"}
               </Button>
             </form>
           </CardContent>
@@ -221,20 +274,25 @@ export default function UsersPage() {
               Display Timezone
             </CardTitle>
             <CardDescription>
-              Dates and times across the admin panel will be shown in this timezone.
+              Dates and times across the admin panel will be shown in this
+              timezone.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="timezone" className="text-sm font-medium">Timezone</Label>
+              <Label htmlFor="timezone" className="text-sm font-medium">
+                Timezone
+              </Label>
               <select
                 id="timezone"
                 value={timezone}
-                onChange={e => setTimezone(e.target.value)}
+                onChange={(e) => setTimezone(e.target.value)}
                 className="mt-1.5 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
-                {TIMEZONE_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                {TIMEZONE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -244,8 +302,11 @@ export default function UsersPage() {
                 Timezone saved.
               </div>
             )}
-            <Button onClick={() => void handleSaveTimezone()} disabled={tzSaving}>
-              {tzSaving ? 'Saving…' : 'Save timezone'}
+            <Button
+              onClick={() => void handleSaveTimezone()}
+              disabled={tzSaving}
+            >
+              {tzSaving ? "Saving…" : "Save timezone"}
             </Button>
           </CardContent>
         </Card>
@@ -263,45 +324,62 @@ export default function UsersPage() {
           <CardContent className="space-y-3">
             <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3 hover:bg-accent">
               <div>
-                <p className="text-sm font-medium text-foreground">Show geo info (flag, city, country)</p>
+                <p className="text-sm font-medium text-foreground">
+                  Show geo info (flag, city, country)
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Displays location data captured from the visitor&apos;s IP on leads and waitlist entries.
+                  Displays location data captured from the visitor&apos;s IP on
+                  leads and waitlist entries.
                 </p>
               </div>
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-foreground"
                 checked={prefs.showGeoInfo}
-                onChange={e => updatePrefs({ showGeoInfo: e.target.checked })}
+                onChange={(e) => updatePrefs({ showGeoInfo: e.target.checked })}
               />
             </label>
             <label className="flex cursor-pointer items-center justify-between gap-4 rounded-lg border p-3 hover:bg-accent">
               <div>
-                <p className="text-sm font-medium text-foreground">Truncate long emails</p>
+                <p className="text-sm font-medium text-foreground">
+                  Truncate long emails
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Shortens long email addresses in tables. Full email is always available on hover and via copy.
+                  Shortens long email addresses in tables. Full email is always
+                  available on hover and via copy.
                 </p>
               </div>
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-foreground"
                 checked={prefs.truncateEmails}
-                onChange={e => updatePrefs({ truncateEmails: e.target.checked })}
+                onChange={(e) =>
+                  updatePrefs({ truncateEmails: e.target.checked })
+                }
               />
             </label>
             <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
               <div>
-                <p className="text-sm font-medium text-foreground">Default dashboard date range</p>
+                <p className="text-sm font-medium text-foreground">
+                  Default dashboard date range
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  The activity chart range shown on the dashboard for new sessions.
+                  The activity chart range shown on the dashboard for new
+                  sessions.
                 </p>
               </div>
               <select
                 className="rounded-md border border-input bg-background px-2 py-1 text-sm"
                 value={prefs.defaultDashboardDays}
-                onChange={e => {
-                  updatePrefs({ defaultDashboardDays: parseInt(e.target.value, 10) as 7 | 14 | 30 | 90 });
-                  localStorage.removeItem('dashboard_date_range');
+                onChange={(e) => {
+                  updatePrefs({
+                    defaultDashboardDays: parseInt(e.target.value, 10) as
+                      | 7
+                      | 14
+                      | 30
+                      | 90,
+                  });
+                  localStorage.removeItem("dashboard_date_range");
                 }}
               >
                 <option value={7}>7 days</option>
@@ -322,7 +400,10 @@ export default function UsersPage() {
         {/* Future note */}
         <div className="rounded-lg border border-dashed border-border bg-muted px-4 py-4 text-sm text-muted-foreground">
           <p className="font-medium text-foreground mb-1">Multi-user support</p>
-          <p>This version supports a single admin account. Multi-user roles (editor, viewer, etc.) are planned for a future release.</p>
+          <p>
+            This version supports a single admin account. Multi-user roles
+            (editor, viewer, etc.) are planned for a future release.
+          </p>
         </div>
       </div>
     </ProtectedLayout>

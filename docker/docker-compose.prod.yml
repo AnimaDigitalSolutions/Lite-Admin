@@ -1,101 +1,47 @@
-version: '3.8'
+# Production deployment configuration
+# Runs on the server after images are loaded from CI/CD tars
+# Media bind mount at /opt/lite-admin/uploads/ for host nginx access
 
 services:
-  app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    container_name: lite-admin
-    restart: always
+  backend:
+    image: ${BACKEND_IMAGE}:${VERSION:-latest}
+    container_name: lite-admin-backend
     ports:
-      - "127.0.0.1:3001:3001"  # Only expose to localhost
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-      DB_TYPE: postgres
-      DB_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - "${REMOTE_BACKEND_PORT:-3001}:3001"
     env_file:
-      - ../.env.production
-    volumes:
-      - uploads:/usr/src/app/src/public/uploads
-      - logs:/usr/src/app/logs
-    networks:
-      - backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: lite-admin-postgres
-    restart: always
+      - ${ENV_FILE:-./.env}
     environment:
-      POSTGRES_DB: ${DB_NAME:-litebackend}
-      POSTGRES_USER: ${DB_USER:-liteuser}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      PGDATA: /var/lib/postgresql/data
+      - NODE_ENV=production
+      - PORT=3001
+      - TRUST_PROXY=true
+      - UPLOAD_DIR=/app/uploads
+      - DATABASE_DIR=/app/database
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - /opt/lite-admin/uploads:/app/uploads
+      - /opt/lite-admin/database:/app/database
+      - /opt/lite-admin/logs:/app/logs
+    restart: unless-stopped
     networks:
-      - backend
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-liteuser} -d ${DB_NAME:-litebackend}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
+      - lite-admin-network
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
 
-  nginx:
-    image: nginx:alpine
-    container_name: lite-admin-nginx
-    restart: always
+  admin:
+    image: ${ADMIN_IMAGE}:${VERSION:-latest}
+    container_name: lite-admin-admin
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ../src/public/uploads:/var/www/uploads:ro
-      - nginx_logs:/var/log/nginx
-      - ./nginx/cache:/var/cache/nginx
-    depends_on:
-      - app
+      - "${REMOTE_ADMIN_PORT:-3002}:3002"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:3001}
+    restart: unless-stopped
     networks:
-      - backend
-      - frontend
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-
-volumes:
-  postgres_data:
-    driver: local
-  uploads:
-    driver: local
-  logs:
-    driver: local
-  nginx_logs:
-    driver: local
+      - lite-admin-network
 
 networks:
-  backend:
-    driver: bridge
-    internal: true
-  frontend:
+  lite-admin-network:
     driver: bridge

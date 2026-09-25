@@ -1,0 +1,51 @@
+# Dockerfile for Express API backend
+# Expects pre-built artifacts from CI/CD (apps/backend/dist, packages/shared/dist)
+FROM node:24-alpine AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Install runtime system dependencies
+# ffmpeg: video thumbnail generation
+# curl: healthcheck
+# libc6-compat: native module compatibility
+RUN apk add --no-cache libc6-compat curl ffmpeg
+
+# Enable corepack for pnpm
+RUN corepack enable
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 expressjs
+
+# Copy package manifests for dependency installation
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/backend/package.json ./apps/backend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Copy pre-built shared package (workspace runtime dependency)
+COPY packages/shared/dist ./packages/shared/dist
+
+# Install production dependencies only
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+
+# Rebuild native modules for Alpine (musl libc)
+RUN cd apps/backend && npx --yes node-gyp-build 2>/dev/null; \
+    pnpm rebuild sharp sqlite3 2>/dev/null || true
+
+# Copy pre-built backend from CI/CD
+COPY apps/backend/dist ./apps/backend/dist
+
+# Create runtime directories (will be overridden by bind mounts in production)
+RUN mkdir -p /app/uploads/portfolio /app/uploads/thumbnails /app/database /app/logs \
+    && chown -R expressjs:nodejs /app/uploads /app/database /app/logs
+
+# Switch to non-root user
+USER expressjs
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
+
+CMD ["node", "apps/backend/dist/server.js"]

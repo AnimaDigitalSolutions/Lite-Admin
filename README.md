@@ -110,17 +110,17 @@ pnpm db:seed
 
 ## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Language | TypeScript (strict) |
-| Monorepo | Turbo.js + pnpm workspaces |
-| Backend | Express.js |
-| Frontend | Next.js 15 (App Router) |
-| Database | SQLite (default) · PostgreSQL, MySQL planned |
-| Email | AHASEND (default) · Resend planned |
-| Storage | Local filesystem (default) · AWS S3 planned |
-| Validation | Zod |
-| Containerization | Docker + PM2 |
+| Layer            | Technology                                   |
+| ---------------- | -------------------------------------------- |
+| Language         | TypeScript (strict)                          |
+| Monorepo         | Turbo.js + pnpm workspaces                   |
+| Backend          | Express.js                                   |
+| Frontend         | Next.js 15 (App Router)                      |
+| Database         | SQLite (default) · PostgreSQL, MySQL planned |
+| Email            | AHASEND (default) · Resend planned           |
+| Storage          | Local filesystem (default) · AWS S3 planned  |
+| Validation       | Zod                                          |
+| Containerization | Docker + PM2                                 |
 
 > **Defaults vs planned:** SQLite, AHASEND, and local storage are the tested defaults shipped today. PostgreSQL, MySQL, Resend, and S3 adapters are implemented but untested. GeoIP city-level enrichment is stubbed out. Contributions welcome.
 
@@ -130,17 +130,17 @@ pnpm db:seed
 
 Access the dashboard at `http://localhost:3002` after starting the dev server.
 
-| Page | Route | Description |
-|---|---|---|
-| Dashboard | `/` | 30-day trend charts, at-a-glance stats |
-| Contacts | `/contacts` | CRM with Table, Kanban, Calendar views; status pipeline; notes |
-| Compose | `/compose` | Multi-recipient email with contact picker |
-| Campaigns | `/campaigns` | Create, target, and send email campaigns |
-| Invoices | `/invoices` | Create, preview, and download PDF invoices |
-| Subscribers | `/subscribers` | Audience management with tags and segmentation |
-| Media Gallery | `/media` | Upload and manage portfolio media with thumbnails |
-| Statistics | `/stats` | Bar charts and server memory breakdown |
-| Settings | `/settings` | Maintenance mode, email toggle, provider credentials |
+| Page          | Route          | Description                                                    |
+| ------------- | -------------- | -------------------------------------------------------------- |
+| Dashboard     | `/`            | 30-day trend charts, at-a-glance stats                         |
+| Contacts      | `/contacts`    | CRM with Table, Kanban, Calendar views; status pipeline; notes |
+| Compose       | `/compose`     | Multi-recipient email with contact picker                      |
+| Campaigns     | `/campaigns`   | Create, target, and send email campaigns                       |
+| Invoices      | `/invoices`    | Create, preview, and download PDF invoices                     |
+| Subscribers   | `/subscribers` | Audience management with tags and segmentation                 |
+| Media Gallery | `/media`       | Upload and manage portfolio media with thumbnails              |
+| Statistics    | `/stats`       | Bar charts and server memory breakdown                         |
+| Settings      | `/settings`    | Maintenance mode, email toggle, provider credentials           |
 
 ---
 
@@ -227,11 +227,11 @@ docker-compose -f docker/docker-compose.prod.yml up -d     # Production
 
 ## Documentation
 
-| Document | Description |
-|---|---|
-| [API Reference](docs/api.md) | Full endpoint documentation for public and admin APIs |
-| [Configuration](docs/configuration.md) | Environment variables and runtime settings |
-| [Database Schema](docs/schema.md) | Complete SQL schema for all tables |
+| Document                               | Description                                           |
+| -------------------------------------- | ----------------------------------------------------- |
+| [API Reference](docs/api.md)           | Full endpoint documentation for public and admin APIs |
+| [Configuration](docs/configuration.md) | Environment variables and runtime settings            |
+| [Database Schema](docs/schema.md)      | Complete SQL schema for all tables                    |
 
 ---
 
@@ -240,6 +240,7 @@ docker-compose -f docker/docker-compose.prod.yml up -d     # Production
 MIT — see [LICENSE](LICENSE) for details.
 
 ## Support
+
 We are open to PRs ☕
 
 Open an issue on GitHub or contact us at animadigitalsolutions.com.

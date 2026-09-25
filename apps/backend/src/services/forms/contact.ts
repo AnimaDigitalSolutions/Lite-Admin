@@ -1,8 +1,8 @@
-import DatabaseService from '../database.service.js';
-import EmailFactory from '../email/index.js';
-import GeoService from '../geo/index.js';
-import config from '../../config/index.js';
-import logger from '../../utils/logger.js';
+import DatabaseService from "../database.service.js";
+import EmailFactory from "../email/index.js";
+import GeoService from "../geo/index.js";
+import config from "../../config/index.js";
+import logger from "../../utils/logger.js";
 // Using local interfaces to avoid circular dependencies
 interface Contact {
   id?: number;
@@ -73,7 +73,10 @@ class ContactFormService {
     this.emailService = await EmailFactory.create(config.email.provider);
   }
 
-  async processSubmission(formData: ContactFormData, requestInfo: RequestInfo): Promise<{ success: boolean; data: { id: number; message: string } }> {
+  async processSubmission(
+    formData: ContactFormData,
+    requestInfo: RequestInfo,
+  ): Promise<{ success: boolean; data: { id: number; message: string } }> {
     try {
       // Ensure services are initialized
       if (!this.db || !this.emailService) {
@@ -94,31 +97,31 @@ class ContactFormService {
 
       // Save to database
       const savedContact = await this.db!.contacts.create(submission);
-      
+
       logger.info({
-        message: 'Contact form submission saved',
-        data: { id: savedContact.id, email: savedContact.email }
+        message: "Contact form submission saved",
+        data: { id: savedContact.id, email: savedContact.email },
       });
 
       // Send email notification
       try {
         await this.emailService!.sendContactNotification(savedContact);
         logger.info({
-          message: 'Contact notification email sent',
-          data: { email: savedContact.email }
+          message: "Contact notification email sent",
+          data: { email: savedContact.email },
         });
       } catch (emailError) {
         logger.error({
-          message: 'Failed to send contact notification email',
-          error: emailError
+          message: "Failed to send contact notification email",
+          error: emailError,
         });
         // Don't throw - we still saved the submission
       }
 
       // Log admin activity
       await this.db!.adminLogs.create({
-        action: 'contact_form_submission',
-        resource: 'contacts',
+        action: "contact_form_submission",
+        resource: "contacts",
         resource_id: savedContact.id,
         details: `New contact from ${savedContact.email}`,
         ip_address: requestInfo.ip,
@@ -128,13 +131,14 @@ class ContactFormService {
         success: true,
         data: {
           id: savedContact.id || 0,
-          message: 'Your message has been received. We will get back to you soon.',
+          message:
+            "Your message has been received. We will get back to you soon.",
         },
       };
     } catch (error) {
       logger.error({
-        message: 'Contact form processing failed',
-        error: error
+        message: "Contact form processing failed",
+        error: error,
       });
       throw error;
     }
@@ -142,14 +146,14 @@ class ContactFormService {
 
   async getSubmissions(options: QueryOptions = {}): Promise<Contact[]> {
     const { limit = 100, offset = 0 } = options;
-    
+
     try {
       const submissions = await this.db!.contacts.findAll(limit, offset);
       return submissions;
     } catch (error) {
       logger.error({
-        message: 'Failed to fetch contact submissions',
-        error: error
+        message: "Failed to fetch contact submissions",
+        error: error,
       });
       throw error;
     }
@@ -159,47 +163,61 @@ class ContactFormService {
     try {
       const submission = await this.db!.contacts.findById(id);
       if (!submission) {
-        throw Object.assign(new Error('Contact submission not found'), { statusCode: 404 });
+        throw Object.assign(new Error("Contact submission not found"), {
+          statusCode: 404,
+        });
       }
       return submission;
     } catch (error) {
       logger.error({
-        message: 'Failed to fetch contact submission',
-        error: error
+        message: "Failed to fetch contact submission",
+        error: error,
       });
       throw error;
     }
   }
 
-  async deleteSubmission(id: string, requestInfo: RequestInfo): Promise<{ success: boolean; message: string }> {
+  async deleteSubmission(
+    id: string,
+    requestInfo: RequestInfo,
+  ): Promise<{ success: boolean; message: string }> {
     try {
       const numericId = parseInt(id, 10);
       const deleted = await this.db!.contacts.deleteById(numericId);
-      
+
       if (!deleted) {
-        throw Object.assign(new Error('Contact submission not found'), { statusCode: 404 });
+        throw Object.assign(new Error("Contact submission not found"), {
+          statusCode: 404,
+        });
       }
 
       // Log admin activity
       await this.db!.adminLogs.create({
-        action: 'contact_form_deletion',
-        resource: 'contacts',
+        action: "contact_form_deletion",
+        resource: "contacts",
         resource_id: numericId,
         details: `Deleted contact submission ${id}`,
         ip_address: requestInfo.ip,
       });
 
-      return { success: true, message: 'Submission deleted successfully' };
+      return { success: true, message: "Submission deleted successfully" };
     } catch (error) {
       logger.error({
-        message: 'Failed to delete contact submission',
-        error: error
+        message: "Failed to delete contact submission",
+        error: error,
       });
       throw error;
     }
   }
 
-  async processTestSubmission(formData: ContactFormData, customEmail: string, requestInfo: RequestInfo): Promise<{ success: boolean; data: { id: number; message: string; email_sent: boolean } }> {
+  async processTestSubmission(
+    formData: ContactFormData,
+    customEmail: string,
+    requestInfo: RequestInfo,
+  ): Promise<{
+    success: boolean;
+    data: { id: number; message: string; email_sent: boolean };
+  }> {
     try {
       // Ensure services are initialized
       if (!this.db || !this.emailService) {
@@ -209,11 +227,11 @@ class ContactFormService {
       // Build a transient object — no DB write for test emails
       const testContact = {
         id: 0,
-        name: formData.name || 'Test User',
+        name: formData.name || "Test User",
         email: customEmail,
         company: formData.company,
         project_type: formData.project_type,
-        message: formData.message || '',
+        message: formData.message || "",
         ip_address: requestInfo.ip,
         user_agent: requestInfo.userAgent,
       };
@@ -223,18 +241,21 @@ class ContactFormService {
         await this.emailService!.sendContactNotification(testContact);
         emailSent = true;
         logger.info({
-          message: 'Test contact notification email sent',
-          data: { email: customEmail }
+          message: "Test contact notification email sent",
+          data: { email: customEmail },
         });
       } catch (emailError) {
-        const msg = emailError instanceof Error ? emailError.message : String(emailError);
-        logger.error({ message: `Failed to send test contact notification email: ${msg}` });
+        const msg =
+          emailError instanceof Error ? emailError.message : String(emailError);
+        logger.error({
+          message: `Failed to send test contact notification email: ${msg}`,
+        });
       }
 
       // Log admin activity (no resource_id — nothing was saved)
       await this.db!.adminLogs.create({
-        action: 'contact_form_test',
-        resource: 'contacts',
+        action: "contact_form_test",
+        resource: "contacts",
         details: `Test contact email sent to ${customEmail}`,
         ip_address: requestInfo.ip,
       });
@@ -243,14 +264,14 @@ class ContactFormService {
         success: true,
         data: {
           id: 0,
-          message: 'Test email sent successfully',
+          message: "Test email sent successfully",
           email_sent: emailSent,
         },
       };
     } catch (error) {
       logger.error({
-        message: 'Test contact form processing failed',
-        error: error
+        message: "Test contact form processing failed",
+        error: error,
       });
       throw error;
     }

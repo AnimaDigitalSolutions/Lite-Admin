@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import ProtectedLayout from '@/components/protected-layout';
-import { PageHeader } from '@/components/page-header';
-import CampaignsTab from '@/components/campaigns-tab';
+import ProtectedLayout from "@/components/protected-layout";
+import { PageHeader } from "@/components/page-header";
+import CampaignsTab from "@/components/campaigns-tab";
 
 export default function CampaignsPage() {
   return (

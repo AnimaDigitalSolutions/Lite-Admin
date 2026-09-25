@@ -1,5 +1,5 @@
-import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
-import { promisify } from 'util';
+import { randomBytes, scrypt, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
 
@@ -15,34 +15,34 @@ export class CryptoService {
    */
   async hashPassword(password: string): Promise<string> {
     const salt = randomBytes(this.saltLength);
-    const derivedKey = await scryptAsync(
-      password, 
-      salt, 
-      this.keyLength
-    ) as Buffer;
-    
+    const derivedKey = (await scryptAsync(
+      password,
+      salt,
+      this.keyLength,
+    )) as Buffer;
+
     // Format: salt:hash
-    return salt.toString('hex') + ':' + derivedKey.toString('hex');
+    return salt.toString("hex") + ":" + derivedKey.toString("hex");
   }
 
   /**
    * Verify a password against a hash
    */
   async verifyPassword(password: string, hash: string): Promise<boolean> {
-    const [saltHex, keyHex] = hash.split(':');
+    const [saltHex, keyHex] = hash.split(":");
     if (!saltHex || !keyHex) {
-      throw new Error('Invalid hash format');
+      throw new Error("Invalid hash format");
     }
 
-    const salt = Buffer.from(saltHex, 'hex');
-    const key = Buffer.from(keyHex, 'hex');
-    
-    const derivedKey = await scryptAsync(
+    const salt = Buffer.from(saltHex, "hex");
+    const key = Buffer.from(keyHex, "hex");
+
+    const derivedKey = (await scryptAsync(
       password,
       salt,
-      this.keyLength
-    ) as Buffer;
-    
+      this.keyLength,
+    )) as Buffer;
+
     return timingSafeEqual(key, derivedKey);
   }
 
@@ -50,7 +50,7 @@ export class CryptoService {
    * Generate a cryptographically secure random token
    */
   generateToken(length = 32): string {
-    return randomBytes(length).toString('hex');
+    return randomBytes(length).toString("hex");
   }
 
   /**
@@ -64,8 +64,8 @@ export class CryptoService {
    * Hash a token for storage (one-way)
    */
   async hashToken(token: string): Promise<string> {
-    const hash = await scryptAsync(token, 'static-salt', 32) as Buffer;
-    return hash.toString('hex');
+    const hash = (await scryptAsync(token, "static-salt", 32)) as Buffer;
+    return hash.toString("hex");
   }
 }
 

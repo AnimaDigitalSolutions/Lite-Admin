@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
 
 export function useSelection<T extends string | number>() {
   const [selectedIds, setSelectedIds] = useState<Set<T>>(new Set());
@@ -14,7 +14,7 @@ export function useSelection<T extends string | number>() {
   }, []);
 
   const toggleOne = useCallback((id: T) => {
-    setSelectedIds(prev => {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;

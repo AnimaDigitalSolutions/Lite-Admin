@@ -1,6 +1,6 @@
-import sharp from 'sharp';
-import config from '../../../config/index.js';
-import logger from '../../../utils/logger.js';
+import sharp from "sharp";
+import config from "../../../config/index.js";
+import logger from "../../../utils/logger.js";
 
 interface OptimizeOptions {
   width?: number;
@@ -49,48 +49,53 @@ class ImageOptimizer {
     this.thumbnailSize = config.image.thumbnail;
   }
 
-  async optimize(buffer: Buffer, options: OptimizeOptions = {}): Promise<OptimizeResult> {
+  async optimize(
+    buffer: Buffer,
+    options: OptimizeOptions = {},
+  ): Promise<OptimizeResult> {
     try {
       const {
         width = null,
         height = null,
         quality = this.defaultQuality,
-        format = 'webp',
+        format = "webp",
       } = options;
 
       let pipeline = sharp(buffer);
-      
+
       // Get metadata first
       const metadata = await pipeline.metadata();
-      
+
       // Resize if dimensions provided
       if (width || height) {
         pipeline = pipeline.resize(width, height, {
-          fit: 'inside',
+          fit: "inside",
           withoutEnlargement: true,
         });
       }
-      
+
       // Convert format and optimize
       switch (format) {
-        case 'webp':
+        case "webp":
           pipeline = pipeline.webp({ quality });
           break;
-        case 'jpeg':
-        case 'jpg':
+        case "jpeg":
+        case "jpg":
           pipeline = pipeline.jpeg({ quality, progressive: true });
           break;
-        case 'png':
+        case "png":
           pipeline = pipeline.png({ quality, compressionLevel: 9 });
           break;
         default:
           pipeline = pipeline.webp({ quality });
       }
-      
+
       const optimizedBuffer = await pipeline.toBuffer();
-      
-      logger.info(`Image optimized: ${metadata.width}x${metadata.height} -> ${format}`);
-      
+
+      logger.info(
+        `Image optimized: ${metadata.width}x${metadata.height} -> ${format}`,
+      );
+
       return {
         buffer: optimizedBuffer,
         metadata: {
@@ -102,14 +107,17 @@ class ImageOptimizer {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to optimize image',
-        error: error
+        message: "Failed to optimize image",
+        error: error,
       });
       throw error;
     }
   }
 
-  async createThumbnail(buffer: Buffer, options: ThumbnailOptions = {}): Promise<ThumbnailResult> {
+  async createThumbnail(
+    buffer: Buffer,
+    options: ThumbnailOptions = {},
+  ): Promise<ThumbnailResult> {
     try {
       const {
         width = this.thumbnailSize.width,
@@ -119,14 +127,14 @@ class ImageOptimizer {
 
       const thumbnail = await sharp(buffer)
         .resize(width, height, {
-          fit: 'cover',
-          position: 'center',
+          fit: "cover",
+          position: "center",
         })
         .webp({ quality })
         .toBuffer();
-      
+
       logger.info(`Thumbnail created: ${width}x${height}`);
-      
+
       return {
         buffer: thumbnail,
         width,
@@ -134,8 +142,8 @@ class ImageOptimizer {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to create thumbnail',
-        error: error
+        message: "Failed to create thumbnail",
+        error: error,
       });
       throw error;
     }
@@ -154,8 +162,8 @@ class ImageOptimizer {
       };
     } catch (error) {
       logger.error({
-        message: 'Failed to get image metadata',
-        error: error
+        message: "Failed to get image metadata",
+        error: error,
       });
       throw error;
     }
@@ -163,13 +171,11 @@ class ImageOptimizer {
 
   async autoRotate(buffer: Buffer): Promise<Buffer> {
     try {
-      return await sharp(buffer)
-        .rotate()
-        .toBuffer();
+      return await sharp(buffer).rotate().toBuffer();
     } catch (error) {
       logger.error({
-        message: 'Failed to auto-rotate image',
-        error: error
+        message: "Failed to auto-rotate image",
+        error: error,
       });
       throw error;
     }
@@ -177,12 +183,12 @@ class ImageOptimizer {
 
   isOptimizableFormat(mimetype: string): boolean {
     const optimizableFormats = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/webp',
-      'image/tiff',
-      'image/gif',
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/tiff",
+      "image/gif",
     ];
     return optimizableFormats.includes(mimetype);
   }
