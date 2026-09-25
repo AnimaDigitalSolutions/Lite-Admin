@@ -38,7 +38,7 @@ function savePrefs(prefs: DisplayPrefs) {
   }
 }
 
-/** Read-only access — use this in pages that just need to check a pref. */
+/** Read-only access: use this in pages that just need to check a pref. */
 export function getDisplayPrefs(): DisplayPrefs {
   return loadPrefs();
 }

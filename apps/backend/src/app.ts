@@ -10,7 +10,7 @@ import { suspiciousActivityBlocker } from "./middleware/smartRateLimit.js";
 
 const app = express();
 
-// Trust proxy headers (X-Forwarded-For) from first hop — enables req.ip to reflect real client IP
+// Trust proxy headers (X-Forwarded-For) from first hop: enables req.ip to reflect real client IP
 // Set CLIENT_IP_HEADER=true in env if running behind Nginx/Cloudflare/etc.
 if (process.env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);

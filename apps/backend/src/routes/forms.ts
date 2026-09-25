@@ -26,7 +26,7 @@ const checkMaintenance: RequestHandler = async (_req, res, next) => {
   next();
 };
 
-// X-Site-Key validation — required for all form submissions
+// X-Site-Key validation: required for all form submissions
 // Validates the key, checks endpoint permissions, and attaches site_id to the request
 function requireSiteKey(scope: string): RequestHandler {
   return async (req, res, next) => {

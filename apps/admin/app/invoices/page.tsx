@@ -354,7 +354,7 @@ export default function InvoicesPage() {
     return (
       <ProtectedLayout>
         <div className="space-y-4">
-          <PageHeader title={`Preview — ${previewInvoice.invoice_number}`}>
+          <PageHeader title={`Preview: ${previewInvoice.invoice_number}`}>
             <div className="flex gap-2">
               <PDFDownloadButton data={previewInvoice} />
               <Button

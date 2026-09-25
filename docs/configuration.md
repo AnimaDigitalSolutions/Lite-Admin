@@ -41,7 +41,7 @@ AWS_SECRET_ACCESS_KEY=         # S3 only
 AWS_REGION=                    # S3 only
 AWS_S3_BUCKET=                 # S3 only
 
-# CORS — in development all origins are allowed; this list is enforced in production only
+# CORS: in development all origins are allowed; this list is enforced in production only
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3002,https://yourdomain.com
 
 # Rate Limiting
@@ -67,21 +67,21 @@ THUMBNAIL_HEIGHT=300
 
 ### Themes
 
-The admin panel ships with two themes — **Café Sepia** (default, light) and **Ocean** (dark). Adding or editing a theme requires changes in two files:
+The admin panel ships with two themes: **Café Sepia** (default, light) and **Ocean** (dark). Adding or editing a theme requires changes in two files:
 
-**1. `apps/admin/lib/theme-context.tsx`** — register the theme:
+**1. `apps/admin/lib/theme-context.tsx`** (register the theme):
 
 ```ts
 export const THEMES = [
   { id: "cafe-sepia", label: "Café Sepia", swatch: "#f5f0e8" },
   { id: "ocean", label: "Ocean", swatch: "#151c2c" },
-  // Add your theme here — { id, label, swatch hex }
+  // Add your theme here: { id, label, swatch hex }
 ] as const;
 ```
 
 The first entry in the array is the default theme shown to first-time visitors.
 
-**2. `apps/admin/app/globals.css`** — add CSS variables for your theme:
+**2. `apps/admin/app/globals.css`** (add CSS variables for your theme):
 
 ```css
 [data-theme="your-theme-id"] {
@@ -104,11 +104,11 @@ Change `PORT` (backend) and `ADMIN_PORT` (admin panel) in the root `.env`. Updat
 
 A module is a new page/feature in the admin panel. Adding one requires changes in 6 places.
 
-Use `reports` as the example name — replace it with your module name throughout.
+Use `reports` as the example name: replace it with your module name throughout.
 
 ---
 
-**1. Frontend page** — create `apps/admin/app/reports/page.tsx`:
+**1. Frontend page** (create `apps/admin/app/reports/page.tsx`):
 
 ```tsx
 "use client";
@@ -120,11 +120,11 @@ export default function ReportsPage() {
 }
 ```
 
-Next.js auto-discovers the file — the route `/reports` is available immediately.
+Next.js auto-discovers the file: the route `/reports` is available immediately.
 
 ---
 
-**2. Backend router** — create `apps/backend/src/routes/admin/reports.ts`:
+**2. Backend router** (create `apps/backend/src/routes/admin/reports.ts`):
 
 ```ts
 import { Router } from "express";
@@ -140,7 +140,7 @@ export default router;
 
 ---
 
-**3. Register the router** — add to `apps/backend/src/routes/admin/index.ts`:
+**3. Register the router** (add to `apps/backend/src/routes/admin/index.ts`):
 
 ```ts
 import reportsRouter from "./reports";
@@ -150,7 +150,7 @@ router.use(reportsRouter);
 
 ---
 
-**4. API client** — add to `apps/admin/lib/api.ts`:
+**4. API client** (add to `apps/admin/lib/api.ts`):
 
 ```ts
 export const reportsApi = {
@@ -164,7 +164,7 @@ export const reportsApi = {
 
 ---
 
-**5. Navigation config** — add an entry to the `navigation` array in `apps/admin/lib/nav-config.ts`:
+**5. Navigation config** (add an entry to the `navigation` array in `apps/admin/lib/nav-config.ts`):
 
 ```ts
 {
@@ -179,7 +179,7 @@ Place it inside whichever `group` fits, or create a new group. This single file 
 
 ---
 
-**6. Backend menu key** — register the new `navKey` in `apps/backend/src/routes/admin/settings.ts`:
+**6. Backend menu key** (register the new `navKey` in `apps/backend/src/routes/admin/settings.ts`):
 
 ```ts
 const NAV_KEYS = [

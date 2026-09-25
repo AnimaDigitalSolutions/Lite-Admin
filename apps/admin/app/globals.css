@@ -32,12 +32,12 @@
   }
 
   /*
-   * Themes — each block must have a matching entry in lib/theme-context.tsx.
+   * Themes: each block must have a matching entry in lib/theme-context.tsx.
    * The [data-theme="<id>"] selector must match the id in the THEMES array.
    * Copy any block below as a starting point for a new theme.
    */
 
-  /* Ocean — cool dark */
+  /* Ocean: cool dark */
   [data-theme="ocean"] {
     --background: 220 35% 13%;
     --foreground: 200 20% 90%;
@@ -65,7 +65,7 @@
     --sidebar-muted: 200 15% 50%;
   }
 
-  /* Café Sepia — warm tinted light */
+  /* Café Sepia: warm tinted light */
   [data-theme="cafe-sepia"] {
     --background: 35 30% 94%;
     --foreground: 25 30% 15%;

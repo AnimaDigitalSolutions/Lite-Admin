@@ -28,7 +28,7 @@ const PAGE_SIZE = 50;
 
 const SNEAKY_MESSAGES = [
   "You sneaky wish has been executed.",
-  "You are being sneaky — but that's OK.",
+  "You are being sneaky, but that's OK.",
   "Evidence destroyed. We saw nothing.",
   "Logs? What logs? Never heard of 'em.",
   "The past is gone. Breathe easy.",
@@ -214,10 +214,10 @@ export default function LogsPage() {
                           )}
                         </td>
                         <td className="max-w-xs truncate px-4 py-3 text-muted-foreground">
-                          {log.details ?? "—"}
+                          {log.details ?? "-"}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                          {log.ip_address ?? "—"}
+                          {log.ip_address ?? "-"}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                           {formatDate(log.created_at)}

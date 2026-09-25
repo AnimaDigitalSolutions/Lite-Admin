@@ -99,7 +99,7 @@ const staticLimiters = {
   admin: createLimiter(rateLimitConfigs.admin, "admin"),
 };
 
-// Dynamic forms limiter — rebuilds when admin changes settings
+// Dynamic forms limiter: rebuilds when admin changes settings
 let _formsLimiter = createLimiter(rateLimitConfigs.forms, "forms");
 let _formsMax = rateLimitConfigs.forms.max;
 let _formsWindowMs = rateLimitConfigs.forms.windowMs;
@@ -115,7 +115,7 @@ function getFormsLimiter(max: number, windowMs: number) {
   return _formsLimiter;
 }
 
-// Kept for backward compat — anything referencing rateLimiters.* still works
+// Kept for backward compat: anything referencing rateLimiters.* still works
 const rateLimiters = {
   get public() {
     return staticLimiters.public;
@@ -187,7 +187,7 @@ async function selectRateLimiter(
     return staticLimiters.admin;
   }
 
-  // Form endpoints — read dynamic limits from admin settings
+  // Form endpoints: read dynamic limits from admin settings
   if (type === "forms") {
     return resolveFormsLimiter();
   }

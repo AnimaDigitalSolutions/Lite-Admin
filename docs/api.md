@@ -13,7 +13,7 @@ GET /health
 ```http
 POST /api/forms/contact
 Content-Type: application/json
-X-Site-Key: lsk_...   (optional — tags the submission to a site)
+X-Site-Key: lsk_...   (optional, tags the submission to a site)
 
 {
   "name": "John Doe",

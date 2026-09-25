@@ -529,7 +529,7 @@ const INVOICES = [
     template: "minimal",
     tax_rate: 0,
     discount: 0,
-    notes: "OVERDUE — please remit payment",
+    notes: "OVERDUE: please remit payment",
     subtotal: 2500,
     tax_amount: 0,
     total: 2500,
@@ -564,7 +564,7 @@ const CAMPAIGNS = [
   },
   {
     id: 2,
-    name: "Monthly Newsletter — March",
+    name: "Monthly Newsletter (March)",
     subject: "What's new in March 2026",
     status: "draft",
     target_type: "tagged",

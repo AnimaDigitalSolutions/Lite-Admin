@@ -532,7 +532,7 @@ export default function ContactDetailPanel({
                     <div className="flex-1 min-w-0">
                       <p className="whitespace-pre-wrap">{contact.message}</p>
                       <p className="text-xs text-blue-400 mt-1.5">
-                        {formatDate(contact.submitted_at)} — from {contact.name}
+                        {formatDate(contact.submitted_at)} · from {contact.name}
                       </p>
                     </div>
                   </div>

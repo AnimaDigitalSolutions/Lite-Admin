@@ -8,7 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Returns true for loopback, private (RFC 1918), and reserved documentation
- * IP ranges — addresses that will never have meaningful geo data.
+ * IP ranges: addresses that will never have meaningful geo data.
  */
 /**
  * Truncates long email addresses for display.

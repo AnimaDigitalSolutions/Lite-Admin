@@ -10,7 +10,7 @@ import {
 
 /**
  * To add a theme:
- *   1. Add an entry here — { id, label, swatch } where swatch is a representative hex colour.
+ *   1. Add an entry here: { id, label, swatch } where swatch is a representative hex colour.
  *   2. Add a matching [data-theme="<id>"] CSS block in app/globals.css with all CSS variables.
  * The first entry in this array is the default theme.
  */

@@ -124,7 +124,7 @@ describe("Auth middleware", () => {
     });
 
     it("blocks non-admin role with 403", async () => {
-      // Force a non-admin role past the type system — this simulates a token
+      // Force a non-admin role past the type system: this simulates a token
       // issued before a role downgrade, or a tampered-but-valid-signature edge case
       const { accessToken: token } = jwtService.generateTokens({
         id: 2,

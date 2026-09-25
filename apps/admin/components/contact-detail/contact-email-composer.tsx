@@ -183,7 +183,7 @@ export default function ContactEmailComposer({
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Plain text — line breaks will be preserved.
+                  Plain text. Line breaks will be preserved.
                 </p>
               </div>
             </>

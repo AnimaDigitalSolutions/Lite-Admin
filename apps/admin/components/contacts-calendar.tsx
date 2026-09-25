@@ -125,7 +125,7 @@ export default function ContactsCalendar({
     } else if (timeFilter === "last90") {
       cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90);
     } else {
-      // 'month' — filter by the selected calendar month
+      // 'month': filter by the selected calendar month
       cutoff = new Date(year, month, 1);
       const monthEnd = new Date(year, month + 1, 0);
       return contacts.filter((c) => {
@@ -384,7 +384,7 @@ export default function ContactsCalendar({
         ) : (
           <>
             <div className="flex border-t border-border">
-              {/* Fixed left column — contact labels */}
+              {/* Fixed left column: contact labels */}
               <div
                 className="shrink-0 border-r border-border z-10"
                 style={{ width: LABEL_WIDTH }}
@@ -434,7 +434,7 @@ export default function ContactsCalendar({
                   style={{ width: totalDays * DAY_WIDTH, minWidth: "100%" }}
                   className="relative"
                 >
-                  {/* Timeline header — month labels + week ticks */}
+                  {/* Timeline header: month labels + week ticks */}
                   <div className="h-[52px] border-b border-border relative">
                     {/* Month labels */}
                     {(() => {
@@ -595,7 +595,7 @@ export default function ContactsCalendar({
                         };
                       });
                     } else {
-                      // No history — single bar with current status
+                      // No history: single bar with current status
                       segments = [
                         {
                           status: currentStatus,
@@ -655,7 +655,7 @@ export default function ContactsCalendar({
                                 width: Math.max(4, seg.widthPx),
                               }}
                               onClick={() => onSelectContact(contact)}
-                              title={`${contact.name} — ${seg.status.replace("_", " ")}`}
+                              title={`${contact.name}: ${seg.status.replace("_", " ")}`}
                             />
                           );
                         })}

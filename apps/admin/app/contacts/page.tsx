@@ -175,7 +175,7 @@ export default function ContactsPage() {
       .getStatusHistory(ids)
       .then((res) => setStatusHistory(res.data || {}))
       .catch(() => {
-        /* silently fail — Gantt falls back to single-color bars */
+        /* silently fail: Gantt falls back to single-color bars */
       });
   }, [contacts, viewMode]);
 
@@ -482,7 +482,7 @@ export default function ContactsPage() {
               icon: CheckCircleIcon,
               color: "text-emerald-600",
               label: "Open Todos",
-              value: todosSummary?.total ?? "—",
+              value: todosSummary?.total ?? "-",
               token: "has:todos",
               extra:
                 todosSummary && todosSummary.total > 0

@@ -234,7 +234,7 @@ export default function EmailTemplatesPage() {
 
         <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
-        {/* Template tabs + variable chips — single compact row */}
+        {/* Template tabs + variable chips: single compact row */}
         <div className="flex items-center justify-between gap-4 border-b border-border pb-0">
           <div className="flex gap-1">
             {templateNames.map((name) => {
@@ -301,7 +301,7 @@ export default function EmailTemplatesPage() {
 
         {currentTemplate && (
           <>
-            {/* Editor + Preview — fill viewport */}
+            {/* Editor + Preview: fill viewport */}
             <div
               className="grid grid-cols-1 gap-4 lg:grid-cols-2"
               style={{ minHeight: "calc(100vh - 320px)" }}

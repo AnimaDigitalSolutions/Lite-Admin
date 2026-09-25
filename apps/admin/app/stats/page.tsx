@@ -145,7 +145,7 @@ export default function StatsPage() {
         {/* Contacts trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Contact Form Submissions — Last 30 Days</CardTitle>
+            <CardTitle>Contact Form Submissions (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
@@ -184,7 +184,7 @@ export default function StatsPage() {
         {/* Waitlist trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Waitlist Signups — Last 30 Days</CardTitle>
+            <CardTitle>Waitlist Signups (Last 30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>

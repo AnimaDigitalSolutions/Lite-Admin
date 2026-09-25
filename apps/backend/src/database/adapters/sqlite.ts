@@ -296,7 +296,7 @@ class SQLiteAdapter {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
-      // Add api_key to existing sites installs (UNIQUE via separate index — SQLite ADD COLUMN forbids inline UNIQUE)
+      // Add api_key to existing sites installs (UNIQUE via separate index, SQLite ADD COLUMN forbids inline UNIQUE)
       `ALTER TABLE sites ADD COLUMN api_key VARCHAR(64)`,
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_sites_api_key ON sites(api_key)`,
 
@@ -427,7 +427,7 @@ class SQLiteAdapter {
         await runAsync(migration);
       } catch (error: unknown) {
         // For ADD COLUMN migrations, any SQLITE_ERROR means the column already
-        // exists — the table is guaranteed to exist at this point (created above),
+        // exists: the table is guaranteed to exist at this point (created above),
         // so there is no other SQLITE_ERROR that can occur for ADD COLUMN.
         const sqlErr = error as { code?: string };
         if (

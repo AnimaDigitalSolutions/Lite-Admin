@@ -30,7 +30,7 @@ class GeoService {
     this.initPromise = (async () => {
       try {
         const geolite2 = await import("geolite2-redist");
-        // geolite2-redist ships as ESM — handle both named and default export shapes
+        // geolite2-redist ships as ESM: handle both named and default export shapes
         const lib =
           (geolite2 as unknown as { default?: typeof geolite2 }).default ??
           geolite2;
@@ -44,7 +44,7 @@ class GeoService {
       } catch (err) {
         logger.warn({
           message:
-            "GeoIP database unavailable — location data will not be recorded",
+            "GeoIP database unavailable, location data will not be recorded",
           err,
         });
         this.unavailable = true;
@@ -62,7 +62,7 @@ class GeoService {
     this.reader = null;
   }
 
-  /** Extract real client IP — handles X-Forwarded-For and IPv6-mapped IPv4. */
+  /** Extract real client IP: handles X-Forwarded-For and IPv6-mapped IPv4. */
   static extractIp(raw: string | undefined): string {
     if (!raw) return "";
     return raw

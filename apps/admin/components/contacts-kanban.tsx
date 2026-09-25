@@ -178,7 +178,7 @@ export default function ContactsKanban({
       setDragState({ contactId: contact.id, sourceStatus: status });
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", contact.id);
-      // Capture element before rAF — React recycles the event so currentTarget becomes null
+      // Capture element before rAF: React recycles the event so currentTarget becomes null
       const el = e.currentTarget as HTMLElement;
       requestAnimationFrame(() => {
         el.style.opacity = "0.5";
@@ -377,7 +377,7 @@ export default function ContactsKanban({
                     {stageContacts.length}
                   </span>
                 </div>
-                {/* Column body — drop zone */}
+                {/* Column body: drop zone */}
                 <div
                   onDragOver={(e) => handleDragOver(e, stage.value)}
                   onDragLeave={handleDragLeave}

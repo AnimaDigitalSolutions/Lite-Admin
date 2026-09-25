@@ -32,7 +32,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      // login() already calls router.push('/') — no need to push again.
+      // login() already calls router.push('/'), so no need to push again.
       // Safety timeout: if the page doesn't unmount within 5s, clear the overlay
       setTimeout(() => setLoading(false), 5000);
     } catch (err) {

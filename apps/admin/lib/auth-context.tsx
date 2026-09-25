@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Always check auth — cookies are httpOnly so document.cookie can't see them.
+    // Always check auth: cookies are httpOnly so document.cookie can't see them.
     // Let the backend decide if the session is valid.
     checkAuth().catch(() => {
       setUser(null);
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAuthState = () => {
     setUser(null);
     setLoading(false);
-    // Cookies are httpOnly — they are cleared by the backend on logout
+    // Cookies are httpOnly: they are cleared by the backend on logout
   };
 
   const login = async (email: string, password: string) => {

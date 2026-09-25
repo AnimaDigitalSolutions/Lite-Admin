@@ -650,10 +650,10 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        {/* Right side — Menu config panel (opens/closes in the empty space) */}
+        {/* Right side: Menu config panel (opens/closes in the empty space) */}
         {menuOpen && (
           <div className="hidden lg:block max-w-2xl flex-1 sticky top-8">
-            {/* Header — aligned with the settings cards below the page title */}
+            {/* Header: aligned with the settings cards below the page title */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Bars3Icon className="h-6 w-6 text-muted-foreground" />

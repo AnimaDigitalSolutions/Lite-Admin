@@ -26,7 +26,7 @@ const errorHandler = (
     userAgent: req.get("user-agent"),
   });
 
-  // Determine status code — AppError subclasses carry their own statusCode
+  // Determine status code: AppError subclasses carry their own statusCode
   const statusCode =
     err instanceof AppError
       ? err.statusCode

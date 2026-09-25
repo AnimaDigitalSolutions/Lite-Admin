@@ -58,7 +58,7 @@ export function invalidateTimezoneCache(newTz?: string) {
  */
 function parseUtc(dateString: string): Date {
   if (!dateString) return new Date(NaN);
-  // Already has offset or 'Z' — pass through
+  // Already has offset or 'Z': pass through
   if (dateString.includes("Z") || /[+-]\d{2}:\d{2}$/.test(dateString)) {
     return new Date(dateString);
   }
@@ -87,7 +87,7 @@ export function useTimezone() {
     options: Intl.DateTimeFormatOptions = {},
   ): string => {
     const d = parseUtc(dateString);
-    if (isNaN(d.getTime())) return "—";
+    if (isNaN(d.getTime())) return "-";
     return d.toLocaleString("en-US", {
       year: "numeric",
       month: "short",

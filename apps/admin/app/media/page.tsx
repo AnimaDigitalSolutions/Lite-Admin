@@ -556,7 +556,7 @@ export default function MediaPage() {
                     className="flex items-center gap-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700"
                   >
                     <span className="font-medium truncate">{file.name}</span>
-                    <span>—</span>
+                    <span>-</span>
                     <span>
                       {errors
                         .map((e) =>
@@ -975,7 +975,7 @@ export default function MediaPage() {
                           <td className="p-3 text-sm text-muted-foreground">
                             {item.width && item.height
                               ? `${item.width} × ${item.height}`
-                              : "—"}
+                              : "-"}
                           </td>
                           <td className="p-3">
                             {item.project_name ? (
@@ -983,7 +983,7 @@ export default function MediaPage() {
                                 {highlightMatch(item.project_name, searchTerm)}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">—</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </td>
                           <td

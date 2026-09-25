@@ -46,7 +46,7 @@ router.get(
         ? media.filter((item) => item.project_name === project)
         : media;
 
-      // Add public URLs — prefer DB thumbnail_url, fall back to image thumbnail for legacy rows
+      // Add public URLs: prefer DB thumbnail_url, fall back to image thumbnail for legacy rows
       const mediaWithUrls = filtered.map((item) => {
         const dbThumb = (item as unknown as Record<string, unknown>)
           .thumbnail_url as string | undefined;

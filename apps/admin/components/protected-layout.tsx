@@ -91,7 +91,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       {/* Demo Banner */}
       {isDemoMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] flex h-8 items-center justify-center bg-indigo-600 text-xs font-medium text-white">
-          Demo Mode — data is simulated
+          Demo Mode: data is simulated
         </div>
       )}
       {/* Sidebar */}

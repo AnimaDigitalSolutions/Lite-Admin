@@ -44,7 +44,7 @@ jobs:
 
       - name: Build admin in demo mode
         run: |
-          # Demo mode is frontend-only — axios interceptor mocks all API calls
+          # Demo mode is frontend-only: axios interceptor mocks all API calls
           export NEXT_PUBLIC_DEMO_MODE=true
           pnpm build
 

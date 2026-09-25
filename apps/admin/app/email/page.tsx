@@ -355,7 +355,7 @@ export default function EmailPage() {
             </CardTitle>
             <CardDescription>
               Where contact form submissions are sent. Use your actual inbox
-              here — not a no-reply address.
+              here, not a no-reply address.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -372,7 +372,7 @@ export default function EmailPage() {
             />
             {!config.notification_address && (
               <p className="mt-2 text-xs text-amber-600 bg-amber-50 rounded px-3 py-2 border border-amber-200">
-                No notification address set — contact form alerts will fall back
+                No notification address set, so contact form alerts will fall back
                 to the From address.
               </p>
             )}
@@ -387,12 +387,12 @@ export default function EmailPage() {
           {saved && (
             <span className="flex items-center gap-1.5 text-sm text-emerald-600">
               <CheckCircleIcon className="h-4 w-4" />
-              Saved — provider reset
+              Saved, provider reset
             </span>
           )}
         </div>
 
-        {/* Send test email — collapsible */}
+        {/* Send test email: collapsible */}
         <Card>
           <button
             type="button"

@@ -47,7 +47,7 @@ export default [
       'no-var': 'error',
       'no-console': 'warn',
 
-      // Enforce shared type imports — discourage local re-declarations
+      // Enforce shared type imports: discourage local re-declarations
       'no-restricted-imports': ['warn', {
         patterns: [{
           group: ['../errors', '../errors.js', '../../errors', '../../errors.js'],
