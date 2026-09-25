@@ -77,9 +77,7 @@ class EmailFactory {
   static reset(): void {
     this.instance = null;
     this.initPromise = null;
-    logger.info(
-      "Email provider instance reset, will reinitialize on next use",
-    );
+    logger.info("Email provider instance reset, will reinitialize on next use");
   }
 }
 
