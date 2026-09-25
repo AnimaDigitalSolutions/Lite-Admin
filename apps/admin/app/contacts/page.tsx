@@ -44,6 +44,7 @@ import ContactsKanban from "@/components/contacts-kanban";
 import { PageHeader } from "@/components/page-header";
 import AddContactModal from "./components/add-contact-modal";
 import TestEmailPanel from "./components/test-email-panel";
+import { ScrollX } from "@/components/ui/scroll-x";
 
 type ContactStatus =
   | "new"
@@ -357,6 +358,7 @@ export default function ContactsPage() {
             />
             {searchTerm && (
               <button
+                aria-label="Clear search"
                 type="button"
                 onClick={() => setSearchTerm("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -581,7 +583,7 @@ export default function ContactsPage() {
                 </div>
               ) : (
                 <>
-                  <div className="-mx-4 overflow-x-auto sm:mx-0">
+                  <ScrollX className="-mx-4 sm:mx-0">
                     <table className="w-full min-w-[760px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                       <thead className="sticky top-0 z-10">
                         <tr className="border-b bg-muted">
@@ -756,6 +758,7 @@ export default function ContactsPage() {
                               <td className="p-3">
                                 <div className="flex gap-2">
                                   <Button
+                                    aria-label={`View ${contact.name}`}
                                     size="sm"
                                     variant="outline"
                                     onClick={() => setSelectedContact(contact)}
@@ -763,6 +766,7 @@ export default function ContactsPage() {
                                     <EyeIcon className="h-4 w-4" />
                                   </Button>
                                   <Button
+                                    aria-label={`Delete ${contact.name}`}
                                     size="sm"
                                     variant="destructive"
                                     onClick={() => handleDelete(contact.id)}
@@ -776,7 +780,7 @@ export default function ContactsPage() {
                         })}
                       </tbody>
                     </table>
-                  </div>
+                  </ScrollX>
 
                   {/* Pagination */}
                   <Pagination

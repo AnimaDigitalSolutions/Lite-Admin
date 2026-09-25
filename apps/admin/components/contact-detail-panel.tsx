@@ -162,7 +162,7 @@ export default function ContactDetailPanel({
       {/* Slide-in panel */}
       <div
         ref={panelRef}
-        className={`fixed ${isDemoMode ? "top-8" : "top-0"} right-0 bottom-0 ${panelWidth} max-w-full bg-white shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200 transition-[width] ease-in-out`}
+        className={`fixed ${isDemoMode ? "top-8" : "top-0"} right-0 bottom-0 ${panelWidth} max-w-full bg-white shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200 transition-[width] ease-in-out motion-reduce:animate-none motion-reduce:transition-none`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3 sm:px-5 sm:py-4">
@@ -227,14 +227,19 @@ export default function ContactDetailPanel({
                 <ArrowsPointingOutIcon className="h-4 w-4" />
               )}
             </Button>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button
+              aria-label="Close panel"
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            >
               <XMarkIcon className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 sm:px-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-5 sm:px-5">
           {editMode ? (
             /* Edit mode */
             <div className="space-y-4">

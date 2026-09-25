@@ -39,10 +39,15 @@ export default function MediaEditModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-3 sm:p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6 max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Edit Media</h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button
+            aria-label="Close"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+          >
             <XMarkIcon className="h-4 w-4" />
           </Button>
         </div>

@@ -30,6 +30,7 @@ import {
 import type { InvoiceFormValues } from "./schemas/invoice-form";
 import { Pagination } from "@/components/ui/pagination";
 import { PageHeader } from "@/components/page-header";
+import { ScrollX } from "@/components/ui/scroll-x";
 
 // Lazy-load PDF components (client-side only) to avoid SSR issues with @react-pdf/renderer
 const InvoicePDFPreview = dynamic(
@@ -914,7 +915,7 @@ export default function InvoicesPage() {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <ScrollX>
                 <table className="w-full min-w-[720px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                   <thead>
                     <tr className="border-b bg-muted">
@@ -1010,7 +1011,7 @@ export default function InvoicesPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollX>
             )}
           </CardContent>
         </Card>

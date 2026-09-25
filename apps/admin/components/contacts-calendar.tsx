@@ -281,13 +281,23 @@ export default function ContactsCalendar({
           {/* Top row: navigation + legend */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button variant="outline" size="sm" onClick={prevPeriod}>
+              <Button
+                aria-label="Previous period"
+                variant="outline"
+                size="sm"
+                onClick={prevPeriod}
+              >
                 <ChevronLeftIcon className="h-4 w-4" />
               </Button>
               <CardTitle className="min-w-0 text-center text-sm sm:min-w-[180px]">
                 {headerLabel}
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={nextPeriod}>
+              <Button
+                aria-label="Next period"
+                variant="outline"
+                size="sm"
+                onClick={nextPeriod}
+              >
                 <ChevronRightIcon className="h-4 w-4" />
               </Button>
               <Button
@@ -330,7 +340,7 @@ export default function ContactsCalendar({
                     key={value}
                     type="button"
                     onClick={() => setTimeFilter(value)}
-                    className={`whitespace-nowrap px-2 py-1 text-xs font-medium transition-colors sm:px-3 ${
+                    className={`whitespace-nowrap px-2 py-1 text-xs [@media(pointer:coarse)]:py-2 font-medium transition-colors sm:px-3 ${
                       timeFilter === value
                         ? "bg-foreground text-background"
                         : "bg-background text-muted-foreground hover:bg-accent"
@@ -351,6 +361,7 @@ export default function ContactsCalendar({
                 Zoom:
               </span>
               <Button
+                aria-label="Zoom out"
                 variant="outline"
                 size="sm"
                 onClick={zoomOut}
@@ -363,6 +374,7 @@ export default function ContactsCalendar({
                 {Math.round((DAY_WIDTH / ZOOM_LEVELS[DEFAULT_ZOOM]) * 100)}%
               </span>
               <Button
+                aria-label="Zoom in"
                 variant="outline"
                 size="sm"
                 onClick={zoomIn}
@@ -425,7 +437,10 @@ export default function ContactsCalendar({
               </div>
 
               {/* Scrollable timeline area */}
-              <div ref={scrollRef} className="overflow-x-auto flex-1">
+              <div
+                ref={scrollRef}
+                className="overflow-x-auto overscroll-x-contain flex-1"
+              >
                 <div
                   style={{ width: totalDays * DAY_WIDTH, minWidth: "100%" }}
                   className="relative"
@@ -691,6 +706,7 @@ export default function ContactsCalendar({
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-3 py-3 border-t border-border">
                 <Button
+                  aria-label="Previous page"
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -702,6 +718,7 @@ export default function ContactsCalendar({
                   Page {currentPage} of {totalPages}
                 </span>
                 <Button
+                  aria-label="Next page"
                   variant="outline"
                   size="sm"
                   onClick={() =>

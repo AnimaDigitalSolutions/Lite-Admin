@@ -13,6 +13,7 @@ import {
   TrashIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { ScrollX } from "@/components/ui/scroll-x";
 
 interface LogEntry {
   id: number;
@@ -173,7 +174,7 @@ export default function LogsPage() {
                 No activity recorded yet.
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <ScrollX>
                 <table className="w-full min-w-[760px] text-sm max-lg:[&_td]:whitespace-nowrap">
                   <thead>
                     <tr className="border-b bg-muted text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -237,7 +238,7 @@ export default function LogsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollX>
             )}
 
             {/* Pagination */}
@@ -248,6 +249,7 @@ export default function LogsPage() {
                 </span>
                 <div className="flex gap-2">
                   <Button
+                    aria-label="Previous page"
                     variant="outline"
                     size="sm"
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
@@ -256,6 +258,7 @@ export default function LogsPage() {
                     <ChevronLeftIcon className="h-4 w-4" />
                   </Button>
                   <Button
+                    aria-label="Next page"
                     variant="outline"
                     size="sm"
                     onClick={() =>

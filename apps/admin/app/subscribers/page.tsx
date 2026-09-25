@@ -35,6 +35,7 @@ import { useSelection } from "@/lib/hooks/use-selection";
 import { PageHeader } from "@/components/page-header";
 import AddSubscriberModal from "./components/add-subscriber-modal";
 import TestEmailPanel from "./components/test-email-panel";
+import { ScrollX } from "@/components/ui/scroll-x";
 
 // === Types ===
 
@@ -307,6 +308,7 @@ function SubscribersTab() {
           />
           {searchTerm && (
             <button
+              aria-label="Clear search"
               type="button"
               onClick={() => setSearchTerm("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -433,7 +435,7 @@ function SubscribersTab() {
             </div>
           ) : (
             <>
-              <div className="-mx-4 overflow-x-auto sm:mx-0">
+              <ScrollX className="-mx-4 sm:mx-0">
                 <table className="w-full min-w-[720px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                   <thead>
                     <tr className="border-b">
@@ -645,6 +647,7 @@ function SubscribersTab() {
                           {editingId === entry.id ? (
                             <div className="flex gap-1">
                               <Button
+                                aria-label="Save changes"
                                 size="sm"
                                 onClick={() => void saveEdit(entry.id)}
                                 disabled={editSaving}
@@ -652,6 +655,7 @@ function SubscribersTab() {
                                 <CheckCircleIcon className="h-4 w-4" />
                               </Button>
                               <Button
+                                aria-label="Cancel editing"
                                 size="sm"
                                 variant="outline"
                                 onClick={cancelEdit}
@@ -662,6 +666,7 @@ function SubscribersTab() {
                           ) : (
                             <div className="flex gap-1">
                               <Button
+                                aria-label={`Edit ${entry.email}`}
                                 size="sm"
                                 variant="outline"
                                 onClick={() => startEdit(entry)}
@@ -669,6 +674,7 @@ function SubscribersTab() {
                                 <PencilSquareIcon className="h-4 w-4" />
                               </Button>
                               <Button
+                                aria-label={`Delete ${entry.email}`}
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => {
@@ -685,7 +691,7 @@ function SubscribersTab() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollX>
 
               <Pagination
                 currentPage={currentPage}

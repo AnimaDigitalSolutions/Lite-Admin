@@ -122,6 +122,7 @@ export default function ContactEmailComposer({
             </h3>
           </div>
           <button
+            aria-label="Close"
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground"
@@ -131,7 +132,7 @@ export default function ContactEmailComposer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
           {fromAddress && (
             <div>
               <label className="text-xs font-medium text-muted-foreground block mb-1">

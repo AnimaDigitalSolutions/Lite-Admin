@@ -183,6 +183,7 @@ export default function ContactPickerModal({
             </div>
           </div>
           <button
+            aria-label="Close"
             type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent"
@@ -220,7 +221,7 @@ export default function ContactPickerModal({
         </div>
 
         {/* Contact list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground" />

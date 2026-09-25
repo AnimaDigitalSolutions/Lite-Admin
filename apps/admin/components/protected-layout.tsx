@@ -159,7 +159,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
       {/* Sidebar */}
       <aside
         id="app-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-sidebar border-r border-sidebar-border shadow-sm transition-transform duration-200 lg:w-60 lg:translate-x-0 ${navOpen ? "translate-x-0" : "-translate-x-full"} ${isDemoMode ? "top-8" : ""}`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-sidebar border-r border-sidebar-border shadow-sm transition-transform duration-200 motion-reduce:transition-none lg:w-60 lg:translate-x-0 ${navOpen ? "translate-x-0" : "-translate-x-full"} ${isDemoMode ? "top-8" : ""}`}
       >
         {/* Logo */}
         <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-4">
@@ -185,7 +185,7 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        <nav className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-5">
           {filteredNavigation.map((section) => (
             <div key={section.group}>
               <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-muted">

@@ -367,7 +367,7 @@ export default function SitesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <pre className="rounded bg-gray-900 px-4 py-3 text-xs text-gray-200 overflow-x-auto">{`fetch('https://your-api.com/api/forms/contact', {
+              <pre className="rounded bg-gray-900 px-4 py-3 text-xs text-gray-200 overflow-x-auto overscroll-x-contain">{`fetch('https://your-api.com/api/forms/contact', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',

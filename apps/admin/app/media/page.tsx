@@ -33,6 +33,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useSelection } from "@/lib/hooks/use-selection";
 import MediaEditModal from "./components/media-edit-modal";
+import { ScrollX } from "@/components/ui/scroll-x";
 // --- Types ---
 
 interface MediaItem {
@@ -512,7 +513,12 @@ export default function MediaPage() {
                 <TrashIcon className="h-4 w-4 mr-1" />
                 Delete ({selectedIds.size})
               </Button>
-              <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <Button
+                aria-label="Clear selection"
+                size="sm"
+                variant="ghost"
+                onClick={clearSelection}
+              >
                 <XMarkIcon className="h-4 w-4" />
               </Button>
             </div>
@@ -671,6 +677,7 @@ export default function MediaPage() {
 
           <div className="flex border border-border rounded-md">
             <Button
+              aria-label="Grid view"
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("grid")}
@@ -679,6 +686,7 @@ export default function MediaPage() {
               <Squares2X2Icon className="h-4 w-4" />
             </Button>
             <Button
+              aria-label="List view"
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("list")}
@@ -845,7 +853,7 @@ export default function MediaPage() {
           /* --- List View --- */
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <ScrollX>
                 <table className="w-full min-w-[760px] max-lg:[&_td]:whitespace-nowrap max-lg:[&_th]:whitespace-nowrap">
                   <thead className="sticky top-0 z-10">
                     <tr className="border-b bg-muted">
@@ -1048,7 +1056,7 @@ export default function MediaPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </ScrollX>
             </CardContent>
           </Card>
         )}
@@ -1081,6 +1089,7 @@ export default function MediaPage() {
               >
                 {/* Close button */}
                 <button
+                  aria-label="Close preview"
                   className="absolute top-4 right-4 text-white/70 hover:text-white z-10"
                   onClick={() => setPreviewItem(null)}
                 >
@@ -1106,6 +1115,7 @@ export default function MediaPage() {
                 {/* Prev/Next */}
                 {hasPrev && (
                   <button
+                    aria-label="Previous item"
                     className="absolute left-1 sm:left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1117,6 +1127,7 @@ export default function MediaPage() {
                 )}
                 {hasNext && (
                   <button
+                    aria-label="Next item"
                     className="absolute right-1 sm:right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                     onClick={(e) => {
                       e.stopPropagation();

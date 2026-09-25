@@ -10,13 +10,14 @@ import {
 
 /**
  * To add a theme:
- *   1. Add an entry here: { id, label, swatch } where swatch is a representative hex colour.
+ *   1. Add an entry here: { id, label, swatch, scheme } where swatch is a representative hex colour
+ *      and scheme is "light" or "dark" (drives native controls via color-scheme).
  *   2. Add a matching [data-theme="<id>"] CSS block in app/globals.css with all CSS variables.
  * The first entry in this array is the default theme.
  */
 export const THEMES = [
-  { id: "cafe-sepia", label: "Café Sepia", swatch: "#f5f0e8" },
-  { id: "ocean", label: "Ocean", swatch: "#151c2c" },
+  { id: "cafe-sepia", label: "Café Sepia", swatch: "#f5f0e8", scheme: "light" },
+  { id: "ocean", label: "Ocean", swatch: "#151c2c", scheme: "dark" },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -52,7 +53,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Sync attribute on mount (in case hydration differs from inline script)
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
+    // Match native controls and the mobile browser bar to the theme
+    root.style.colorScheme =
+      THEMES.find((t) => t.id === theme)?.scheme ?? "light";
+    const bar = getComputedStyle(root).getPropertyValue("--sidebar-bg").trim();
+    let meta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = `hsl(${bar})`;
   }, [theme]);
 
   return (

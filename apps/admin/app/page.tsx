@@ -251,7 +251,7 @@ export default function DashboardPage() {
                     <button
                       key={d}
                       onClick={() => handleDaysChange(d)}
-                      className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                      className={`rounded px-2.5 py-1 text-xs [@media(pointer:coarse)]:px-3 [@media(pointer:coarse)]:py-2 font-medium transition-colors ${
                         days === d
                           ? "bg-foreground text-background"
                           : "text-muted-foreground hover:bg-accent"

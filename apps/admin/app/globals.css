@@ -105,6 +105,21 @@
 
 /* ---------- Mobile / touch ---------- */
 
+/* No double-tap zoom delay on controls; replace the grey tap flash with
+   the controls' own active states. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+a,
+button,
+input,
+select,
+textarea,
+label,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 /* Controls that only appear on hover are unreachable on touch screens:
    always show them when the primary input can't hover. */
 @media (hover: none) {
@@ -112,6 +127,15 @@
   [class*="group-hover/row:opacity-100"],
   [class*="hover:opacity-100"] {
     opacity: 1 !important;
+  }
+}
+
+/* Finger-sized default checkboxes and radios on touch screens. */
+@media (pointer: coarse) {
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 1.125rem;
+    height: 1.125rem;
   }
 }
 
@@ -123,4 +147,3 @@
     font-size: 16px;
   }
 }
-

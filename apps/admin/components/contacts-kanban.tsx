@@ -296,7 +296,7 @@ export default function ContactsKanban({
                 setColumnFilter(value);
                 if (value === "custom") setShowColumnPicker(true);
               }}
-              className={`px-3 py-1 text-xs font-medium transition-colors ${
+              className={`px-3 py-1 text-xs font-medium [@media(pointer:coarse)]:py-2 transition-colors ${
                 columnFilter === value
                   ? "bg-foreground text-background"
                   : "bg-background text-muted-foreground hover:bg-accent"
@@ -358,7 +358,7 @@ export default function ContactsKanban({
       <p className="mb-2 hidden text-xs text-muted-foreground [@media(hover:none)]:block">
         Tap a card to open it and change its status.
       </p>
-      <div className="-mx-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory sm:mx-0 sm:px-0 sm:snap-none">
+      <div className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-4 snap-x snap-mandatory sm:mx-0 sm:px-0 sm:snap-none">
         <div className="flex gap-3 min-w-max">
           {visibleStages.map((stage) => {
             const stageContacts = contacts.filter(
@@ -473,7 +473,7 @@ export default function ContactsKanban({
       {confirmDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-50">
           <div
-            className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
+            className="bg-white rounded-lg max-w-md w-full shadow-xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain"
             onKeyDown={handleConfirmKeyDown}
           >
             <div className="p-4 sm:p-6">
@@ -482,6 +482,7 @@ export default function ContactsKanban({
                   Move Contact
                 </h3>
                 <button
+                  aria-label="Close"
                   type="button"
                   onClick={handleCancelMove}
                   className="text-muted-foreground hover:text-foreground"
@@ -517,7 +518,7 @@ export default function ContactsKanban({
                   rows={3}
                   className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground mt-1 [@media(hover:none)]:hidden">
                   Press Enter to confirm, Shift+Enter for new line
                 </p>
               </div>

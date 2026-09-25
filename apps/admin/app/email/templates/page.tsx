@@ -236,7 +236,7 @@ export default function EmailTemplatesPage() {
 
         {/* Template tabs + variable chips: single compact row */}
         <div className="flex flex-col gap-2 border-b border-border pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div className="-mb-px flex gap-1 overflow-x-auto">
+          <div className="-mb-px flex gap-1 overflow-x-auto overscroll-x-contain">
             {templateNames.map((name) => {
               const active = activeTemplate === name;
               const tpl = templates[name];
@@ -263,7 +263,7 @@ export default function EmailTemplatesPage() {
           </div>
           {/* Inline variable chips */}
           {currentTemplate && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-2">
+            <div className="flex items-center gap-1.5 overflow-x-auto overscroll-x-contain pb-2">
               <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 Variables:
               </span>
